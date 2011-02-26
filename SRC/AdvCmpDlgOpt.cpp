@@ -461,7 +461,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 					return true;
 				}
 			}
-			else if (record->EventType==KEY_EVENT)
+			if (record->EventType==KEY_EVENT)
 			{
 				long Key=FSF.FarInputRecordToKey(record);
 

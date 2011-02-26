@@ -1912,7 +1912,7 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,INT_PTR Param2)
 			if (record->EventType==MOUSE_EVENT)
 				if (Param1==0 && record->Event.MouseEvent.dwButtonState==FROM_LEFT_1ST_BUTTON_PRESSED && record->Event.MouseEvent.dwEventFlags==DOUBLE_CLICK)
 					goto GOTOFILE;
-			else if (record->EventType==KEY_EVENT)
+			if (record->EventType==KEY_EVENT)
 			{
 				long Key=FSF.FarInputRecordToKey(record);
 
