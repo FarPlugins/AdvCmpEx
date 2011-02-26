@@ -1,0 +1,87 @@
+﻿.Language=English,English
+
+"Advanced compare 2"
+
+"Ok"
+"Cancel"
+
+"Compare:"
+"names case sensiti&vely"
+"&size"
+"&time"
+"two seconds &precision"
+"ignore time &zone differences"
+"&contents"
+"only if time &differ"
+"p&artly:"
+"fu&ll file"
+"K&b:"
+"&ignore:"
+"all whitespace characters"
+"differences in new line characters"
+"whitespace and tabs"
+
+// " C O M P A R E "
+""
+"Sub&folders,"
+"ma&ximum folder depth"
+"&Use file filter"
+"F4-Filter"
+"Process selected items onl&y"
+"Skip in filename&:"
+"Ign&ore missing items"
+"Compare till the first differe&nce"
+"Select ne&w files"
+"Cac&he:"
+"i&gnore"
+"us&e"
+"F8-Clearing"
+"Display &messages"
+"Sounds notification"
+"Show total compare prog&ress indicator"
+"   F3-Put result to the panel "
+"F2-Under cursor"
+
+"Comparing files..."
+"{%d%%} Comparing files"
+" Comparing "%s": "
+" with "%s": "
+" Found differences: %s - %s "
+" Total: %s (%s) "
+"Data processing. Please wait several seconds..."
+
+"Active panel | Passive panel"
+"Name"
+"Size"
+"Time"
+
+"No differences"
+"The compared files seem to be identical"
+
+"Files under cursor"
+"Identical"
+"Differ"
+"Differ, run external program of the comparison?"
+
+"Paths being compared are equal"
+"The panels contain the same folder. Cancel the comparison?"
+
+"Found a difference"
+"Do you really want to cancel comparison?"
+
+"Two file panels are required to perform the compare"
+
+"Not enough memory"
+"Not enough memory to initialize plugin"
+
+"Clear cache"
+"%d items"
+"Do you really want to clear cache?"
+
+"Operation was interrupted"
+"Do you really want to cancel it?"
+
+"Attention"
+"Some files (folders) couldn't been opened"
+
+"<Folder>"
