@@ -86,7 +86,7 @@ struct ParamStore
 {
 	int ID;
 	wchar_t *RegName;
-	INT_PTR *Option;
+	int *Option;
 } StoreOpt[] = {
 	{DlgBORDER,      0,                      0},
 	{DlgCMP,         0,                      0},

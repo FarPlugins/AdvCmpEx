@@ -1940,9 +1940,10 @@ GOTOFILE:
 						;
 					if (cur)
 					{
-						if ((cur->dwAttributes&FILE_ATTRIBUTE_DIRECTORY) ||
+						if ((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN) ||
+								(cur->dwAttributes&FILE_ATTRIBUTE_DIRECTORY) ||
 								!(cur->ftLLastWriteTime.dwLowDateTime || cur->ftLLastWriteTime.dwHighDateTime) ||
-								!(cur->ftRLastWriteTime.dwLowDateTime || cur->ftRLastWriteTime.dwHighDateTime))
+								!(cur->ftRLastWriteTime.dwLowDateTime || cur->ftRLastWriteTime.dwHighDateTime) )
 							MessageBeep(MB_OK);
 						else if (pCompareFiles)
 						{
@@ -1953,6 +1954,31 @@ GOTOFILE:
 							if (strRFullFileName.length()>0 && strRFullFileName[(size_t)(strRFullFileName.length()-1)]!=L'\\') strRFullFileName+=L"\\";
 							strRFullFileName+=cur->strFileName;
 							pCompareFiles(strLFullFileName.get(),strRFullFileName.get(),0);
+						}
+						else
+						{
+							WIN32_FIND_DATA wfdFindData;
+							HANDLE hFind;
+							wchar_t DiffProgram[MAX_PATH];
+							ExpandEnvironmentStringsW(L"%ProgramFiles%",DiffProgram,(sizeof(DiffProgram)/sizeof(DiffProgram[0])));
+							wcscat(DiffProgram,L"\\WinMerge\\WinMergeU.exe");
+							if ((hFind=FindFirstFileW(DiffProgram,&wfdFindData)) != INVALID_HANDLE_VALUE)
+							{
+								string strLFullFileName=cur->strLDir.get();
+								if (strLFullFileName.length()>0 && strLFullFileName[(size_t)(strLFullFileName.length()-1)]!=L'\\') strLFullFileName+=L"\\";
+								strLFullFileName+=cur->strFileName;
+								string strRFullFileName=cur->strRDir.get();
+								if (strRFullFileName.length()>0 && strRFullFileName[(size_t)(strRFullFileName.length()-1)]!=L'\\') strRFullFileName+=L"\\";
+								strRFullFileName+=cur->strFileName;
+								FindClose(hFind);
+								STARTUPINFO si;
+								PROCESS_INFORMATION pi;
+								memset(&si, 0, sizeof(si));
+								si.cb = sizeof(si);
+								wchar_t Command[32768];
+								FSF.sprintf(Command, L"\"%s\" -e \"%s\" \"%s\"", DiffProgram,strLFullFileName.get()+4,strRFullFileName.get()+4);
+								CreateProcess(0,Command,0,0,false,0,0,0,&si,&pi);
+							}
 						}
 					}
 					return true;
