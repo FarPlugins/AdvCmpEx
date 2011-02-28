@@ -570,6 +570,18 @@ bool AdvCmpProc::SetCacheResult(DWORD FullFileName1, DWORD FullFileName2, DWORD6
 	return true;
 }
 
+int GetPosToName(wchar_t *FileName)
+{
+	if (FileName[0]==L'\\' && FileName[1]==L'\\' && FileName[2]==L'?')
+	{
+		if (FileName[5]==L':')
+			return 4;
+		else if (FileName[5]==L'N')
+			return 7;
+	}
+	return 0;
+}
+
 /****************************************************************************
  * Сравнение атрибутов и прочего для двух одноимённых элементов (файлов или
  * подкаталогов).
@@ -600,7 +612,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 
 			if (!(LPanel.bARC || RPanel.bARC))
 			{
-				if (!GetDirList(strLFullDir,ScanDepth,false,&LList) ||!GetDirList(strRFullDir,ScanDepth,false,&RList))
+				if (!GetDirList(strLFullDir,ScanDepth,false,&LList) || !GetDirList(strRFullDir,ScanDepth,false,&RList))
 				{
 					bBrokenByEsc=true; // То ли юзер прервал, то ли ошибка чтения
 					bEqual=false; // Остановим сравнение
@@ -615,8 +627,8 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 				RList.Dir=(wchar_t*)malloc((wcslen(RDir)+1)*sizeof(wchar_t));
 				if (RList.Dir) wcscpy(RList.Dir,RDir);
 
-				if (!Info.GetPluginDirList(0,LPanel.hPanel,pLPPI->FileName,&LList.PPI,&LList.ItemsNumber) ||
-						!Info.GetPluginDirList(0,RPanel.hPanel,pRPPI->FileName,&RList.PPI,&RList.ItemsNumber) )
+				if (!Info.GetPluginDirList(&MainGuid,LPanel.hPanel,pLPPI->FileName,&LList.PPI,&LList.ItemsNumber) ||
+						!Info.GetPluginDirList(&MainGuid,RPanel.hPanel,pRPPI->FileName,&RList.PPI,&RList.ItemsNumber) )
 				{
 					bBrokenByEsc=true; // То ли юзер прервал, то ли ошибка чтения
 					bEqual=false; // Остановим сравнение
@@ -627,41 +639,51 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 			{
 				LList.Dir=(wchar_t*)malloc((wcslen(LDir)+1)*sizeof(wchar_t));
 				if (LList.Dir) wcscpy(LList.Dir,LDir);
-
+//				DebugMsg(L"LList.Dir",LList.Dir);
+//				DebugMsg(L"pLPPI->FileName",(wchar_t*)pLPPI->FileName);
 				RList.Dir=(wchar_t*)malloc((wcslen(RDir)+1)*sizeof(wchar_t));
 				if (RList.Dir) wcscpy(RList.Dir,RDir);
-//				DebugMsg(L"RPanel.bARC",RList.Dir);
-				if (!Info.GetDirList(pLPPI->FileName,&LList.PPI,&LList.ItemsNumber) ||
-						!Info.GetPluginDirList(0,RPanel.hPanel,pRPPI->FileName,&RList.PPI,&RList.ItemsNumber) )
+//				DebugMsg(L"RList.Dir",RList.Dir);
+//				DebugMsg(L"pRPPI->FileName",(wchar_t*)pRPPI->FileName);
+
+				if (!Info.GetDirList(strLFullDir.get()+GetPosToName(strLFullDir.get()),&LList.PPI,&LList.ItemsNumber) ||
+						!Info.GetPluginDirList(&MainGuid,RPanel.hPanel,pRPPI->FileName,&RList.PPI,&RList.ItemsNumber) )
 				{
 					bBrokenByEsc=true; // То ли юзер прервал, то ли ошибка чтения
 					bEqual=false; // Остановим сравнение
 					bOpenFail=true;
 				}
-//				for (int i=0; bEqual && i<LList.ItemsNumber; i++)
-//				DebugMsg(L"!LPanel.bARC",(wchar_t*)LList.PPI[i].FindData.lpwszFileName,i);
+//					for (int i=0; bEqual && i<LList.ItemsNumber; i++)
+//						DebugMsg(L"FAR",(wchar_t*)LList.PPI[i].FileName,i);
 
-//				for (int i=0; bEqual && i<RList.ItemsNumber; i++)
-//				DebugMsg(L"RPanel.bARC",(wchar_t*)RList.PPI[i].FindData.lpwszFileName,i);
-
+//					for (int i=0; bEqual && i<RList.ItemsNumber; i++)
+//						DebugMsg(L"ARC",(wchar_t*)RList.PPI[i].FileName,i);
 			}
 			else if (LPanel.bARC && !RPanel.bARC)
 			{
 				LList.Dir=(wchar_t*)malloc((wcslen(LDir)+1)*sizeof(wchar_t));
 				if (LList.Dir) wcscpy(LList.Dir,LDir);
+//				DebugMsg(L"LList.Dir",LList.Dir);
+//				DebugMsg(L"pLPPI->FileName",(wchar_t*)pLPPI->FileName);
 
 				RList.Dir=(wchar_t*)malloc((wcslen(RDir)+1)*sizeof(wchar_t));
 				if (RList.Dir) wcscpy(RList.Dir,RDir);
+//				DebugMsg(L"RList.Dir",RList.Dir);
+//				DebugMsg(L"pRPPI->FileName",(wchar_t*)pRPPI->FileName);
 
-				if (!Info.GetPluginDirList(0,LPanel.hPanel,pLPPI->FileName,&LList.PPI,&LList.ItemsNumber) ||
-						!Info.GetDirList(pRPPI->FileName,&RList.PPI,&RList.ItemsNumber) )
+				if (!Info.GetPluginDirList(&MainGuid,LPanel.hPanel,pLPPI->FileName,&LList.PPI,&LList.ItemsNumber) ||
+						!Info.GetDirList(strRFullDir.get()+GetPosToName(strRFullDir.get()),&RList.PPI,&RList.ItemsNumber) )
 				{
 					bBrokenByEsc=true; // То ли юзер прервал, то ли ошибка чтения
 					bEqual=false; // Остановим сравнение
 					bOpenFail=true;
 				}
-//				for (int i=0; bEqual && i<RList.ItemsNumber; i++)
-//				DebugMsg(L"RPanel.bARC",(wchar_t*)RList.PPI[i].FindData.lpwszFileName);
+//					for (int i=0; bEqual && i<LList.ItemsNumber; i++)
+//						DebugMsg(L"ARC",(wchar_t*)LList.PPI[i].FileName,i);
+
+//					for (int i=0; bEqual && i<RList.ItemsNumber; i++)
+//						DebugMsg(L"FAR",(wchar_t*)RList.PPI[i].FileName,i);
+
 			}
 //			DebugMsg(L"Posle Info.GetPluginDirList");
 
@@ -1237,8 +1259,9 @@ bool AdvCmpProc::CheckScanDepth(const wchar_t *FileName, int ScanDepth)
 	int i=0;
 	while (*FileName++)
 		if (*FileName==L'\\') i++;
-	return  i<ScanDepth;
+	return  i<=ScanDepth;
 }
+
 
 /****************************************************************************
  * Построение сортированного списка элементов для быстрого сравнения
@@ -1278,7 +1301,8 @@ bool AdvCmpProc::BuildItemsIndex(bool bLeftPanel,const struct DirList *pList,str
 				// архив + панель || панель + архив (элемент с панели)
 				if ((LPanel.bARC && !RPanel.bARC && !bLeftPanel) || (!LPanel.bARC && RPanel.bARC && bLeftPanel))
 				{
-					string srtFileName(pList->PPI[i].FileName+4);
+//DebugMsg((wchar_t *)pList->PPI[i].FileName);
+					string srtFileName(pList->PPI[i].FileName);
 					string strSubstr;
 					wchar_t *p=pList->Dir+4;
 					while (*p++) // для экранирования спецсимволов в регэкспах
@@ -1289,6 +1313,7 @@ bool AdvCmpProc::BuildItemsIndex(bool bLeftPanel,const struct DirList *pList,str
 					}
 					// вырежем pList->Dir из имени файла, т.к. путь до текущей папки (и сама папка) нам не нужен
 					wcscpy((wchar_t*)pList->PPI[i].FileName,CutSubstr(srtFileName,strSubstr.get())+2);
+//DebugMsg(L"FAR",(wchar_t *)pList->PPI[i].FileName);
 
 					if (Opt.ProcessSubfolders==2 && !CheckScanDepth(pList->PPI[i].FileName, Opt.MaxScanDepth))
 						continue;
@@ -1297,9 +1322,10 @@ bool AdvCmpProc::BuildItemsIndex(bool bLeftPanel,const struct DirList *pList,str
 				// архив + панель || панель + архив (элемент с архива)
 				else if ((LPanel.bARC && !RPanel.bARC && bLeftPanel) || (!LPanel.bARC && RPanel.bARC && !bLeftPanel))
 				{
-					string srtFileName(pList->PPI[i].FileName);
+//					string srtFileName(pList->PPI[i].FileName);
 					// вырежем всё до первого слеша, так как сама папка нам не нужна
-					wcscpy((wchar_t*)pList->PPI[i].FileName,CutSubstr(srtFileName,L"^(.*?)\\\\"));
+//					wcscpy((wchar_t*)pList->PPI[i].FileName,CutSubstr(srtFileName,L"^(.*?)\\\\"));
+//DebugMsg(L"ARC",(wchar_t *)pList->PPI[i].FileName);
 
 					if (Opt.ProcessSubfolders==2 && !CheckScanDepth(pList->PPI[i].FileName, Opt.MaxScanDepth))
 						continue;
@@ -1718,17 +1744,6 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 	return bDifferenceNotFound;
 }
 
-int GetPosToName(wchar_t *FileName)
-{
-	if (FileName[0]==L'\\' && FileName[1]==L'\\' && FileName[2]==L'?')
-	{
-		if (FileName[5]==L':')
-			return 4;
-		else if (FileName[5]==L'N')
-			return 7;
-	}
-	return 0;
-}
 
 /***************************************************************************
  * Изменение/обновление листа файлов в диалоге

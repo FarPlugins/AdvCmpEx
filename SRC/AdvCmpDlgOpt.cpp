@@ -668,7 +668,7 @@ int AdvCmpDlgOpt::ShowOptDialog()
 					DialogItems[i].PtrData=buf;
 				}
 				else
-					DialogItems[i].Selected=item.Number?1:0;
+					DialogItems[i].Selected=(int)item.Number;
 			}
 		}
 		Info.SettingsControl(settings.Handle,SCTL_FREE,0,0);
