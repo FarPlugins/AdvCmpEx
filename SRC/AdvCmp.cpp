@@ -494,9 +494,9 @@ HANDLE WINAPI OpenPanelW(OPENPANEL_OPENFROM OpenFrom,const GUID* Guid,INT_PTR Da
 		if (!bBrokenByEsc)
 		{
 			for (int i=0; i<LList.ItemsNumber; i++)
-				Info.Control(LPanel.hPanel,FCTL_SETSELECTION,i,Opt.Panel?(LList.PPI[i].Flags&PPIF_SELECTED):0);
+				Info.Control(LPanel.hPanel,FCTL_SETSELECTION,i,LList.PPI[i].Flags&PPIF_SELECTED);
 			for (int i=0; i<RList.ItemsNumber; i++)
-				Info.Control(RPanel.hPanel,FCTL_SETSELECTION,i,Opt.Panel?(RList.PPI[i].Flags&PPIF_SELECTED):0);
+				Info.Control(RPanel.hPanel,FCTL_SETSELECTION,i,RList.PPI[i].Flags&PPIF_SELECTED);
 
 			Info.Control(LPanel.hPanel,FCTL_ENDSELECTION,0,0);
 			Info.Control(LPanel.hPanel,FCTL_REDRAWPANEL,0,0);

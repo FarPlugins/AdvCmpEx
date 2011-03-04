@@ -1368,6 +1368,14 @@ bool AdvCmpProc::BuildFileList(const wchar_t *LDir,const PluginPanelItem *pLPPI,
 	if (pLPPI && pRPPI && (pLPPI->FileAttributes&FILE_ATTRIBUTE_DIRECTORY) && (pRPPI->FileAttributes&FILE_ATTRIBUTE_DIRECTORY))
 		return true;
 
+	if (pLPPI && pRPPI && dwFlag==RCIF_DIFFER)
+	{
+		__int64 Delta=(((__int64)pLPPI->LastWriteTime.dwHighDateTime << 32) | pLPPI->LastWriteTime.dwLowDateTime) -
+									(((__int64)pRPPI->LastWriteTime.dwHighDateTime << 32) | pRPPI->LastWriteTime.dwLowDateTime);
+			if (Delta>0) dwFlag=RCIF_LNEW;
+			else if (Delta<0) dwFlag=RCIF_RNEW;
+	}
+
 	File add;
 	add.dwFlags=dwFlag;
 	add.strLDir=LDir;
@@ -1536,7 +1544,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 				{
 					bDifferenceNotFound=false;
 					// узнаем, новый кто?
-					if (Opt.SelectedNew || !Opt.Panel)
+					if (Opt.SelectedNew)
 					{
 						__int64 Delta=(((__int64)LII.pPPI[i]->LastWriteTime.dwHighDateTime << 32) | LII.pPPI[i]->LastWriteTime.dwLowDateTime) -
 													(((__int64)RII.pPPI[j]->LastWriteTime.dwHighDateTime << 32) | RII.pPPI[j]->LastWriteTime.dwLowDateTime);
@@ -1544,12 +1552,10 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 						if (Delta>0)
 						{
 							LII.pPPI[i]->Flags |= PPIF_SELECTED;
-							dwFlag=RCIF_LNEW;
 						}
 						else if (Delta<0)
 						{
 							RII.pPPI[j]->Flags |= PPIF_SELECTED;
-							dwFlag=RCIF_RNEW;
 						}
 						else
 						{
@@ -1944,15 +1950,19 @@ GOTOFILE:
 								(cur->dwAttributes&FILE_ATTRIBUTE_DIRECTORY) ||
 								!(cur->ftLLastWriteTime.dwLowDateTime || cur->ftLLastWriteTime.dwHighDateTime) ||
 								!(cur->ftRLastWriteTime.dwLowDateTime || cur->ftRLastWriteTime.dwHighDateTime) )
-							MessageBeep(MB_OK);
-						else if (pCompareFiles)
 						{
-							string strLFullFileName=cur->strLDir.get();
-							if (strLFullFileName.length()>0 && strLFullFileName[(size_t)(strLFullFileName.length()-1)]!=L'\\') strLFullFileName+=L"\\";
-							strLFullFileName+=cur->strFileName;
-							string strRFullFileName=cur->strRDir.get();
-							if (strRFullFileName.length()>0 && strRFullFileName[(size_t)(strRFullFileName.length()-1)]!=L'\\') strRFullFileName+=L"\\";
-							strRFullFileName+=cur->strFileName;
+							MessageBeep(MB_OK);
+							return true;
+						}
+						string strLFullFileName=cur->strLDir.get();
+						if (strLFullFileName.length()>0 && strLFullFileName[(size_t)(strLFullFileName.length()-1)]!=L'\\') strLFullFileName+=L"\\";
+						strLFullFileName+=cur->strFileName;
+						string strRFullFileName=cur->strRDir.get();
+						if (strRFullFileName.length()>0 && strRFullFileName[(size_t)(strRFullFileName.length()-1)]!=L'\\') strRFullFileName+=L"\\";
+						strRFullFileName+=cur->strFileName;
+
+						if (pCompareFiles)
+						{
 							pCompareFiles(strLFullFileName.get(),strRFullFileName.get(),0);
 						}
 						else
@@ -1964,19 +1974,13 @@ GOTOFILE:
 							wcscat(DiffProgram,L"\\WinMerge\\WinMergeU.exe");
 							if ((hFind=FindFirstFileW(DiffProgram,&wfdFindData)) != INVALID_HANDLE_VALUE)
 							{
-								string strLFullFileName=cur->strLDir.get();
-								if (strLFullFileName.length()>0 && strLFullFileName[(size_t)(strLFullFileName.length()-1)]!=L'\\') strLFullFileName+=L"\\";
-								strLFullFileName+=cur->strFileName;
-								string strRFullFileName=cur->strRDir.get();
-								if (strRFullFileName.length()>0 && strRFullFileName[(size_t)(strRFullFileName.length()-1)]!=L'\\') strRFullFileName+=L"\\";
-								strRFullFileName+=cur->strFileName;
 								FindClose(hFind);
 								STARTUPINFO si;
 								PROCESS_INFORMATION pi;
 								memset(&si, 0, sizeof(si));
 								si.cb = sizeof(si);
 								wchar_t Command[32768];
-								FSF.sprintf(Command, L"\"%s\" -e \"%s\" \"%s\"", DiffProgram,strLFullFileName.get()+4,strRFullFileName.get()+4);
+								FSF.sprintf(Command, L"\"%s\" -e \"%s\" \"%s\"", DiffProgram,strLFullFileName.get()+GetPosToName(strLFullFileName.get()),strRFullFileName.get()+GetPosToName(strRFullFileName.get()));
 								CreateProcess(0,Command,0,0,false,0,0,0,&si,&pi);
 							}
 						}
