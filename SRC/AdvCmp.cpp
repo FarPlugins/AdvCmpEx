@@ -511,7 +511,7 @@ HANDLE WINAPI OpenPanelW(OPENPANEL_OPENFROM OpenFrom,const GUID* Guid,INT_PTR Da
 				const wchar_t *MsgItems[] = { GetMsg(MNoDiffTitle), GetMsg(MNoDiffBody), GetMsg(MOK) };
 				Info.Message(&MainGuid,0,0,MsgItems,sizeof(MsgItems) / sizeof(MsgItems[0]),1);
 			}
-			else if (!bDifferenceNotFound && !Opt.Panel)
+			else if (!bDifferenceNotFound && Opt.Dialog)
 				AdvCmp.ShowCmpDialog(&LList,&RList);
 		}
 	}

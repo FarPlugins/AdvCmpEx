@@ -76,7 +76,7 @@ enum {
 	DlgSOUND,       //32
 	DlgTOTALPROCESS,//33
 
-	DlgSEP2_PANEL,  //34
+	DlgSEP2_DIALOG,  //34
 	DlgOK,          //35
 	DlgUNDERCURSOR, //36
 	DlgCANCEL,      //37
@@ -124,7 +124,7 @@ struct ParamStore
 	{DlgSHOWMSG,     L"ShowMsg",             &Opt.ShowMsg},
 	{DlgSOUND,       L"Sound",               &Opt.Sound},
 	{DlgTOTALPROCESS,L"TotalProcess",        &Opt.TotalProcess},
-	{DlgSEP2_PANEL,  L"Panel",               &Opt.Panel}
+	{DlgSEP2_DIALOG,  L"Dialog",              &Opt.Dialog}
 };
 
 
@@ -283,9 +283,9 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 
 		case DN_DRAWDIALOG:
 			{
-				string sep=GetMsg(MPanel);
-				if (Opt.Panel) sep[(size_t)1]=0x221a;
-				Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, DlgSEP2_PANEL, (INT_PTR)sep.get());
+				string sep=GetMsg(MDialog);
+				if (Opt.Dialog) sep[(size_t)1]=0x221a;
+				Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, DlgSEP2_DIALOG, (INT_PTR)sep.get());
 				return true;
 			}
 
@@ -453,10 +453,10 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 			const INPUT_RECORD* record=(const INPUT_RECORD *)Param2;
 			if (record->EventType==MOUSE_EVENT)
 			{
-				if (Param1==DlgSEP2_PANEL && record->Event.MouseEvent.dwButtonState==FROM_LEFT_1ST_BUTTON_PRESSED)
+				if (Param1==DlgSEP2_DIALOG && record->Event.MouseEvent.dwButtonState==FROM_LEFT_1ST_BUTTON_PRESSED)
 				{
-					if (Opt.Panel) Opt.Panel=0;
-					else Opt.Panel=1;
+					if (Opt.Dialog) Opt.Dialog=0;
+					else Opt.Dialog=1;
 					Info.SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
 					return true;
 				}
@@ -473,8 +473,8 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 					Info.SendDlgMessage(hDlg,DM_CLOSE,DlgUNDERCURSOR,0);
 				else if (Key == KEY_F3)
 				{
-					if (Opt.Panel) Opt.Panel=0;
-					else Opt.Panel=1;
+					if (Opt.Dialog) Opt.Dialog=0;
+					else Opt.Dialog=1;
 					Info.SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
 					return true;
 				}
@@ -643,7 +643,7 @@ int AdvCmpDlgOpt::ShowOptDialog()
 	DialogItems[DlgCACHEIGNORE].X1 = DialogItems[DlgCACHE].X1 + wcslen(DialogItems[DlgCACHE].PtrData) - (wcschr(DialogItems[DlgCACHE].PtrData, L'&')?1:0) + 5;
 
 	// расставим опции в диалоге
-	*StoreOpt[DlgSEP2_PANEL].Option=1;
+	*StoreOpt[DlgSEP2_DIALOG].Option=0;
 
 	FarSettingsCreate settings={sizeof(FarSettingsCreate),MainGuid,INVALID_HANDLE_VALUE};
 	if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,(INT_PTR)&settings))

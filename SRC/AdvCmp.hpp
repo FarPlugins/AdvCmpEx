@@ -110,7 +110,7 @@ extern struct Options {
 			ShowMsg,
 			Sound,
 			TotalProcess,
-			Panel,
+			Dialog,
 
 			ProcessHidden,
 			BufSize;
@@ -162,6 +162,7 @@ struct DirList {
 
 // флаги результата сравнения
 enum ResultCmpItemFlag {
+	RCIF_NONE   = 0,
 	RCIF_EQUAL  = 0x1,      // одинаковые   |=|
 	RCIF_DIFFER = 0x2,      // разные       |?|
 

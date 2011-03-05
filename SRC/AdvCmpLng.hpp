@@ -51,7 +51,7 @@ enum {
 	MShowMsg,
 	MSound,
 	MTotalProcess,
-	MPanel,
+	MDialog,
 	MUnderCursorBotton,
 
 	/**** процесс ****/
