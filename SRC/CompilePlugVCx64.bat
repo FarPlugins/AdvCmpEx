@@ -24,7 +24,7 @@ echo Make %PlugName%.def file...
 @echo EXPORTS                                              >> %PlugName%.def
 @echo   SetStartupInfoW                                    >> %PlugName%.def
 @echo   GetPluginInfoW                                     >> %PlugName%.def
-@echo   OpenPanelW                                         >> %PlugName%.def
+@echo   OpenW                                              >> %PlugName%.def
 @echo   GetGlobalInfoW                                     >> %PlugName%.def
 @echo   ExitFARW                                           >> %PlugName%.def
 

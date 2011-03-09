@@ -303,7 +303,7 @@ void WINAPI GetPluginInfoW(struct PluginInfo *Info)
 /****************************************************************************
  * Основная функция плагина. FAR её вызывает, когда пользователь зовёт плагин
  ****************************************************************************/
-HANDLE WINAPI OpenPanelW(OPENPANEL_OPENFROM OpenFrom,const GUID* Guid,INT_PTR Data)
+HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 {
 	HANDLE hPanel = INVALID_HANDLE_VALUE;
 	struct PanelInfo PInfo; 
