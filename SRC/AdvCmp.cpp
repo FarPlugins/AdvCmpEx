@@ -256,7 +256,7 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 {
 	Info->StructSize=sizeof(GlobalInfo);
 	Info->MinFarVersion=FARMANAGERVERSION;
-	Info->Version=MAKEFARVERSION(3,0,32);
+	Info->Version=MAKEFARVERSION(3,0,0,32);
 	Info->Guid=MainGuid;
 	Info->Title=L"Advanced compare 2";
 	Info->Description=L"Advanced compare 2 plugin for Far Manager v3.0";

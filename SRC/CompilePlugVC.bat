@@ -57,7 +57,7 @@ echo Make %PlugName%.rc file...
 @echo       VALUE "InternalName",     "%PlugName%\0"            >> %PlugName%.rc
 @echo       VALUE "LegalCopyright",   "%legalcopyright%\0"      >> %PlugName%.rc
 @echo       VALUE "OriginalFilename", "%PlugName%.dll\0"        >> %PlugName%.rc
-@echo       VALUE "ProductName",      "FAR Manager\0"           >> %PlugName%.rc
+@echo       VALUE "ProductName",      "Far Manager\0"           >> %PlugName%.rc
 @echo       VALUE "ProductVersion",   "3.0\0"                   >> %PlugName%.rc
 @echo       VALUE "Comments",         "%comments%\0"            >> %PlugName%.rc
 @echo     }                                                     >> %PlugName%.rc
