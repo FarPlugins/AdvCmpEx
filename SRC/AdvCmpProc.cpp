@@ -32,6 +32,98 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma hdrstop
 #include "AdvCmpProc.hpp"
 
+/****************************************************************************
+ * Поиск и вырезание Substr в именах файлов.
+ ****************************************************************************/
+wchar_t *CutSubstr(string &strSrc, wchar_t *Substr)
+{
+	if (!Substr) return strSrc.get();
+	int len=wcslen(Substr);
+	if (!len) return strSrc.get();
+
+	int lenSrc=strSrc.length();
+	const wchar_t *src=strSrc.get();
+	string strBuf;
+	// делаем замену
+	{
+		HANDLE re;
+		int start_offset=0;
+		if (!Info.RegExpControl(0,RECTL_CREATE,0,(INT_PTR)&re)) return false;
+
+		string Search=L"/";
+		if (len>0 && Substr[0]==L'/') 
+			Search+=Substr+1;
+		else Search+=Substr;
+		if (Search.length()>0 && Search[(size_t)(Search.length()-1)]!=L'/')
+			Search+=L"/i";
+		if (Info.RegExpControl(re,RECTL_COMPILE,0,(INT_PTR)Search.get()))
+		{
+			int brackets=Info.RegExpControl(re,RECTL_BRACKETSCOUNT,0,0);
+			if (!brackets) { Info.RegExpControl(re,RECTL_FREE,0,0); return false; }
+			RegExpMatch *match=(RegExpMatch*)malloc(brackets*sizeof(RegExpMatch));
+
+			for (;;)
+			{
+				RegExpSearch search= { src,start_offset,lenSrc,match,brackets,0 };
+
+				if (Info.RegExpControl(re,RECTL_SEARCHEX,0,(INT_PTR)&search))
+				{
+					// копируем ДО паттерна
+					for (int i=start_offset; i<match[0].start; i++)
+						strBuf+=src[i];
+
+					start_offset=match[0].end;
+
+					if (match[0].start==match[0].end || start_offset>=lenSrc)
+						break;
+				}
+				else
+					break;
+			}
+			free(match);
+			Info.RegExpControl(re,RECTL_FREE,0,0);
+		}
+		// копируем всё то что не вошло в паттерн
+		for (int i=start_offset; i<lenSrc; i++)
+			strBuf+=src[i];
+		if (!FSF.Trim(strBuf.get())) return strSrc.get();
+		strSrc=strBuf.get();
+	}
+	return strSrc.get();
+}
+
+/****************************************************************************
+ * Центрирование строки и заполнение символом заполнителем
+ ****************************************************************************/
+void strcentr(wchar_t *Dest, const wchar_t *Src, int len, wchar_t sym)
+{
+	int iLen, iLen2;
+	iLen=wcslen(wcscpy(Dest,Src));
+	if (iLen<len)
+	{
+		iLen2=(len-iLen)/2;
+		wmemmove(Dest+iLen2,Dest,iLen);
+		wmemset(Dest,sym,iLen2);
+		wmemset(Dest+iLen2+iLen,sym,len-iLen2-iLen);
+		Dest[len]=L'\0';
+	}
+}
+
+/****************************************************************************
+ * Возвращает начало файла, без префиксов "\\?\"
+ ****************************************************************************/
+int GetPosToName(wchar_t *FileName)
+{
+	if (FileName[0]==L'\\' && FileName[1]==L'\\' && FileName[2]==L'?')
+	{
+		if (FileName[5]==L':')
+			return 4;
+		else if (FileName[5]==L'N')
+			return 7;
+	}
+	return 0;
+}
+
 
 AdvCmpProc::AdvCmpProc()
 {
@@ -161,65 +253,6 @@ void AdvCmpProc::TrunCopy(wchar_t *Dest, const wchar_t *Src, bool bDir, const wc
 	}
 }
 
-/****************************************************************************
- * Поиск и вырезание Substr в именах файлов.
- ****************************************************************************/
-wchar_t *CutSubstr(string &strSrc, wchar_t *Substr)
-{
-	if (!Substr) return strSrc.get();
-	int len=wcslen(Substr);
-	if (!len) return strSrc.get();
-
-	int lenSrc=strSrc.length();
-	const wchar_t *src=strSrc.get();
-	string strBuf;
-	// делаем замену
-	{
-		HANDLE re;
-		int start_offset=0;
-		if (!Info.RegExpControl(0,RECTL_CREATE,0,(INT_PTR)&re)) return false;
-
-		string Search=L"/";
-		if (len>0 && Substr[0]==L'/') 
-			Search+=Substr+1;
-		else Search+=Substr;
-		if (Search.length()>0 && Search[(size_t)(Search.length()-1)]!=L'/')
-			Search+=L"/i";
-		if (Info.RegExpControl(re,RECTL_COMPILE,0,(INT_PTR)Search.get()))
-		{
-			int brackets=Info.RegExpControl(re,RECTL_BRACKETSCOUNT,0,0);
-			if (!brackets) { Info.RegExpControl(re,RECTL_FREE,0,0); return false; }
-			RegExpMatch *match=(RegExpMatch*)malloc(brackets*sizeof(RegExpMatch));
-
-			for (;;)
-			{
-				RegExpSearch search= { src,start_offset,lenSrc,match,brackets,0 };
-
-				if (Info.RegExpControl(re,RECTL_SEARCHEX,0,(INT_PTR)&search))
-				{
-					// копируем ДО паттерна
-					for (int i=start_offset; i<match[0].start; i++)
-						strBuf+=src[i];
-
-					start_offset=match[0].end;
-
-					if (match[0].start==match[0].end || start_offset>=lenSrc)
-						break;
-				}
-				else
-					break;
-			}
-			free(match);
-			Info.RegExpControl(re,RECTL_FREE,0,0);
-		}
-		// копируем всё то что не вошло в паттерн
-		for (int i=start_offset; i<lenSrc; i++)
-			strBuf+=src[i];
-		if (!FSF.Trim(strBuf.get())) return strSrc.get();
-		strSrc=strBuf.get();
-	}
-	return strSrc.get();
-}
 
 /****************************************************************************
  * Преобразует int в wchar_t поразрядно: из 1234567890 в "1 234 567 890"
@@ -245,24 +278,6 @@ wchar_t* AdvCmpProc::itoaa(__int64 num, wchar_t *buf)
 	*p=*--t;
 
 	return buf;
-}
-
-
-/****************************************************************************
- * Центрирование строки и заполнение символом заполнителем
- ****************************************************************************/
-void AdvCmpProc::strcentr(wchar_t *Dest, const wchar_t *Src, int len, wchar_t sym)
-{
-	int iLen, iLen2;
-	iLen=wcslen(wcscpy(Dest,Src));
-	if (iLen<len)
-	{
-		iLen2=(len-iLen)/2;
-		wmemmove(Dest+iLen2,Dest,iLen);
-		wmemset(Dest,sym,iLen2);
-		wmemset(Dest+iLen2+iLen,sym,len-iLen2-iLen);
-		Dest[len]=L'\0';
-	}
 }
 
 /****************************************************************************
@@ -460,15 +475,6 @@ void AdvCmpProc::FreeDirList(struct DirList *pList)
 	pList->ItemsNumber=0;
 }
 
-
-/****************************************************************************
- * Новая строка? и/или пробельный символ?
- * для нужд Opt.IgnoreWhitespace и Opt.IgnoreNewLines
- ****************************************************************************/
-inline bool IsNewLine(int c) {return (c == '\r' || c == '\n');}
-inline bool myIsSpace(int c) {return (c == ' ' || c == '\t' || c == '\v' || c == '\f');}
-inline bool IsWhiteSpace(int c) {return (c == ' ' || c == '\t' || c == '\v' || c == '\f' || c == '\r' || c == '\n');}
-
 /****************************************************************************
  * Перемещение указателя в файле для нужд Opt.ContentsPercent
  ****************************************************************************/
@@ -568,18 +574,6 @@ bool AdvCmpProc::SetCacheResult(DWORD FullFileName1, DWORD FullFileName2, DWORD6
 		}
 	}
 	return true;
-}
-
-int GetPosToName(wchar_t *FileName)
-{
-	if (FileName[0]==L'\\' && FileName[1]==L'\\' && FileName[2]==L'?')
-	{
-		if (FileName[5]==L':')
-			return 4;
-		else if (FileName[5]==L'N')
-			return 7;
-	}
-	return 0;
 }
 
 /****************************************************************************
@@ -1735,6 +1729,20 @@ bool UpdateFarList(HANDLE hDlg, DList<File> *pFileList, bool bInit=false)
 
 	wchar_t *buf=(wchar_t *)malloc(65536*sizeof(wchar_t));
 
+	// каталог на панели
+	string strLPanelDir, strRPanelDir;
+	{
+		int size=Info.Control(LPanel.hPanel,FCTL_GETPANELDIR,0,0);
+		strLPanelDir.get(size);
+		Info.Control(LPanel.hPanel,FCTL_GETPANELDIR,size,(INT_PTR)strLPanelDir.get());
+		strLPanelDir.updsize();
+
+		size=Info.Control(RPanel.hPanel,FCTL_GETPANELDIR,0,0);
+		strRPanelDir.get(size);
+		Info.Control(RPanel.hPanel,FCTL_GETPANELDIR,size,(INT_PTR)strRPanelDir.get());
+		strRPanelDir.updsize();
+	}
+
 	for (File *cur=pFileList->First(); cur; cur=pFileList->Next(cur))
 	{
 		// добавим элемент-папку. только при первом построении списка!
@@ -1751,13 +1759,13 @@ bool UpdateFarList(HANDLE hDlg, DList<File> *pFileList, bool bInit=false)
 		wchar_t LTime[18]={0}, RTime[18]={0};
 		SYSTEMTIME ModificTime;
 		FILETIME local;
-		if (cur->ftLLastWriteTime.dwLowDateTime || cur->ftLLastWriteTime.dwHighDateTime)
+		if (cur->ftLLastWriteTime.dwLowDateTime || cur->ftLLastWriteTime.dwHighDateTime)  // есть элемент слева
 		{
 			FileTimeToLocalFileTime(&(cur->ftLLastWriteTime), &local);
 			FileTimeToSystemTime(&local, &ModificTime);
 			FSF.sprintf(LTime, L"%02d.%02d.%02d %02d:%02d:%02d",ModificTime.wDay,ModificTime.wMonth,ModificTime.wYear%100,ModificTime.wHour,ModificTime.wMinute,ModificTime.wSecond);
 		}
-		if (cur->ftRLastWriteTime.dwLowDateTime || cur->ftRLastWriteTime.dwHighDateTime)
+		if (cur->ftRLastWriteTime.dwLowDateTime || cur->ftRLastWriteTime.dwHighDateTime)  // есть элемент справа
 		{
 			FileTimeToLocalFileTime(&(cur->ftRLastWriteTime), &local);
 			FileTimeToSystemTime(&local, &ModificTime);
@@ -1765,10 +1773,17 @@ bool UpdateFarList(HANDLE hDlg, DList<File> *pFileList, bool bInit=false)
 		}
 
 		wchar_t LSize[65]={0}, RSize[65]={0};
+		const int nSIZE=32; // размер ячейки для FSF.sprintf(%*.*)
+
 		if (!(cur->dwAttributes&FILE_ATTRIBUTE_DIRECTORY))
 		{
 			if (LTime[0]) FSF.itoa64(cur->nLFileSize,LSize,10);
 			if (RTime[0]) FSF.itoa64(cur->nRFileSize,RSize,10);
+		}
+		else
+		{
+			if (LTime[0] || !cur->dwFlags) strcentr(LSize,GetMsg(MFolder),nSIZE,L' ');
+			if (RTime[0] || !cur->dwFlags) strcentr(RSize,GetMsg(MFolder),nSIZE,L' ');
 		}
 
 		wchar_t Mark;
@@ -1788,28 +1803,16 @@ bool UpdateFarList(HANDLE hDlg, DList<File> *pFileList, bool bInit=false)
 
 		if (cur->dwAttributes&FILE_ATTRIBUTE_DIRECTORY)
 		{
-			int len=WinInfo.Con.Right/2-3;
-			string strTmp1(GetMsg(MFolder));
+			string strDir;
 			if (LTime[0] || !cur->dwFlags)
-			{
-				strTmp1=cur->strLDir.get()+GetPosToName(cur->strLDir.get());
-				if (strTmp1.length()>0 && strTmp1[(size_t)(strTmp1.length()-1)]!=L'\\') strTmp1+=L"\\";
-				strTmp1+=cur->strFileName;
-				if (strTmp1.length()>0 && strTmp1[(size_t)(strTmp1.length()-1)]!=L'\\') strTmp1+=L"\\";
-				FSF.TruncPathStr(strTmp1.get(),len);
-				strTmp1.updsize();
-			}
-			string strTmp2(GetMsg(MFolder));
-			if (RTime[0] || !cur->dwFlags)
-			{
-				strTmp2=cur->strRDir.get()+GetPosToName(cur->strRDir.get());
-				if (strTmp2.length()>0 && strTmp2[(size_t)(strTmp2.length()-1)]!=L'\\') strTmp2+=L"\\";
-				strTmp2+=cur->strFileName;
-				if (strTmp2.length()>0 && strTmp2[(size_t)(strTmp2.length()-1)]!=L'\\') strTmp2+=L"\\";
-				FSF.TruncPathStr(strTmp2.get(),len);
-				strTmp2.updsize();
-			}
-			FSF.sprintf(buf, L"%-*.*s  %-*.*s",len,len,strTmp1.get(),len,len,strTmp2.get());
+				strDir=cur->strLDir.get()+(GetPosToName(cur->strLDir.get())+strLPanelDir.length());
+			if (RTime[0])
+				strDir=cur->strRDir.get()+(GetPosToName(cur->strRDir.get())+strRPanelDir.length());
+			strDir+=L"\\";
+			strDir+=cur->strFileName;
+			if (strDir.length()>0 && strDir[(size_t)(strDir.length()-1)]!=L'\\') strDir+=L"\\";
+
+			FSF.sprintf(buf, L"%-*.*s%c%*.*s%c%c%c%s",nSIZE,nSIZE,LSize,0x2551,nSIZE,nSIZE,RSize,0x2551,Mark,0x2502,strDir.get());
 		}
 		else
 			FSF.sprintf(buf, L"%*.*s%c%*.*s%c%*.*s%c%*.*s%c%c%c%s",14,14,LSize,0x2502,17,17,LTime,0x2551,17,17,RTime,0x2502,14,14,RSize,0x2551,Mark,0x2502,cur->strFileName.get());

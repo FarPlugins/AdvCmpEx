@@ -484,15 +484,15 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 	{
 		DWORD dwTicks=GetTickCount();
 
-		Info.Control(LPanel.hPanel,FCTL_BEGINSELECTION,0,0);
-		Info.Control(RPanel.hPanel,FCTL_BEGINSELECTION,0,0);
-
 		class AdvCmpProc AdvCmp;
 		bool bDifferenceNotFound=AdvCmp.CompareDirs(&LList,&RList,true,0);
 
 		// Отмечаем файлы и перерисовываем панели. Если нужно показываем сообщение...
 		if (!bBrokenByEsc)
 		{
+			Info.Control(LPanel.hPanel,FCTL_BEGINSELECTION,0,0);
+			Info.Control(RPanel.hPanel,FCTL_BEGINSELECTION,0,0);
+
 			for (int i=0; i<LList.ItemsNumber; i++)
 				Info.Control(LPanel.hPanel,FCTL_SETSELECTION,i,LList.PPI[i].Flags&PPIF_SELECTED);
 			for (int i=0; i<RList.ItemsNumber; i++)

@@ -76,7 +76,7 @@ enum {
 	DlgSOUND,       //32
 	DlgTOTALPROCESS,//33
 
-	DlgSEP2_DIALOG,  //34
+	DlgSEP2_DIALOG, //34
 	DlgOK,          //35
 	DlgUNDERCURSOR, //36
 	DlgCANCEL,      //37
@@ -124,7 +124,7 @@ struct ParamStore
 	{DlgSHOWMSG,     L"ShowMsg",             &Opt.ShowMsg},
 	{DlgSOUND,       L"Sound",               &Opt.Sound},
 	{DlgTOTALPROCESS,L"TotalProcess",        &Opt.TotalProcess},
-	{DlgSEP2_DIALOG,  L"Dialog",              &Opt.Dialog}
+	{DlgSEP2_DIALOG, L"Dialog",              &Opt.Dialog}
 };
 
 
