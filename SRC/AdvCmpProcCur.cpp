@@ -352,12 +352,12 @@ int AdvCmpProcCur::ShowCmpCurDialog(const PluginPanelItem *pLPPI,const PluginPan
 	DialogItems[1].Type=DI_DOUBLEBOX;
 	DialogItems[1].X1=0; DialogItems[1].X2=WinInfo.Con.Right/2;
 	DialogItems[1].Y1=0; DialogItems[1].Y2=WinInfo.Con.Bottom-WinInfo.Con.Top;
-	DialogItems[1].PtrData=pLPPI->FileName;
+	DialogItems[1].Data=pLPPI->FileName;
 
 	DialogItems[2].Type=DI_DOUBLEBOX;
 	DialogItems[2].X1=WinInfo.Con.Right/2+1; DialogItems[2].X2=WinInfo.Con.Right;
 	DialogItems[2].Y1=0; DialogItems[2].Y2=WinInfo.Con.Bottom-WinInfo.Con.Top;
-	DialogItems[2].PtrData=pRPPI->FileName;
+	DialogItems[2].Data=pRPPI->FileName;
 // инфо
 	DialogItems[3].Type=DI_TEXT;
 	DialogItems[3].X1=1; DialogItems[3].X2=WinInfo.Con.Right/2-1;
@@ -427,19 +427,19 @@ int AdvCmpProcCur::ShowCmpCurDialog(const PluginPanelItem *pLPPI,const PluginPan
 
 	FSF.itoa64(pLPPI->FileSize,Buf1,10);
 	FSF.sprintf(strBuf1.get(), L"%*.*s",DialogItems[5].X2,DialogItems[5].X2,Buf1);
-	DialogItems[5].PtrData=strBuf1.get();
+	DialogItems[5].Data=strBuf1.get();
 
 	FSF.itoa64(pRPPI->FileSize,Buf1,10);
-	DialogItems[6].PtrData=Buf1;
+	DialogItems[6].Data=Buf1;
 
 	FSF.sprintf(Buf2, L"%-*.*s  %02d.%02d.%04d  %02d:%02d:%02d", 
 							10,10,LAttributes,LModificTime.wDay,LModificTime.wMonth,LModificTime.wYear,LModificTime.wHour,LModificTime.wMinute,LModificTime.wSecond);
 	FSF.sprintf(strBuf3.get(), L"%*.*s",DialogItems[7].X2,DialogItems[7].X2,Buf2);
-	DialogItems[7].PtrData=strBuf3.get();
+	DialogItems[7].Data=strBuf3.get();
 
 	FSF.sprintf(Buf2, L"%02d:%02d:%02d  %02d.%02d.%04d  %-*.*s", 
 							RModificTime.wHour,RModificTime.wMinute,RModificTime.wSecond,RModificTime.wDay,RModificTime.wMonth,RModificTime.wYear,10,10,RAttributes);
-	DialogItems[8].PtrData=Buf2;
+	DialogItems[8].Data=Buf2;
 
 	int color=Info.AdvControl(&MainGuid,ACTL_GETCOLOR,(void*)COL_PANELTEXT);
 	color=color&0xF0;

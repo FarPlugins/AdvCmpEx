@@ -2014,7 +2014,7 @@ int AdvCmpProc::ShowCmpDialog(const struct DirList *pLList,const struct DirList 
 	if (buf)
 	{
 		FSF.sprintf(buf, L"%s %s",buf1,buf2);
-		DialogItems[0].PtrData=buf;
+		DialogItems[0].Data=buf;
 	}
 
 	HANDLE hDlg=Info.DialogInit(&MainGuid,&CmpDlgGuid,0,0,WinInfo.Con.Right,WinInfo.Con.Bottom-WinInfo.Con.Top,L"Contents",DialogItems,

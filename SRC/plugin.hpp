@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 1906
+  Plugin API for Far Manager 3.0 build 1955
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 1906
+#define FARMANAGERVERSION_BUILD 1955
 
 #ifndef RC_INVOKED
 
@@ -70,6 +70,16 @@ struct FarColor
 	void* Reserved;
 };
 
+typedef unsigned __int64 COLORDIALOGFLAGS;
+static const COLORDIALOGFLAGS
+    CDF_NONE = 0;
+
+typedef BOOL (WINAPI *FARAPICOLORDIALOG)(
+    const GUID* PluginId,
+    COLORDIALOGFLAGS Flags,
+    struct FarColor *Color
+);
+
 typedef unsigned __int64 FARMESSAGEFLAGS;
 static const FARMESSAGEFLAGS
 	FMSG_NONE                = 0,
@@ -90,7 +100,7 @@ typedef int (WINAPI *FARAPIMESSAGE)(
     FARMESSAGEFLAGS Flags,
     const wchar_t *HelpTopic,
     const wchar_t * const *Items,
-    int ItemsNumber,
+    size_t ItemsNumber,
     int ButtonsNumber
 );
 
@@ -397,7 +407,7 @@ struct FarListItemData
 
 struct FarList
 {
-	int ItemsNumber;
+	size_t ItemsNumber;
 	struct FarListItem *Items;
 };
 
@@ -435,10 +445,9 @@ struct FarDialogItem
 	const wchar_t *History;
 	const wchar_t *Mask;
 	FARDIALOGITEMFLAGS Flags;
-	LONG_PTR UserParam;
-
-	const wchar_t *PtrData;
-	size_t MaxLen; // terminate 0 not included (if == 0 string size is unlimited)
+	const wchar_t *Data;
+	size_t MaxLength; // terminate 0 not included (if == 0 string size is unlimited)
+	LONG_PTR UserData;
 };
 
 struct FarDialogItemData
@@ -598,7 +607,7 @@ typedef int (WINAPI *FARAPIMENU)(
     const struct FarKey *BreakKeys,
     int                *BreakCode,
     const struct FarMenuItem *Item,
-    int                 ItemsNumber
+    size_t              ItemsNumber
 );
 
 
@@ -625,7 +634,7 @@ struct PluginPanelItem
 	const wchar_t *Description;
 	const wchar_t *Owner;
 	const wchar_t * const *CustomColumnData;
-	int           CustomColumnNumber;
+	size_t           CustomColumnNumber;
 	DWORD_PTR     UserData;
 	DWORD         CRC32;
 	DWORD_PTR     Reserved[2];
@@ -1713,7 +1722,7 @@ typedef int (WINAPIV *FARSTDSSCANF)(const wchar_t *Buffer, const wchar_t *Format
 typedef void (WINAPI *FARSTDQSORT)(void *base, size_t nelem, size_t width, int (__cdecl *fcmp)(const void *, const void *));
 typedef void (WINAPI *FARSTDQSORTEX)(void *base, size_t nelem, size_t width, int (__cdecl *fcmp)(const void *, const void *,void *userparam),void *userparam);
 typedef void   *(WINAPI *FARSTDBSEARCH)(const void *key, const void *base, size_t nelem, size_t width, int (__cdecl *fcmp)(const void *, const void *));
-typedef int (WINAPI *FARSTDGETFILEOWNER)(const wchar_t *Computer,const wchar_t *Name,wchar_t *Owner,int Size);
+typedef size_t (WINAPI *FARSTDGETFILEOWNER)(const wchar_t *Computer,const wchar_t *Name,wchar_t *Owner,size_t Size);
 typedef int (WINAPI *FARSTDGETNUMBEROFLINKS)(const wchar_t *Name);
 typedef int (WINAPI *FARSTDATOI)(const wchar_t *s);
 typedef __int64(WINAPI *FARSTDATOI64)(const wchar_t *s);
@@ -1726,7 +1735,6 @@ typedef wchar_t   *(WINAPI *FARSTDTRUNCSTR)(wchar_t *Str,int MaxLength);
 typedef wchar_t   *(WINAPI *FARSTDTRUNCPATHSTR)(wchar_t *Str,int MaxLength);
 typedef wchar_t   *(WINAPI *FARSTDQUOTESPACEONLY)(wchar_t *Str);
 typedef const wchar_t*(WINAPI *FARSTDPOINTTONAME)(const wchar_t *Path);
-typedef int (WINAPI *FARSTDGETPATHROOT)(const wchar_t *Path,wchar_t *Root, int DestSize);
 typedef BOOL (WINAPI *FARSTDADDENDSLASH)(wchar_t *Path);
 typedef int (WINAPI *FARSTDCOPYTOCLIPBOARD)(const wchar_t *Data);
 typedef wchar_t *(WINAPI *FARSTDPASTEFROMCLIPBOARD)(void);
@@ -1752,7 +1760,7 @@ static const PROCESSNAME_FLAGS
 	PN_GENERATENAME = 0x0000000000020000ULL,
 	PN_SKIPPATH     = 0x0000000001000000ULL;
 
-typedef int (WINAPI *FARSTDPROCESSNAME)(const wchar_t *param1, wchar_t *param2, DWORD size, PROCESSNAME_FLAGS flags);
+typedef size_t (WINAPI *FARSTDPROCESSNAME)(const wchar_t *param1, wchar_t *param2, size_t size, PROCESSNAME_FLAGS flags);
 
 typedef void (WINAPI *FARSTDUNQUOTE)(wchar_t *Str);
 
@@ -1764,7 +1772,7 @@ static const XLAT_FLAGS
 	XLAT_CONVERTALLCMDLINE = 0x0000000000010000ULL;
 
 
-typedef size_t (WINAPI *FARSTDKEYTOKEYNAME)(int Key,wchar_t *KeyText,size_t Size);
+typedef size_t (WINAPI *FARSTDKEYTOKEYNAME)(int Key, wchar_t *KeyText, size_t Size);
 
 typedef wchar_t*(WINAPI *FARSTDXLAT)(wchar_t *Line,int StartPos,int EndPos,XLAT_FLAGS Flags);
 
@@ -1783,8 +1791,9 @@ static const FRSMODE
 	FRS_SCANSYMLINK          = 0x0000000000000004ULL;
 
 typedef void (WINAPI *FARSTDRECURSIVESEARCH)(const wchar_t *InitDir,const wchar_t *Mask,FRSUSERFUNC Func,FRSMODE Flags,void *Param);
-typedef int (WINAPI *FARSTDMKTEMP)(wchar_t *Dest, DWORD size, const wchar_t *Prefix);
+typedef size_t (WINAPI *FARSTDMKTEMP)(wchar_t *Dest, size_t DestSize, const wchar_t *Prefix);
 typedef void (WINAPI *FARSTDDELETEBUFFER)(void *Buffer);
+typedef size_t (WINAPI *FARSTDGETPATHROOT)(const wchar_t *Path,wchar_t *Root, size_t DestSize);
 
 enum LINK_TYPE
 {
@@ -1802,8 +1811,8 @@ static const MKLINK_FLAGS
 	MLF_SHOWERRMSG       = 0x0000000000010000ULL,
 	MLF_DONOTUPDATEPANEL = 0x0000000000020000ULL;
 
-typedef int (WINAPI *FARSTDMKLINK)(const wchar_t *Src,const wchar_t *Dest,enum LINK_TYPE Type, MKLINK_FLAGS Flags);
-typedef int (WINAPI *FARGETREPARSEPOINTINFO)(const wchar_t *Src, wchar_t *Dest,int DestSize);
+typedef BOOL (WINAPI *FARSTDMKLINK)(const wchar_t *Src,const wchar_t *Dest,enum LINK_TYPE Type, MKLINK_FLAGS Flags);
+typedef size_t (WINAPI *FARGETREPARSEPOINTINFO)(const wchar_t *Src, wchar_t *Dest, size_t DestSize);
 
 enum CONVERTPATHMODES
 {
@@ -1812,9 +1821,9 @@ enum CONVERTPATHMODES
 	CPM_NATIVE,
 };
 
-typedef int (WINAPI *FARCONVERTPATH)(enum CONVERTPATHMODES Mode, const wchar_t *Src, wchar_t *Dest, int DestSize);
+typedef size_t (WINAPI *FARCONVERTPATH)(enum CONVERTPATHMODES Mode, const wchar_t *Src, wchar_t *Dest, size_t DestSize);
 
-typedef DWORD (WINAPI *FARGETCURRENTDIRECTORY)(DWORD Size,wchar_t* Buffer);
+typedef size_t (WINAPI *FARGETCURRENTDIRECTORY)(size_t Size, wchar_t* Buffer);
 
 typedef struct FarStandardFunctions
 {
@@ -1903,6 +1912,7 @@ struct PluginStartupInfo
 	FARAPISHOWHELP         ShowHelp;
 	FARAPIADVCONTROL       AdvControl;
 	FARAPIINPUTBOX         InputBox;
+	FARAPICOLORDIALOG      ColorDialog;
 	FARAPIDIALOGINIT       DialogInit;
 	FARAPIDIALOGRUN        DialogRun;
 	FARAPIDIALOGFREE       DialogFree;
@@ -1946,10 +1956,10 @@ enum VERSION_STAGE
 
 struct VersionInfo
 {
-	int Major;
-	int Minor;
-	int Revision;
-	int Build;
+	DWORD Major;
+	DWORD Minor;
+	DWORD Revision;
+	DWORD Build;
 	enum VERSION_STAGE Stage;
 };
 
@@ -2044,7 +2054,7 @@ struct KeyBarLabel
 
 struct KeyBarTitles
 {
-	int CountLabels;
+	size_t CountLabels;
 	struct KeyBarLabel *Labels;
 };
 
@@ -2070,11 +2080,11 @@ struct OpenPanelInfo
 	const wchar_t               *Format;
 	const wchar_t               *PanelTitle;
 	const struct InfoPanelLine  *InfoLines;
-	int                          InfoLinesNumber;
+	size_t                       InfoLinesNumber;
 	const wchar_t * const       *DescrFiles;
-	int                          DescrFilesNumber;
+	size_t                       DescrFilesNumber;
 	const struct PanelMode      *PanelModesArray;
-	int                          PanelModesNumber;
+	size_t                       PanelModesNumber;
 	int                          StartPanelMode;
 	enum OPENPANELINFO_SORTMODES StartSortMode;
 	int                          StartSortOrder;
@@ -2150,7 +2160,7 @@ struct SetFindListInfo
 	size_t StructSize;
 	HANDLE hPanel;
 	const struct PluginPanelItem *PanelItem;
-	int ItemsNumber;
+	size_t ItemsNumber;
 };
 
 struct PutFilesInfo
@@ -2158,7 +2168,7 @@ struct PutFilesInfo
 	size_t StructSize;
 	HANDLE hPanel;
 	struct PluginPanelItem *PanelItem;
-	int ItemsNumber;
+	size_t ItemsNumber;
 	int Move;
 	const wchar_t *SrcPath;
 	OPERATION_MODES OpMode;
@@ -2169,7 +2179,7 @@ struct ProcessHostFileInfo
 	size_t StructSize;
 	HANDLE hPanel;
 	struct PluginPanelItem *PanelItem;
-	int ItemsNumber;
+	size_t ItemsNumber;
 	OPERATION_MODES OpMode;
 };
 
