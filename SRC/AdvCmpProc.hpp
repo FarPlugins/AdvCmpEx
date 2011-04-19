@@ -56,7 +56,6 @@ class AdvCmpProc
 		bool CheckForEsc(void);
 		bool GetFarTitle(string &strTitle);
 		void TrunCopy(wchar_t *Dest, const wchar_t *Src, bool bDir, const wchar_t *Msg);
-		wchar_t *itoaa(__int64 num, wchar_t *buf);
 		void ProgressLine(wchar_t *Dest, unsigned __int64 nCurrent, unsigned __int64 nTotal);
 		void ShowMessage(const wchar_t *Dir1, const wchar_t *Name1, const wchar_t *Dir2, const wchar_t *Name2, bool bRedraw);
 

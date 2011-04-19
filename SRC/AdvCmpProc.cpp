@@ -124,6 +124,32 @@ int GetPosToName(wchar_t *FileName)
 	return 0;
 }
 
+/****************************************************************************
+ * Преобразует int в wchar_t поразрядно: из 1234567890 в "1 234 567 890"
+ ****************************************************************************/
+wchar_t* itoaa(__int64 num, wchar_t *buf)
+{
+	wchar_t tmp[100];
+	FSF.itoa64(num,tmp,10);
+	int digits_count=0;
+	wchar_t *t=tmp;
+	while (*t++)
+		digits_count++;
+	wchar_t *p=buf+digits_count+(digits_count-1) / 3;
+	digits_count=0;
+	*p--=L'\0';
+	t--;      //заметь, требуется дополнительное смещение!
+	while (p!=buf)
+	{
+		*p--=*--t;
+		if ((++digits_count) % 3 == 0)
+			*p-- = L' ';
+	}
+	*p=*--t;
+
+	return buf;
+}
+
 
 AdvCmpProc::AdvCmpProc()
 {
@@ -253,32 +279,6 @@ void AdvCmpProc::TrunCopy(wchar_t *Dest, const wchar_t *Src, bool bDir, const wc
 	}
 }
 
-
-/****************************************************************************
- * Преобразует int в wchar_t поразрядно: из 1234567890 в "1 234 567 890"
- ****************************************************************************/
-wchar_t* AdvCmpProc::itoaa(__int64 num, wchar_t *buf)
-{
-	wchar_t tmp[100];
-	FSF.itoa64(num,tmp,10);
-	int digits_count=0;
-	wchar_t *t=tmp;
-	while (*t++)
-		digits_count++;
-	wchar_t *p=buf+digits_count+(digits_count-1) / 3;
-	digits_count=0;
-	*p--=L'\0';
-	t--;      //заметь, требуется дополнительное смещение!
-	while (p!=buf)
-	{
-		*p--=*--t;
-		if ((++digits_count) % 3 == 0)
-			*p-- = L' ';
-	}
-	*p=*--t;
-
-	return buf;
-}
 
 /****************************************************************************
  * Рисует строку-прогресс
@@ -419,7 +419,7 @@ int AdvCmpProc::GetDirList(const wchar_t *Dir, int ScanDepth, bool OnlyInfo, str
 			if (!Opt.ProcessHidden && (wfdFindData.dwFileAttributes&FILE_ATTRIBUTE_HIDDEN))
 				continue;
 			if ((wfdFindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) &&
-						((wfdFindData.cFileName[0]==L'.' && !wfdFindData.cFileName[1]) || (wfdFindData.cFileName[1]==L'.' && !wfdFindData.cFileName[2])))
+						((wfdFindData.cFileName[0]==L'.' && !wfdFindData.cFileName[1]) || (wfdFindData.cFileName[0]==L'.' && wfdFindData.cFileName[1]==L'.' && !wfdFindData.cFileName[2])))
 				continue;
 			if (OnlyInfo && (wfdFindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY))
 			{
@@ -1250,7 +1250,7 @@ bool AdvCmpProc::BuildItemsIndex(bool bLeftPanel,const struct DirList *pList,str
 		{
 			if ( (pList->PPI[i].FileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
 					 ((pList->PPI[i].FileName[0]==L'.' && !pList->PPI[i].FileName[1]) || 
-					 (pList->PPI[i].FileName[1]==L'.' && !pList->PPI[i].FileName[2]))
+					 (pList->PPI[i].FileName[0]==L'.' && pList->PPI[i].FileName[1]==L'.' && !pList->PPI[i].FileName[2]))
 					)
 				continue;
 			if ( (bLeftPanel?LPanel.hFilter:RPanel.hFilter)!=INVALID_HANDLE_VALUE &&
@@ -1777,8 +1777,8 @@ bool UpdateFarList(HANDLE hDlg, DList<File> *pFileList, bool bInit=false)
 
 		if (!(cur->dwAttributes&FILE_ATTRIBUTE_DIRECTORY))
 		{
-			if (LTime[0]) FSF.itoa64(cur->nLFileSize,LSize,10);
-			if (RTime[0]) FSF.itoa64(cur->nRFileSize,RSize,10);
+			if (LTime[0]) cur->nLFileSize>99999999999?FSF.itoa64(cur->nLFileSize,LSize,10):itoaa(cur->nLFileSize,LSize);
+			if (RTime[0]) cur->nRFileSize>99999999999?FSF.itoa64(cur->nRFileSize,RSize,10):itoaa(cur->nRFileSize,RSize);
 		}
 		else
 		{
@@ -1812,7 +1812,7 @@ bool UpdateFarList(HANDLE hDlg, DList<File> *pFileList, bool bInit=false)
 			strDir+=cur->strFileName;
 			if (strDir.length()>0 && strDir[(size_t)(strDir.length()-1)]!=L'\\') strDir+=L"\\";
 
-			FSF.sprintf(buf, L"%-*.*s%c%*.*s%c%c%c%s",nSIZE,nSIZE,LSize,0x2551,nSIZE,nSIZE,RSize,0x2551,Mark,0x2502,strDir.get());
+			FSF.sprintf(buf, L"%*.*s%c%*.*s%c%c%c%s",nSIZE,nSIZE,LSize,0x2551,nSIZE,nSIZE,RSize,0x2551,Mark,0x2502,strDir.get());
 		}
 		else
 			FSF.sprintf(buf, L"%*.*s%c%*.*s%c%*.*s%c%*.*s%c%c%c%s",14,14,LSize,0x2502,17,17,LTime,0x2551,17,17,RTime,0x2502,14,14,RSize,0x2551,Mark,0x2502,cur->strFileName.get());
@@ -1957,6 +1957,93 @@ GOTOFILE:
 								CreateProcess(0,Command,0,0,false,0,0,0,&si,&pi);
 							}
 						}
+					}
+					return true;
+				}
+				else if (Key==(KEY_CTRL|KEY_PGUP) || Key==(KEY_RCTRL|KEY_PGUP))
+				{
+//GOTOFILE:
+					int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
+					File *cur=NULL; unsigned index;
+					for (cur=pFileList->First(), index=0; cur && index<Pos; cur=pFileList->Next(cur), index++)
+						;
+					if (cur)
+					{
+						if ((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN))
+						{
+							MessageBeep(MB_OK);
+							return true;
+						}
+
+						// каталог на панели
+						string strLPanelDir, strRPanelDir;
+						{
+							int size=Info.Control(LPanel.hPanel,FCTL_GETPANELDIR,0,0);
+							strLPanelDir.get(size);
+							Info.Control(LPanel.hPanel,FCTL_GETPANELDIR,size,(INT_PTR)strLPanelDir.get());
+							strLPanelDir.updsize();
+
+							size=Info.Control(RPanel.hPanel,FCTL_GETPANELDIR,0,0);
+							strRPanelDir.get(size);
+							Info.Control(RPanel.hPanel,FCTL_GETPANELDIR,size,(INT_PTR)strRPanelDir.get());
+							strRPanelDir.updsize();
+						}
+
+						PanelRedrawInfo LRInfo={0,0}, RRInfo={0,0};
+
+						bool bSetLDir=false;
+						if (FSF.LStricmp(strLPanelDir.get(),cur->strLDir.get()+GetPosToName(cur->strLDir.get())))
+							bSetLDir=Info.Control(LPanel.hPanel,FCTL_SETPANELDIR,0,(INT_PTR)(cur->strLDir.get()+GetPosToName(cur->strLDir.get())));
+						{
+							PanelInfo PInfo;
+							PInfo.StructSize=sizeof(PanelInfo);
+							Info.Control(LPanel.hPanel,FCTL_GETPANELINFO,0,(INT_PTR)&PInfo);
+							for (int i=0; i<PInfo.ItemsNumber && cur->strFileName.length(); i++)
+							{
+								PluginPanelItem *PPI=(PluginPanelItem*)malloc(Info.Control(LPanel.hPanel,FCTL_GETPANELITEM,i,0));
+								if (PPI)
+								{
+									Info.Control(LPanel.hPanel,FCTL_GETPANELITEM,i,(INT_PTR)PPI);
+									if (!FSF.LStricmp(cur->strFileName.get(), PPI->FileName))
+									{
+										LRInfo.CurrentItem=i;
+										free(PPI);
+										break;
+									}
+									else
+										free(PPI);
+								}
+							}
+						}
+
+						bool bSetRDir=false;
+						if (FSF.LStricmp(strRPanelDir.get(),cur->strRDir.get()+GetPosToName(cur->strRDir.get())))
+							bSetRDir=Info.Control(RPanel.hPanel,FCTL_SETPANELDIR,0,(INT_PTR)(cur->strRDir.get()+GetPosToName(cur->strRDir.get())));
+						{
+							PanelInfo PInfo;
+							PInfo.StructSize=sizeof(PanelInfo);
+							Info.Control(RPanel.hPanel,FCTL_GETPANELINFO,0,(INT_PTR)&PInfo);
+							for (int i=0; i<PInfo.ItemsNumber && cur->strFileName.length(); i++)
+							{
+								PluginPanelItem *PPI=(PluginPanelItem*)malloc(Info.Control(RPanel.hPanel,FCTL_GETPANELITEM,i,0));
+								if (PPI)
+								{
+									Info.Control(RPanel.hPanel,FCTL_GETPANELITEM,i,(INT_PTR)PPI);
+									if (!FSF.LStricmp(cur->strFileName.get(), PPI->FileName))
+									{
+										RRInfo.CurrentItem=i;
+										free(PPI);
+										break;
+									}
+									else
+										free(PPI);
+								}
+							}
+						}
+
+						Info.Control(LPanel.hPanel,FCTL_REDRAWPANEL,0,(INT_PTR)&LRInfo);
+						Info.Control(RPanel.hPanel,FCTL_REDRAWPANEL,0,(INT_PTR)&RRInfo);
+						Info.SendDlgMessage(hDlg,DM_CLOSE,0,0);
 					}
 					return true;
 				}
