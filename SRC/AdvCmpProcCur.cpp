@@ -205,22 +205,22 @@ void AdvCmpProcCur::UpdateInfoText(HANDLE hDlg, PicData *data, bool left)
 	}
 	else
 		FSF.sprintf(str,L"%d x %d  %d/%d",data->pic_info->Width,data->pic_info->Height,data->Page,data->pic_info->NumberOfImages);
-	Info.SendDlgMessage(hDlg,DM_SETTEXTPTR,left?3:4,(INT_PTR)(left?str2:str));
+	Info.SendDlgMessage(hDlg,DM_SETTEXTPTR,left?3:4,(left?str2:str));
 }
 
-INT_PTR WINAPI AdvCmpProcCur::ShowCmpCurDialogProcThunk(HANDLE hDlg, int Msg, int Param1, INT_PTR Param2)
+INT_PTR WINAPI AdvCmpProcCur::ShowCmpCurDialogProcThunk(HANDLE hDlg, int Msg, int Param1, void *Param2)
 {
 	AdvCmpProcCur* Class=(AdvCmpProcCur*)Info.SendDlgMessage(hDlg,DM_GETDLGDATA,0,0);
 	return Class->ShowCmpCurDialogProc(hDlg,Msg,Param1,Param2);
 }
 
-INT_PTR WINAPI AdvCmpProcCur::ShowCmpCurDialogProc(HANDLE hDlg,int Msg,int Param1,INT_PTR Param2)
+INT_PTR WINAPI AdvCmpProcCur::ShowCmpCurDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 {
 	switch(Msg)
 	{
 		case DN_CTLCOLORDLGITEM:
 			if (Param1!=0)
-				return (Info.AdvControl(&MainGuid,ACTL_GETCOLOR,(void*)COL_PANELTEXT)<<16)|(Info.AdvControl(&MainGuid,ACTL_GETCOLOR,(void*)COL_PANELTEXT)<<8)|(Info.AdvControl(&MainGuid,ACTL_GETCOLOR,(void*)COL_PANELSELECTEDTITLE));
+				return (Info.AdvControl(&MainGuid,ACTL_GETCOLOR,COL_PANELTEXT,0)<<16)|(Info.AdvControl(&MainGuid,ACTL_GETCOLOR,COL_PANELTEXT,0)<<8)|(Info.AdvControl(&MainGuid,ACTL_GETCOLOR,COL_PANELSELECTEDTITLE,0));
 			break;
 
 		case DN_DRAWDLGITEM:
@@ -425,11 +425,13 @@ int AdvCmpProcCur::ShowCmpCurDialog(const PluginPanelItem *pLPPI,const PluginPan
 	strBuf1.get(WinInfo.Con.Right/2);
 	strBuf3.get(WinInfo.Con.Right/2);
 
-	FSF.itoa64(pLPPI->FileSize,Buf1,10);
+//	FSF.itoa64(pLPPI->FileSize,Buf1,10);
+	itoaa(pLPPI->FileSize,Buf1);
 	FSF.sprintf(strBuf1.get(), L"%*.*s",DialogItems[5].X2,DialogItems[5].X2,Buf1);
 	DialogItems[5].Data=strBuf1.get();
 
-	FSF.itoa64(pRPPI->FileSize,Buf1,10);
+//	FSF.itoa64(pRPPI->FileSize,Buf1,10);
+	itoaa(pRPPI->FileSize,Buf1);
 	DialogItems[6].Data=Buf1;
 
 	FSF.sprintf(Buf2, L"%-*.*s  %02d.%02d.%04d  %02d:%02d:%02d", 
@@ -441,7 +443,7 @@ int AdvCmpProcCur::ShowCmpCurDialog(const PluginPanelItem *pLPPI,const PluginPan
 							RModificTime.wHour,RModificTime.wMinute,RModificTime.wSecond,RModificTime.wDay,RModificTime.wMonth,RModificTime.wYear,10,10,RAttributes);
 	DialogItems[8].Data=Buf2;
 
-	int color=Info.AdvControl(&MainGuid,ACTL_GETCOLOR,(void*)COL_PANELTEXT);
+	int color=Info.AdvControl(&MainGuid,ACTL_GETCOLOR,COL_PANELTEXT,0);
 	color=color&0xF0;
 	color=color|(color>>4);
 
@@ -460,7 +462,7 @@ int AdvCmpProcCur::ShowCmpCurDialog(const PluginPanelItem *pLPPI,const PluginPan
 		}
 
 		HANDLE hDlg=Info.DialogInit(&MainGuid,&CurDlgGuid,0,0,WinInfo.Con.Right,WinInfo.Con.Bottom-WinInfo.Con.Top,NULL,DialogItems,
-																sizeof(DialogItems)/sizeof(DialogItems[0]),0,FDLG_SMALLDIALOG|FDLG_NODRAWSHADOW,ShowCmpCurDialogProcThunk,(INT_PTR)this);
+																sizeof(DialogItems)/sizeof(DialogItems[0]),0,FDLG_SMALLDIALOG|FDLG_NODRAWSHADOW,ShowCmpCurDialogProcThunk,this);
 		if (hDlg != INVALID_HANDLE_VALUE)
 		{
 			Info.DialogRun(hDlg);

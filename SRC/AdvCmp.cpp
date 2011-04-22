@@ -174,7 +174,7 @@ bool LoadVisComp(wchar_t *PlugPath)
 
 	string strPatchVisComp;
 	if (FindFile(PlugPath,L"VisComp.dll",strPatchVisComp) &&
-			Info.PluginsControl(INVALID_HANDLE_VALUE,PCTL_FORCEDLOADPLUGIN,PLT_PATH,(INT_PTR)strPatchVisComp.get()))
+			Info.PluginsControl(INVALID_HANDLE_VALUE,PCTL_FORCEDLOADPLUGIN,PLT_PATH,strPatchVisComp.get()))
 	{
 		pCompareFiles=(PCOMPAREFILES)GetProcAddress(GetModuleHandleW(L"VisComp.dll"),"CompareFiles");
 		return true;
@@ -310,33 +310,33 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 	PInfo.StructSize=sizeof(PanelInfo);
 
 	// Если не удалось запросить информацию об активной панели...
-	if (!Info.Control(PANEL_ACTIVE,FCTL_GETPANELINFO,0,(INT_PTR)&PInfo))
+	if (!Info.PanelControl(PANEL_ACTIVE,FCTL_GETPANELINFO,0,&PInfo))
 		return hPanel;
 	if (PInfo.Flags & PFLAGS_PANELLEFT)
 	{
 		LPanel.PInfo.StructSize=sizeof(PanelInfo);
-		Info.Control(PANEL_ACTIVE,FCTL_GETPANELINFO,0,(INT_PTR)&LPanel.PInfo);
+		Info.PanelControl(PANEL_ACTIVE,FCTL_GETPANELINFO,0,&LPanel.PInfo);
 		LPanel.hPanel=PANEL_ACTIVE;
 	}
 	else
 	{
 		RPanel.PInfo.StructSize=sizeof(PanelInfo);
-		Info.Control(PANEL_ACTIVE,FCTL_GETPANELINFO,0,(INT_PTR)&RPanel.PInfo);
+		Info.PanelControl(PANEL_ACTIVE,FCTL_GETPANELINFO,0,&RPanel.PInfo);
 		RPanel.hPanel=PANEL_ACTIVE;
 	}
 	// Если не удалось запросить информацию об пассивной панели...
-	if (!Info.Control(PANEL_PASSIVE,FCTL_GETPANELINFO,0,(INT_PTR)&PInfo))
+	if (!Info.PanelControl(PANEL_PASSIVE,FCTL_GETPANELINFO,0,&PInfo))
 		return hPanel;
 	if (PInfo.Flags & PFLAGS_PANELLEFT)
 	{
 		LPanel.PInfo.StructSize=sizeof(PanelInfo);
-		Info.Control(PANEL_PASSIVE,FCTL_GETPANELINFO,0,(INT_PTR)&LPanel.PInfo);
+		Info.PanelControl(PANEL_PASSIVE,FCTL_GETPANELINFO,0,&LPanel.PInfo);
 		LPanel.hPanel=PANEL_PASSIVE;
 	}
 	else
 	{
 		RPanel.PInfo.StructSize=sizeof(PanelInfo);
-		Info.Control(PANEL_PASSIVE,FCTL_GETPANELINFO,0,(INT_PTR)&RPanel.PInfo);
+		Info.PanelControl(PANEL_PASSIVE,FCTL_GETPANELINFO,0,&RPanel.PInfo);
 		RPanel.hPanel=PANEL_PASSIVE;
 	}
 
@@ -359,10 +359,10 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		{
 			for (int i=0; i<LList.ItemsNumber; i++)
 			{
-				PluginPanelItem *pPPI=(PluginPanelItem*)malloc(Info.Control(LPanel.hPanel,FCTL_GETPANELITEM,i,0));
+				PluginPanelItem *pPPI=(PluginPanelItem*)malloc(Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,0));
 				if (pPPI)
 				{
-					Info.Control(LPanel.hPanel,FCTL_GETPANELITEM,i,(INT_PTR)pPPI);
+					Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,pPPI);
 					LList.PPI[i]=*pPPI;
 					LList.PPI[i].FileName=(wchar_t*)malloc((wcslen(pPPI->FileName)+1)*sizeof(wchar_t));
 					if (LList.PPI[i].FileName) wcscpy((wchar_t*)LList.PPI[i].FileName,pPPI->FileName);
@@ -387,11 +387,11 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		LList.PPI=NULL;
 	}
 	{
-		int size=Info.Control(LPanel.hPanel,FCTL_GETPANELDIR,0,0);
+		int size=Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIR,0,0);
 		if (!(LPanel.PInfo.Flags&PFLAGS_PLUGIN))
 		{
 			wchar_t *buf=(wchar_t*)malloc(size*sizeof(wchar_t));
-			if (buf) Info.Control(LPanel.hPanel,FCTL_GETPANELDIR,size,(INT_PTR)buf);
+			if (buf) Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIR,size,buf);
 			size=FSF.ConvertPath(CPM_NATIVE,buf,0,0);
 			LList.Dir=(wchar_t*)malloc(size*sizeof(wchar_t));
 			if (LList.Dir) FSF.ConvertPath(CPM_NATIVE,buf,LList.Dir,size);
@@ -400,7 +400,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		else
 		{
 			LList.Dir=(wchar_t*)malloc(size*sizeof(wchar_t));
-			if (LList.Dir) Info.Control(LPanel.hPanel,FCTL_GETPANELDIR,size,(INT_PTR)LList.Dir);
+			if (LList.Dir) Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIR,size,LList.Dir);
 		}
 	}
 
@@ -412,10 +412,10 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		{
 			for (int i=0; i<RList.ItemsNumber; i++)
 			{
-				PluginPanelItem *pPPI=(PluginPanelItem*)malloc(Info.Control(RPanel.hPanel,FCTL_GETPANELITEM,i,0));
+				PluginPanelItem *pPPI=(PluginPanelItem*)malloc(Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,0));
 				if (pPPI)
 				{
-					Info.Control(RPanel.hPanel,FCTL_GETPANELITEM,i,(INT_PTR)pPPI);
+					Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,pPPI);
 					RList.PPI[i]=*pPPI;
 					RList.PPI[i].FileName=(wchar_t*)malloc((wcslen(pPPI->FileName)+1)*sizeof(wchar_t));
 					if (RList.PPI[i].FileName) wcscpy((wchar_t*)RList.PPI[i].FileName,pPPI->FileName);
@@ -440,11 +440,11 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		RList.PPI=NULL;
 	}
 	{
-		int size=Info.Control(RPanel.hPanel,FCTL_GETPANELDIR,0,0);
+		int size=Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIR,0,0);
 		if (!(RPanel.PInfo.Flags&PFLAGS_PLUGIN))
 		{
 			wchar_t *buf=(wchar_t*)malloc(size*sizeof(wchar_t));
-			if (buf) Info.Control(RPanel.hPanel,FCTL_GETPANELDIR,size,(INT_PTR)buf);
+			if (buf) Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIR,size,buf);
 			size=FSF.ConvertPath(CPM_NATIVE,buf,0,0);
 			RList.Dir=(wchar_t*)malloc(size*sizeof(wchar_t));
 			if (RList.Dir) FSF.ConvertPath(CPM_NATIVE,buf,RList.Dir,size);
@@ -453,13 +453,13 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		else
 		{
 			RList.Dir=(wchar_t*)malloc(size*sizeof(wchar_t));
-			if (RList.Dir) Info.Control(RPanel.hPanel,FCTL_GETPANELDIR,size,(INT_PTR)RList.Dir);
+			if (RList.Dir) Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIR,size,RList.Dir);
 		}
 	}
 
-	WinInfo.hFarWindow=(HWND)Info.AdvControl(&MainGuid,ACTL_GETFARHWND,0);
+	WinInfo.hFarWindow=(HWND)Info.AdvControl(&MainGuid,ACTL_GETFARHWND,0,0);
 	GetClientRect(WinInfo.hFarWindow,&WinInfo.Win);
-	if (Info.AdvControl(&MainGuid,ACTL_GETFARRECT,&WinInfo.Con))
+	if (Info.AdvControl(&MainGuid,ACTL_GETFARRECT,0,&WinInfo.Con))
 	{
 		WinInfo.TruncLen=WinInfo.Con.Right-WinInfo.Con.Left-20+1;
 		if (WinInfo.TruncLen>MAX_PATH-2) WinInfo.TruncLen=MAX_PATH-2;
@@ -490,21 +490,21 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		// Отмечаем файлы и перерисовываем панели. Если нужно показываем сообщение...
 		if (!bBrokenByEsc)
 		{
-			Info.Control(LPanel.hPanel,FCTL_BEGINSELECTION,0,0);
-			Info.Control(RPanel.hPanel,FCTL_BEGINSELECTION,0,0);
+			Info.PanelControl(LPanel.hPanel,FCTL_BEGINSELECTION,0,0);
+			Info.PanelControl(RPanel.hPanel,FCTL_BEGINSELECTION,0,0);
 
 			for (int i=0; i<LList.ItemsNumber; i++)
-				Info.Control(LPanel.hPanel,FCTL_SETSELECTION,i,LList.PPI[i].Flags&PPIF_SELECTED);
+				Info.PanelControl(LPanel.hPanel,FCTL_SETSELECTION,i,(void*)(LList.PPI[i].Flags&PPIF_SELECTED));
 			for (int i=0; i<RList.ItemsNumber; i++)
-				Info.Control(RPanel.hPanel,FCTL_SETSELECTION,i,RList.PPI[i].Flags&PPIF_SELECTED);
+				Info.PanelControl(RPanel.hPanel,FCTL_SETSELECTION,i,(void*)(RList.PPI[i].Flags&PPIF_SELECTED));
 
-			Info.Control(LPanel.hPanel,FCTL_ENDSELECTION,0,0);
-			Info.Control(LPanel.hPanel,FCTL_REDRAWPANEL,0,0);
-			Info.Control(RPanel.hPanel,FCTL_ENDSELECTION,0,0);
-			Info.Control(RPanel.hPanel,FCTL_REDRAWPANEL,0,0);
+			Info.PanelControl(LPanel.hPanel,FCTL_ENDSELECTION,0,0);
+			Info.PanelControl(LPanel.hPanel,FCTL_REDRAWPANEL,0,0);
+			Info.PanelControl(RPanel.hPanel,FCTL_ENDSELECTION,0,0);
+			Info.PanelControl(RPanel.hPanel,FCTL_REDRAWPANEL,0,0);
 
 			if (Opt.Sound && (GetTickCount()-dwTicks > 30000)) MessageBeep(MB_ICONASTERISK);
-			Info.AdvControl(&MainGuid,ACTL_PROGRESSNOTIFY,0);
+			Info.AdvControl(&MainGuid,ACTL_PROGRESSNOTIFY,0,0);
 //			if (bOpenFail) ErrorMsg(MOpenErrorTitle,MOpenErrorBody);
 			if (bDifferenceNotFound && Opt.ShowMsg)
 			{

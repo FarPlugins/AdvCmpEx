@@ -132,13 +132,13 @@ struct ParamStore
  * Обработчик диалога для ShowOptDialog
  ****************************************************************************/
 
-INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProcThunk(HANDLE hDlg, int Msg, int Param1, INT_PTR Param2)
+INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProcThunk(HANDLE hDlg, int Msg, int Param1, void *Param2)
 {
 	AdvCmpDlgOpt* Class=(AdvCmpDlgOpt*)Info.SendDlgMessage(hDlg,DM_GETDLGDATA,0,0);
 	return Class->ShowOptDialogProc(hDlg,Msg,Param1,Param2);
 }
 
-INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1, INT_PTR Param2)
+INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1, void *Param2)
 {
 
 	switch (Msg)
@@ -148,20 +148,20 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 				bool CheckSelect=false;
 				if (LPanel.PInfo.SelectedItemsNumber)
 				{
-					PluginPanelItem *PPI=(PluginPanelItem*)malloc(Info.Control(LPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,0));
+					PluginPanelItem *PPI=(PluginPanelItem*)malloc(Info.PanelControl(LPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,0));
 					if (PPI)
 					{
-						Info.Control(LPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,(INT_PTR)PPI);
+						Info.PanelControl(LPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,PPI);
 						if (PPI->Flags&PPIF_SELECTED) CheckSelect=true;
 						free(PPI);
 					}
 				}
 				if (!CheckSelect && RPanel.PInfo.SelectedItemsNumber)
 				{
-					PluginPanelItem *PPI=(PluginPanelItem*)malloc(Info.Control(RPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,0));
+					PluginPanelItem *PPI=(PluginPanelItem*)malloc(Info.PanelControl(RPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,0));
 					if (PPI)
 					{
-						Info.Control(RPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,(INT_PTR)PPI);
+						Info.PanelControl(RPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,PPI);
 						if (PPI->Flags&PPIF_SELECTED) CheckSelect=true;
 						free(PPI);
 					}
@@ -169,7 +169,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 
 				if (!CheckSelect)
 				{
-					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgSELECTED,BSTATE_UNCHECKED);
+					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgSELECTED,(void*)BSTATE_UNCHECKED);
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgSELECTED,false);
 				}
 				//------------
@@ -186,7 +186,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 				{
 					Opt.CmpContents=0;
 					Opt.Cache=0;
-					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgCMPCONTENTS,BSTATE_UNCHECKED);
+					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgCMPCONTENTS,(void*)BSTATE_UNCHECKED);
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCMPCONTENTS,false);
 				}
 				if (Opt.CmpContents && (LPanel.bARC || RPanel.bARC))
@@ -202,10 +202,10 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 				if (Opt.PartlyFull)
 				{
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,false);
-					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgPARTLYFULL,BSTATE_CHECKED);
+					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgPARTLYFULL,(void*)BSTATE_CHECKED);
 				}
 				else
-					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgLPARTLYKB,BSTATE_CHECKED);
+					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgLPARTLYKB,(void*)BSTATE_CHECKED);
 
 				if (!Opt.Partly)
 				{
@@ -219,9 +219,9 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 				}
 				//------------порядок важен! идем из глубины опций наверх
 				if (Opt.CacheIgnore)
-					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgCACHEIGNORE,BSTATE_CHECKED);
+					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgCACHEIGNORE,(void*)BSTATE_CHECKED);
 				else
-					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgCACHEUSE,BSTATE_CHECKED);
+					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgCACHEUSE,(void*)BSTATE_CHECKED);
 
 				if (!Opt.Cache)
 				{
@@ -248,7 +248,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 								(LPanel.bARC && RPanel.bARC) ) )
 				{
 					Opt.ProcessSubfolders=0;
-					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgSUBFOLDER,BSTATE_UNCHECKED);
+					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgSUBFOLDER,(void*)BSTATE_UNCHECKED);
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgSUBFOLDER,false);
 				}
 				if (Opt.ProcessSubfolders!=2)
@@ -273,7 +273,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 //				Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPANEL,false);
 
 				// определим остальные опции...
-				Opt.ProcessHidden=Info.AdvControl(&MainGuid,ACTL_GETPANELSETTINGS,0) & FPS_SHOWHIDDENANDSYSTEMFILES;
+				Opt.ProcessHidden=Info.AdvControl(&MainGuid,ACTL_GETPANELSETTINGS,0,0) & FPS_SHOWHIDDENANDSYSTEMFILES;
 				Opt.hCustomFilter=INVALID_HANDLE_VALUE;
 
 				return true;
@@ -285,7 +285,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 			{
 				string sep=GetMsg(MDialog);
 				if (Opt.Dialog) sep[(size_t)1]=0x221a;
-				Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, DlgSEP2_DIALOG, (INT_PTR)sep.get());
+				Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, DlgSEP2_DIALOG, sep.get());
 				return true;
 			}
 
@@ -296,13 +296,13 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 			{
 				if (Param2)
 				{
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPRECISION,true);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgTIMEZONE,true);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPRECISION,(void*)true);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgTIMEZONE,(void*)true);
 				}
 				else
 				{
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPRECISION,false);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgTIMEZONE,false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPRECISION,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgTIMEZONE,(void*)false);
 				}
 			}
 			//------------
@@ -310,58 +310,58 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 			{
 				if (Param2)
 				{
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDIFFTIME,true);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDIFFTIME,(void*)true);
 
 					if (!(LPanel.bARC || RPanel.bARC))
-						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPARTLY,true);
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPARTLY,(void*)true);
 					if (Info.SendDlgMessage(hDlg,DM_GETCHECK,DlgPARTLY,0))
 					{
-						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPARTLYFULL,true);
-						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgLPARTLYKB,true);
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPARTLYFULL,(void*)true);
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgLPARTLYKB,(void*)true);
 						if (Info.SendDlgMessage(hDlg,DM_GETCHECK,DlgLPARTLYKB,0))
-							Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,true);
+							Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,(void*)true);
 						else
-							Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,false);
+							Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,(void*)false);
 					}
 					else
 					{
-						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPARTLYFULL,false);
-						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgLPARTLYKB,false);
-						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,false);
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPARTLYFULL,(void*)false);
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgLPARTLYKB,(void*)false);
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,(void*)false);
 					}
 
 					if (!(LPanel.bARC || RPanel.bARC))
-						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORE,true);
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORE,(void*)true);
 					if (Info.SendDlgMessage(hDlg,DM_GETCHECK,DlgIGNORE,0))
-						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORETEMPL,true);
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORETEMPL,(void*)true);
 					else
-						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORETEMPL,false);
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORETEMPL,(void*)false);
 
 					if (!(LPanel.bARC || RPanel.bARC))
-						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHE,true);
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHE,(void*)true);
 					if (Info.SendDlgMessage(hDlg,DM_GETCHECK,DlgCACHE,0))
 					{
-						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEIGNORE,true);
-						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEUSE,true);
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEIGNORE,(void*)true);
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEUSE,(void*)true);
 					}
 					else
 					{
-						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEIGNORE,false);
-						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEUSE,false);
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEIGNORE,(void*)false);
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEUSE,(void*)false);
 					}
 				}
 				else
 				{
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDIFFTIME,false);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPARTLY,false);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPARTLYFULL,false);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgLPARTLYKB,false);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,false);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORE,false);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORETEMPL,false);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHE,false);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEIGNORE,false);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEUSE,false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDIFFTIME,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPARTLY,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPARTLYFULL,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgLPARTLYKB,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORE,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORETEMPL,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHE,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEIGNORE,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEUSE,(void*)false);
 				}
 			}
 			//------------
@@ -369,78 +369,78 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 			{
 				if (Param2)
 				{
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPARTLYFULL,true);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgLPARTLYKB,true);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPARTLYFULL,(void*)true);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgLPARTLYKB,(void*)true);
 					if (Info.SendDlgMessage(hDlg,DM_GETCHECK,DlgLPARTLYKB,0))
-						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,true);
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,(void*)true);
 					else
-						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,false);
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,(void*)false);
 				}
 				else
 				{
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPARTLYFULL,false);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgLPARTLYKB,false);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPARTLYFULL,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgLPARTLYKB,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,(void*)false);
 				}
 			}
 			//------------
 			else if (Param1 == DlgLPARTLYKB)
 			{
 				if (Param2)
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,true);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,(void*)true);
 				else
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,(void*)false);
 			}
 			//------------
 			else if (Param1 == DlgIGNORE)
 			{
 				if (Param2)
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORETEMPL,true);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORETEMPL,(void*)true);
 				else
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORETEMPL,false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORETEMPL,(void*)false);
 			}
 			//------------
 			else if (Param1 == DlgSUBFOLDER)
 			{
-				if (Param2 == 2)
+				if (Param2 == (void*)2)
 				{
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgLMAXDEPTH,true);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEMAXDEPTH,true);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgLMAXDEPTH,(void*)true);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEMAXDEPTH,(void*)true);
 				}
 				else
 				{
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgLMAXDEPTH,false);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEMAXDEPTH,false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgLMAXDEPTH,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEMAXDEPTH,(void*)false);
 				}
 			}
 			//------------
 			else if (Param1 == DlgFILTER)
 			{
 				if (Param2)
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgFILTERBOTTON,true);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgFILTERBOTTON,(void*)true);
 				else
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgFILTERBOTTON,false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgFILTERBOTTON,(void*)false);
 			}
 			//------------
 			else if (Param1 == DlgLCMPSKIP)
 			{
 				if (Param2)
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgECMPSKIP,true);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgECMPSKIP,(void*)true);
 				else
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgECMPSKIP,false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgECMPSKIP,(void*)false);
 			}
 			//------------
 			else if (Param1 == DlgCACHE)
 			{
 				if (Param2)
 				{
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEIGNORE,true);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEUSE,true);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEIGNORE,(void*)true);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEUSE,(void*)true);
 				}
 				else
 				{
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEIGNORE,false);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEUSE,false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEIGNORE,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEUSE,(void*)false);
 				}
 			}
 			break;
@@ -467,9 +467,9 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 
 				if (Key == KEY_F4 && Info.SendDlgMessage(hDlg,DM_GETCHECK,DlgFILTER,0))
 					Info.SendDlgMessage(hDlg,DM_CLOSE,DlgFILTERBOTTON,0);
-				else if (Key == KEY_F8 && Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHECLEAR,(INT_PTR)-1))
+				else if (Key == KEY_F8 && Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHECLEAR,(void*)-1))
 					Info.SendDlgMessage(hDlg,DM_CLOSE,DlgCACHECLEAR,0);
-				else if (Key == KEY_F2 && Info.SendDlgMessage(hDlg,DM_ENABLE,DlgUNDERCURSOR,(INT_PTR)-1))
+				else if (Key == KEY_F2 && Info.SendDlgMessage(hDlg,DM_ENABLE,DlgUNDERCURSOR,(void*)-1))
 					Info.SendDlgMessage(hDlg,DM_CLOSE,DlgUNDERCURSOR,0);
 				else if (Key == KEY_F3)
 				{
@@ -488,7 +488,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 			if (Param1 == DlgFILTERBOTTON)
 			{
 				if (Opt.hCustomFilter == INVALID_HANDLE_VALUE)
-					Opt.Filter=Info.FileFilterControl(PANEL_NONE,FFCTL_CREATEFILEFILTER,FFT_CUSTOM,(INT_PTR)&Opt.hCustomFilter);
+					Opt.Filter=Info.FileFilterControl(PANEL_NONE,FFCTL_CREATEFILEFILTER,FFT_CUSTOM,&Opt.hCustomFilter);
 				if (Opt.hCustomFilter != INVALID_HANDLE_VALUE)
 					Info.FileFilterControl(Opt.hCustomFilter,FFCTL_OPENFILTERSMENU,0,0);
 				return false;
@@ -497,7 +497,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 			{
 				if (Cache.RCI)
 				{
-					if (Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0) & FCS_DELETE)
+					if (Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0,0) & FCS_DELETE)
 					{
 						wchar_t buf[100]; FSF.sprintf(buf,GetMsg(MClearCacheItems),Cache.ItemsNumber);
 						const wchar_t *MsgItems[]={ GetMsg(MClearCacheTitle),buf,GetMsg(MClearCacheBody) };
@@ -510,7 +510,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 						free(Cache.RCI);
 						Cache.RCI=0;
 						Cache.ItemsNumber=0;
-						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHECLEAR,false);
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHECLEAR,(void*)false);
 					}
 				}
 				return false;
@@ -540,7 +540,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 				{
 					Opt.Substr=(wchar_t*)realloc(Opt.Substr,(len+1)*sizeof(wchar_t));
 					if (Opt.Substr)
-						Info.SendDlgMessage(hDlg,DM_GETTEXTPTR,DlgECMPSKIP,(INT_PTR)Opt.Substr);
+						Info.SendDlgMessage(hDlg,DM_GETTEXTPTR,DlgECMPSKIP,Opt.Substr);
 					else
 						Opt.SkipSubstr=0;
 				}
@@ -551,19 +551,19 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 				}
 
 				if (Opt.Filter && Opt.hCustomFilter == INVALID_HANDLE_VALUE)
-					Opt.Filter=Info.FileFilterControl(PANEL_NONE,FFCTL_CREATEFILEFILTER,FFT_CUSTOM,(INT_PTR)&Opt.hCustomFilter);
+					Opt.Filter=Info.FileFilterControl(PANEL_NONE,FFCTL_CREATEFILEFILTER,FFT_CUSTOM,&Opt.hCustomFilter);
 
 				FarSettingsCreate settings={sizeof(FarSettingsCreate),MainGuid,INVALID_HANDLE_VALUE};
-				if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,(INT_PTR)&settings))
+				if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings))
 				{
 					int Root=0; // корень ключа
 					for (int i=DlgCMPCASE; i<sizeof(StoreOpt)/sizeof(StoreOpt[0]); i++)
 					{
-						if (StoreOpt[i].RegName && Info.SendDlgMessage(hDlg,DM_ENABLE,i,(INT_PTR)-1))
+						if (StoreOpt[i].RegName && Info.SendDlgMessage(hDlg,DM_ENABLE,i,(void*)-1))
 						{
 							FarSettingsItem item={Root,StoreOpt[i].RegName,FST_QWORD};
 							item.Number=*StoreOpt[i].Option;
-							Info.SettingsControl(settings.Handle,SCTL_SET,0,(INT_PTR)&item);
+							Info.SettingsControl(settings.Handle,SCTL_SET,0,&item);
 						}
 					}
 					Info.SettingsControl(settings.Handle,SCTL_FREE,0,0);
@@ -646,13 +646,13 @@ int AdvCmpDlgOpt::ShowOptDialog()
 	*StoreOpt[DlgSEP2_DIALOG].Option=0;
 
 	FarSettingsCreate settings={sizeof(FarSettingsCreate),MainGuid,INVALID_HANDLE_VALUE};
-	if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,(INT_PTR)&settings))
+	if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings))
 	{
 		int Root=0; // корень ключа
 		for (int i=DlgCMPCASE; i<sizeof(StoreOpt)/sizeof(StoreOpt[0]); i++)
 		{
 			FarSettingsItem item={Root,StoreOpt[i].RegName,FST_QWORD};
-			if (StoreOpt[i].RegName && Info.SettingsControl(settings.Handle,SCTL_GET,0,(INT_PTR)&item))
+			if (StoreOpt[i].RegName && Info.SettingsControl(settings.Handle,SCTL_GET,0,&item))
 			{
 				*StoreOpt[i].Option=(int)item.Number;
 				if (i==DlgEPARTLYKB)
@@ -697,7 +697,7 @@ int AdvCmpDlgOpt::ShowOptDialog()
                                 sizeof(DialogItems)/sizeof(DialogItems[0]),
                                 0, FDLG_SMALLDIALOG,
                                 ShowOptDialogProcThunk,
-                                (INT_PTR) this );
+                                this );
 
 	int ExitCode=-1;
 

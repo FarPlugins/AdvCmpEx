@@ -65,8 +65,8 @@ class AdvCmpProcCur
 		void FreeImage(PicData *pData);
 		void UpdateInfoText(HANDLE hDlg, PicData *data, bool left);
 
-		static INT_PTR WINAPI ShowCmpCurDialogProcThunk(HANDLE hDlg,int Msg,int Param1,INT_PTR Param2);
-		INT_PTR WINAPI ShowCmpCurDialogProc(HANDLE hDlg,int Msg,int Param1,INT_PTR Param2);
+		static INT_PTR WINAPI ShowCmpCurDialogProcThunk(HANDLE hDlg,int Msg,int Param1,void *Param2);
+		INT_PTR WINAPI ShowCmpCurDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2);
 		int ShowCmpCurDialog(const PluginPanelItem *pLPPI,const PluginPanelItem *pRPPI);
 
 	public:

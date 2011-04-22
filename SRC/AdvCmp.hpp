@@ -238,6 +238,8 @@ const wchar_t *GetMsg(int MsgId);
 void ErrorMsg(DWORD Title, DWORD Body);
 bool YesNoMsg(DWORD Title, DWORD Body);
 int DebugMsg(wchar_t *msg, wchar_t *msg2 = L" ", unsigned int i = 1000);
+wchar_t* itoaa(__int64 num, wchar_t *buf);
+
 
 /****************************************************************************
  *  VisComp.dll

@@ -35,8 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // диалог с опциями
 class AdvCmpDlgOpt
 {
-		static INT_PTR WINAPI ShowOptDialogProcThunk(HANDLE hDlg, int Msg, int Param1, INT_PTR Param2);
-		INT_PTR WINAPI ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1, INT_PTR Param2);
+		static INT_PTR WINAPI ShowOptDialogProcThunk(HANDLE hDlg, int Msg, int Param1, void *Param2);
+		INT_PTR WINAPI ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1, void *Param2);
 
 	public:
 		AdvCmpDlgOpt() { }

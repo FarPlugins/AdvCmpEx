@@ -48,7 +48,7 @@ wchar_t *CutSubstr(string &strSrc, wchar_t *Substr)
 	{
 		HANDLE re;
 		int start_offset=0;
-		if (!Info.RegExpControl(0,RECTL_CREATE,0,(INT_PTR)&re)) return false;
+		if (!Info.RegExpControl(0,RECTL_CREATE,0,&re)) return false;
 
 		string Search=L"/";
 		if (len>0 && Substr[0]==L'/') 
@@ -56,7 +56,7 @@ wchar_t *CutSubstr(string &strSrc, wchar_t *Substr)
 		else Search+=Substr;
 		if (Search.length()>0 && Search[(size_t)(Search.length()-1)]!=L'/')
 			Search+=L"/i";
-		if (Info.RegExpControl(re,RECTL_COMPILE,0,(INT_PTR)Search.get()))
+		if (Info.RegExpControl(re,RECTL_COMPILE,0,Search.get()))
 		{
 			int brackets=Info.RegExpControl(re,RECTL_BRACKETSCOUNT,0,0);
 			if (!brackets) { Info.RegExpControl(re,RECTL_FREE,0,0); return false; }
@@ -66,7 +66,7 @@ wchar_t *CutSubstr(string &strSrc, wchar_t *Substr)
 			{
 				RegExpSearch search= { src,start_offset,lenSrc,match,brackets,0 };
 
-				if (Info.RegExpControl(re,RECTL_SEARCHEX,0,(INT_PTR)&search))
+				if (Info.RegExpControl(re,RECTL_SEARCHEX,0,&search))
 				{
 					// копируем ДО паттерна
 					for (int i=start_offset; i<match[0].start; i++)
@@ -169,8 +169,8 @@ AdvCmpProc::AdvCmpProc()
 	}
 
 	LPanel.hFilter=RPanel.hFilter=INVALID_HANDLE_VALUE;
-	Info.FileFilterControl(LPanel.hPanel,FFCTL_CREATEFILEFILTER,FFT_PANEL,(INT_PTR)&LPanel.hFilter);
-	Info.FileFilterControl(RPanel.hPanel,FFCTL_CREATEFILEFILTER,FFT_PANEL,(INT_PTR)&RPanel.hFilter);
+	Info.FileFilterControl(LPanel.hPanel,FFCTL_CREATEFILEFILTER,FFT_PANEL,&LPanel.hFilter);
+	Info.FileFilterControl(RPanel.hPanel,FFCTL_CREATEFILEFILTER,FFT_PANEL,&RPanel.hFilter);
 	Info.FileFilterControl(LPanel.hFilter,FFCTL_STARTINGTOFILTER,0,0);
 	Info.FileFilterControl(RPanel.hFilter,FFCTL_STARTINGTOFILTER,0,0);
 
@@ -222,7 +222,7 @@ bool AdvCmpProc::CheckForEsc(void)
 		if ( rec.EventType == KEY_EVENT && rec.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE && rec.Event.KeyEvent.bKeyDown )
 		{
 			// Опциональное подтверждение прерывания по Esc
-			if (Info.AdvControl(&MainGuid, ACTL_GETCONFIRMATIONS, 0) & FCS_INTERRUPTOPERATION)
+			if (Info.AdvControl(&MainGuid, ACTL_GETCONFIRMATIONS,0,0) & FCS_INTERRUPTOPERATION)
 			{
 				if (YesNoMsg(MEscTitle, MEscBody))
 					return bBrokenByEsc = true;
@@ -1254,9 +1254,9 @@ bool AdvCmpProc::BuildItemsIndex(bool bLeftPanel,const struct DirList *pList,str
 					)
 				continue;
 			if ( (bLeftPanel?LPanel.hFilter:RPanel.hFilter)!=INVALID_HANDLE_VALUE &&
-					 !Info.FileFilterControl((bLeftPanel?LPanel.hFilter:RPanel.hFilter),FFCTL_ISFILEINFILTER,0,(INT_PTR)&pList->PPI[i]))
+					 !Info.FileFilterControl((bLeftPanel?LPanel.hFilter:RPanel.hFilter),FFCTL_ISFILEINFILTER,0,&pList->PPI[i]))
 				continue;
-			if (Opt.Filter && !Info.FileFilterControl(Opt.hCustomFilter,FFCTL_ISFILEINFILTER,0,(INT_PTR)&pList->PPI[i]))
+			if (Opt.Filter && !Info.FileFilterControl(Opt.hCustomFilter,FFCTL_ISFILEINFILTER,0,&pList->PPI[i]))
 				continue;
 
 			if (ScanDepth)
@@ -1722,7 +1722,7 @@ bool UpdateFarList(HANDLE hDlg, DList<File> *pFileList, bool bInit=false)
 {
 	// запросим информацию
 	FarListInfo ListInfo;
-	Info.SendDlgMessage(hDlg,DM_LISTINFO,0,(INT_PTR)&ListInfo);
+	Info.SendDlgMessage(hDlg,DM_LISTINFO,0,&ListInfo);
 
 	if (ListInfo.ItemsNumber)
 		Info.SendDlgMessage(hDlg,DM_LISTDELETE,0,0);
@@ -1732,14 +1732,14 @@ bool UpdateFarList(HANDLE hDlg, DList<File> *pFileList, bool bInit=false)
 	// каталог на панели
 	string strLPanelDir, strRPanelDir;
 	{
-		int size=Info.Control(LPanel.hPanel,FCTL_GETPANELDIR,0,0);
+		int size=Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIR,0,0);
 		strLPanelDir.get(size);
-		Info.Control(LPanel.hPanel,FCTL_GETPANELDIR,size,(INT_PTR)strLPanelDir.get());
+		Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIR,size,strLPanelDir.get());
 		strLPanelDir.updsize();
 
-		size=Info.Control(RPanel.hPanel,FCTL_GETPANELDIR,0,0);
+		size=Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIR,0,0);
 		strRPanelDir.get(size);
-		Info.Control(RPanel.hPanel,FCTL_GETPANELDIR,size,(INT_PTR)strRPanelDir.get());
+		Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIR,size,strRPanelDir.get());
 		strRPanelDir.updsize();
 	}
 
@@ -1830,7 +1830,7 @@ bool UpdateFarList(HANDLE hDlg, DList<File> *pFileList, bool bInit=false)
 		Item.Text=buf;
 		Item.Reserved[0]=Item.Reserved[1]=Item.Reserved[2]=0;
 		List.Items=&Item;
-		Info.SendDlgMessage(hDlg,DM_LISTADD,0,(INT_PTR)&List);
+		Info.SendDlgMessage(hDlg,DM_LISTADD,0,&List);
 	}
 
 	if (buf) free(buf);
@@ -1838,14 +1838,14 @@ bool UpdateFarList(HANDLE hDlg, DList<File> *pFileList, bool bInit=false)
 	FarListPos ListPos;
 	ListPos.SelectPos=0/*ListInfo.SelectPos*/;
 	ListPos.TopPos=-1/*ListInfo.TopPos*/;
-	Info.SendDlgMessage(hDlg,DM_LISTSETCURPOS,0,(INT_PTR)&ListPos);
+	Info.SendDlgMessage(hDlg,DM_LISTSETCURPOS,0,&ListPos);
 
-	Info.SendDlgMessage(hDlg,DM_LISTSETMOUSEREACTION,0,(INT_PTR)LMRT_NEVER);
+	Info.SendDlgMessage(hDlg,DM_LISTSETMOUSEREACTION,0,(void*)LMRT_NEVER);
 	return true;
 }
 
 
-INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,INT_PTR Param2)
+INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 {
 	DList<File> *pFileList=(DList<File> *)Info.SendDlgMessage(hDlg,DM_GETDLGDATA,0,0);
 	switch(Msg)
@@ -1858,13 +1858,13 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,INT_PTR Param2)
 		{
 			COORD c=(*(COORD*)Param2);
 			Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
-			Info.SendDlgMessage(hDlg,DM_RESIZEDIALOG,0,(INT_PTR)&c);
+			Info.SendDlgMessage(hDlg,DM_RESIZEDIALOG,0,&c);
 			WinInfo.Con.Right=c.X-1;
 			WinInfo.Con.Bottom=c.Y-1;
-			Info.SendDlgMessage(hDlg,DM_SETITEMPOSITION,0,(INT_PTR)&WinInfo.Con);
+			Info.SendDlgMessage(hDlg,DM_SETITEMPOSITION,0,&WinInfo.Con);
 			c.X=c.Y=-1;
-			Info.SendDlgMessage(hDlg,DM_MOVEDIALOG,true,(INT_PTR)&c);
-			Info.SendDlgMessage(hDlg,DM_LISTSETMOUSEREACTION,0,(INT_PTR)LMRT_NEVER);
+			Info.SendDlgMessage(hDlg,DM_MOVEDIALOG,true,&c);
+			Info.SendDlgMessage(hDlg,DM_LISTSETMOUSEREACTION,0,(void*)LMRT_NEVER);
 			Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
 			return true;
 		}
@@ -1891,7 +1891,7 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,INT_PTR Param2)
 				COL_PANELCURSOR
 			};
 			for (int i=0; i<sizeof(ColorDlgList); i++)
-				ColorDlgList[i]=Info.AdvControl(&MainGuid,ACTL_GETCOLOR,(void *)ColorIndex[i]);
+				ColorDlgList[i]=Info.AdvControl(&MainGuid,ACTL_GETCOLOR,ColorIndex[i],0);
 
 			FarListColors *flc=(FarListColors *)Param2;
 			flc->Flags=flc->Reserved=0;
@@ -1978,14 +1978,14 @@ GOTOFILE:
 						// каталог на панели
 						string strLPanelDir, strRPanelDir;
 						{
-							int size=Info.Control(LPanel.hPanel,FCTL_GETPANELDIR,0,0);
+							int size=Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIR,0,0);
 							strLPanelDir.get(size);
-							Info.Control(LPanel.hPanel,FCTL_GETPANELDIR,size,(INT_PTR)strLPanelDir.get());
+							Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIR,size,strLPanelDir.get());
 							strLPanelDir.updsize();
 
-							size=Info.Control(RPanel.hPanel,FCTL_GETPANELDIR,0,0);
+							size=Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIR,0,0);
 							strRPanelDir.get(size);
-							Info.Control(RPanel.hPanel,FCTL_GETPANELDIR,size,(INT_PTR)strRPanelDir.get());
+							Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIR,size,strRPanelDir.get());
 							strRPanelDir.updsize();
 						}
 
@@ -1993,17 +1993,17 @@ GOTOFILE:
 
 						bool bSetLDir=false;
 						if (FSF.LStricmp(strLPanelDir.get(),cur->strLDir.get()+GetPosToName(cur->strLDir.get())))
-							bSetLDir=Info.Control(LPanel.hPanel,FCTL_SETPANELDIR,0,(INT_PTR)(cur->strLDir.get()+GetPosToName(cur->strLDir.get())));
+							bSetLDir=Info.PanelControl(LPanel.hPanel,FCTL_SETPANELDIR,0,(cur->strLDir.get()+GetPosToName(cur->strLDir.get())));
 						{
 							PanelInfo PInfo;
 							PInfo.StructSize=sizeof(PanelInfo);
-							Info.Control(LPanel.hPanel,FCTL_GETPANELINFO,0,(INT_PTR)&PInfo);
+							Info.PanelControl(LPanel.hPanel,FCTL_GETPANELINFO,0,&PInfo);
 							for (int i=0; i<PInfo.ItemsNumber && cur->strFileName.length(); i++)
 							{
-								PluginPanelItem *PPI=(PluginPanelItem*)malloc(Info.Control(LPanel.hPanel,FCTL_GETPANELITEM,i,0));
+								PluginPanelItem *PPI=(PluginPanelItem*)malloc(Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,0));
 								if (PPI)
 								{
-									Info.Control(LPanel.hPanel,FCTL_GETPANELITEM,i,(INT_PTR)PPI);
+									Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,PPI);
 									if (!FSF.LStricmp(cur->strFileName.get(), PPI->FileName))
 									{
 										LRInfo.CurrentItem=i;
@@ -2018,17 +2018,17 @@ GOTOFILE:
 
 						bool bSetRDir=false;
 						if (FSF.LStricmp(strRPanelDir.get(),cur->strRDir.get()+GetPosToName(cur->strRDir.get())))
-							bSetRDir=Info.Control(RPanel.hPanel,FCTL_SETPANELDIR,0,(INT_PTR)(cur->strRDir.get()+GetPosToName(cur->strRDir.get())));
+							bSetRDir=Info.PanelControl(RPanel.hPanel,FCTL_SETPANELDIR,0,(cur->strRDir.get()+GetPosToName(cur->strRDir.get())));
 						{
 							PanelInfo PInfo;
 							PInfo.StructSize=sizeof(PanelInfo);
-							Info.Control(RPanel.hPanel,FCTL_GETPANELINFO,0,(INT_PTR)&PInfo);
+							Info.PanelControl(RPanel.hPanel,FCTL_GETPANELINFO,0,&PInfo);
 							for (int i=0; i<PInfo.ItemsNumber && cur->strFileName.length(); i++)
 							{
-								PluginPanelItem *PPI=(PluginPanelItem*)malloc(Info.Control(RPanel.hPanel,FCTL_GETPANELITEM,i,0));
+								PluginPanelItem *PPI=(PluginPanelItem*)malloc(Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,0));
 								if (PPI)
 								{
-									Info.Control(RPanel.hPanel,FCTL_GETPANELITEM,i,(INT_PTR)PPI);
+									Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,PPI);
 									if (!FSF.LStricmp(cur->strFileName.get(), PPI->FileName))
 									{
 										RRInfo.CurrentItem=i;
@@ -2041,8 +2041,8 @@ GOTOFILE:
 							}
 						}
 
-						Info.Control(LPanel.hPanel,FCTL_REDRAWPANEL,0,(INT_PTR)&LRInfo);
-						Info.Control(RPanel.hPanel,FCTL_REDRAWPANEL,0,(INT_PTR)&RRInfo);
+						Info.PanelControl(LPanel.hPanel,FCTL_REDRAWPANEL,0,&LRInfo);
+						Info.PanelControl(RPanel.hPanel,FCTL_REDRAWPANEL,0,&RRInfo);
 						Info.SendDlgMessage(hDlg,DM_CLOSE,0,0);
 					}
 					return true;
@@ -2066,12 +2066,12 @@ int AdvCmpProc::ShowCmpDialog(const struct DirList *pLList,const struct DirList 
 
 	int len=WinInfo.Con.Right/2-2;
 
-	int size=Info.Control(LPanel.hPanel,FCTL_GETPANELHOSTFILE,0,0);
+	int size=Info.PanelControl(LPanel.hPanel,FCTL_GETPANELHOSTFILE,0,0);
 	string strTmp;
 	if (size>1)
 	{
 		strTmp.get(size);
-		Info.Control(LPanel.hPanel,FCTL_GETPANELHOSTFILE,size,(INT_PTR)strTmp.get());
+		Info.PanelControl(LPanel.hPanel,FCTL_GETPANELHOSTFILE,size,strTmp.get());
 	}
 	else
 		strTmp=pLList->Dir+GetPosToName(pLList->Dir);
@@ -2082,11 +2082,11 @@ int AdvCmpProc::ShowCmpDialog(const struct DirList *pLList,const struct DirList 
 	wchar_t buf1[MAX_PATH];
 	strcentr(buf1,strTmp2.get(),len,0x00002550);
 
-	size=Info.Control(RPanel.hPanel,FCTL_GETPANELHOSTFILE,0,0);
+	size=Info.PanelControl(RPanel.hPanel,FCTL_GETPANELHOSTFILE,0,0);
 	if (size>1)
 	{
 		strTmp.get(size);
-		Info.Control(RPanel.hPanel,FCTL_GETPANELHOSTFILE,size,(INT_PTR)strTmp.get());
+		Info.PanelControl(RPanel.hPanel,FCTL_GETPANELHOSTFILE,size,strTmp.get());
 	}
 	else
 		strTmp=pRList->Dir+GetPosToName(pRList->Dir);
@@ -2105,7 +2105,7 @@ int AdvCmpProc::ShowCmpDialog(const struct DirList *pLList,const struct DirList 
 	}
 
 	HANDLE hDlg=Info.DialogInit(&MainGuid,&CmpDlgGuid,0,0,WinInfo.Con.Right,WinInfo.Con.Bottom-WinInfo.Con.Top,L"Contents",DialogItems,
-															sizeof(DialogItems)/sizeof(DialogItems[0]),0,FDLG_SMALLDIALOG|FDLG_KEEPCONSOLETITLE,ShowCmpDialogProc,(INT_PTR)&FileList);
+															sizeof(DialogItems)/sizeof(DialogItems[0]),0,FDLG_SMALLDIALOG|FDLG_KEEPCONSOLETITLE,ShowCmpDialogProc,&FileList);
 	if (hDlg != INVALID_HANDLE_VALUE)
 	{
 		Info.DialogRun(hDlg);
