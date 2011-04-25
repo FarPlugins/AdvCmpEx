@@ -69,12 +69,12 @@ enum {
 	DlgSELECTED,    //25
 	DlgLCMPSKIP,    //26
 	DlgECMPSKIP,    //27
-	DlgSELECTEDNEW, //28
-	DlgIGNORMISSING,//29
-	DlgFIRSTDIFF,   //30
-	DlgDIALOG,      //31
-	DlgSHOWMSG,     //32
-	DlgSOUND,       //33
+	DlgFIRSTDIFF,   //28
+	DlgSELECTEDNEW, //29
+	DlgIGNORMISSING,//30
+	DlgSHOWMSG,     //31
+	DlgSOUND,       //32
+	DlgDIALOG,      //33
 	DlgTOTALPROCESS,//34
 
 	DlgSEP2,        //35
@@ -119,12 +119,12 @@ struct ParamStore
 	{DlgSELECTED,    L"ProcessSelected",     &Opt.ProcessSelected},
 	{DlgLCMPSKIP,    L"SkipSubstr",          &Opt.SkipSubstr},
 	{DlgECMPSKIP,    0,                      0},
+	{DlgFIRSTDIFF,   L"ProcessTillFirstDiff",&Opt.ProcessTillFirstDiff},
 	{DlgSELECTEDNEW, L"SelectedNew",         &Opt.SelectedNew},
 	{DlgIGNORMISSING,L"IgnoreMissing",       &Opt.IgnoreMissing},
-	{DlgFIRSTDIFF,   L"ProcessTillFirstDiff",&Opt.ProcessTillFirstDiff},
-	{DlgDIALOG,      L"Dialog",              &Opt.Dialog},
 	{DlgSHOWMSG,     L"ShowMsg",             &Opt.ShowMsg},
 	{DlgSOUND,       L"Sound",               &Opt.Sound},
+	{DlgDIALOG,      L"Dialog",              &Opt.Dialog},
 	{DlgTOTALPROCESS,L"TotalProcess",        &Opt.TotalProcess}
 };
 
@@ -269,9 +269,6 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 				//------------
 				if (!LPanel.bCurFile || !RPanel.bCurFile)
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgUNDERCURSOR,(void*)false);
-
-				// !! временно
-//				Info.SendDlgMessage(hDlg,DM_ENABLE,DlgPANEL,false);
 
 				// определим остальные опции...
 				Opt.ProcessHidden=Info.AdvControl(&MainGuid,ACTL_GETPANELSETTINGS,0,0) & FPS_SHOWHIDDENANDSYSTEMFILES;
@@ -589,7 +586,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 int AdvCmpDlgOpt::ShowOptDialog()
 {
 	const unsigned int dW = 68;   // ширина
-	const unsigned int dH = 25;   // высота
+	const unsigned int dH = 24;   // высота
 
 	struct FarDialogItem DialogItems[] = {
 		//			Type	X1	Y1	X2	Y2		Selected	History					Mask															Flags	Data	MaxLen	UserParam
@@ -622,18 +619,18 @@ int AdvCmpDlgOpt::ShowOptDialog()
 		/*25*/{DI_CHECKBOX,   2,15,   0,   0, 0, 0,                   0,                                0, GetMsg(MProcessSelected),0,0},
 		/*26*/{DI_CHECKBOX,   2,16,   0,   0, 0, 0,                   0,                                0, GetMsg(MCompareSkipSubstr),0,0},
 		/*27*/{DI_EDIT,       0,16,dW-3,   0, 0, L"AdvCmpSkipSubstr", 0,   DIF_USELASTHISTORY|DIF_HISTORY, L"",0,0},
-		/*28*/{DI_CHECKBOX,   2,17,   0,   0, 0, 0,                   0,                                0, GetMsg(MSelectedNew),0,0},
-		/*29*/{DI_CHECKBOX,  35,17,   0,   0, 0, 0,                   0,                                0, GetMsg(MIgnoreMissing),0,0},
-		/*30*/{DI_CHECKBOX,   2,18,   0,   0, 1, 0,                   0,                                0, GetMsg(MProcessTillFirstDiff),0,0},
-		/*31*/{DI_CHECKBOX,   2,19,   0,   0, 0, 0,                   0,                                0, GetMsg(MDialog),0,0},
-		/*32*/{DI_CHECKBOX,   2,20,   0,   0, 1, 0,                   0,                                0, GetMsg(MShowMsg),0,0},
-		/*33*/{DI_CHECKBOX,  35,20,   0,   0, 0, 0,                   0,                                0, GetMsg(MSound),0,0},
-		/*34*/{DI_CHECKBOX,   2,21,   0,   0, 0, 0,                   0,                                0, GetMsg(MTotalProcess),0,0},
+		/*28*/{DI_CHECKBOX,   2,17,   0,   0, 1, 0,                   0,                                0, GetMsg(MProcessTillFirstDiff),0,0},
+		/*29*/{DI_CHECKBOX,   2,18,   0,   0, 0, 0,                   0,                                0, GetMsg(MSelectedNew),0,0},
+		/*30*/{DI_CHECKBOX,  35,18,   0,   0, 0, 0,                   0,                                0, GetMsg(MIgnoreMissing),0,0},
+		/*31*/{DI_CHECKBOX,   2,19,   0,   0, 1, 0,                   0,                                0, GetMsg(MShowMsg),0,0},
+		/*32*/{DI_CHECKBOX,  35,19,   0,   0, 0, 0,                   0,                                0, GetMsg(MSound),0,0},
+		/*33*/{DI_CHECKBOX,   2,20,   0,   0, 0, 0,                   0,                                0, GetMsg(MDialog),0,0},
+		/*34*/{DI_CHECKBOX,  35,20,   0,   0, 0, 0,                   0,                                0, GetMsg(MTotalProcess),0,0},
 
-		/*35*/{DI_TEXT,      -1,22,   0,   0, 0, 0,                   0,                    DIF_SEPARATOR, L"",0,0},
-		/*36*/{DI_BUTTON,     0,23,   0,   0, 0, 0,                   0,DIF_CENTERGROUP|DIF_DEFAULTBUTTON, GetMsg(MOK),0,0},
-		/*37*/{DI_BUTTON,     0,23,   0,   0, 0, 0,                   0,                  DIF_CENTERGROUP, GetMsg(MUnderCursorBotton),0,0},
-		/*38*/{DI_BUTTON,     0,23,   0,   0, 0, 0,                   0,                  DIF_CENTERGROUP, GetMsg(MCancel),0,0}
+		/*35*/{DI_TEXT,      -1,21,   0,   0, 0, 0,                   0,                    DIF_SEPARATOR, L"",0,0},
+		/*36*/{DI_BUTTON,     0,22,   0,   0, 0, 0,                   0,DIF_CENTERGROUP|DIF_DEFAULTBUTTON, GetMsg(MOK),0,0},
+		/*37*/{DI_BUTTON,     0,22,   0,   0, 0, 0,                   0,                  DIF_CENTERGROUP, GetMsg(MUnderCursorBotton),0,0},
+		/*38*/{DI_BUTTON,     0,22,   0,   0, 0, 0,                   0,                  DIF_CENTERGROUP, GetMsg(MCancel),0,0}
 	};
 
 	// динамические координаты для строк
