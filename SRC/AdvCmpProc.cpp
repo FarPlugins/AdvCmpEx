@@ -2002,7 +2002,7 @@ GOTOFILE:
 							for (int i=0; i<PInfo.ItemsNumber && cur->strFileName.length(); i++)
 							{
 								FGPPI.Size=0; FGPPI.Item=0;
-								FGPPI.Item=(PluginPanelItem*)malloc(Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI));
+								FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI));
 								if (FGPPI.Item)
 								{
 									Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI);
@@ -2029,7 +2029,7 @@ GOTOFILE:
 							for (int i=0; i<PInfo.ItemsNumber && cur->strFileName.length(); i++)
 							{
 								FGPPI.Size=0; FGPPI.Item=0;
-								FGPPI.Item=(PluginPanelItem*)malloc(Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI));
+								FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI));
 								if (FGPPI.Item)
 								{
 									Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI);

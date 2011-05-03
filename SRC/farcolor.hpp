@@ -4,7 +4,7 @@
 /*
   farcolor.hpp
 
-  Colors Index for FAR Manager 3.0 build 2019
+  Colors Index for FAR Manager 3.0 build 2020
   HKCU\Software\Far Manager\Colors\CurrentPalette
 */
 

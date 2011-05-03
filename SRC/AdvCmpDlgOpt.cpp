@@ -150,7 +150,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 				if (LPanel.PInfo.SelectedItemsNumber)
 				{
 					FarGetPluginPanelItem FGPPI={0,0};
-					FGPPI.Item=(PluginPanelItem*)malloc(Info.PanelControl(LPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,&FGPPI));
+					FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(LPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,&FGPPI));
 					if (FGPPI.Item)
 					{
 						Info.PanelControl(LPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,&FGPPI);
@@ -161,7 +161,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 				if (!CheckSelect && RPanel.PInfo.SelectedItemsNumber)
 				{
 					FarGetPluginPanelItem FGPPI={0,0};
-					FGPPI.Item=(PluginPanelItem*)malloc(Info.PanelControl(RPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,&FGPPI));
+					FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(RPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,&FGPPI));
 					if (FGPPI.Item)
 					{
 						Info.PanelControl(RPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,&FGPPI);
