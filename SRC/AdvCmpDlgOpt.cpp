@@ -149,22 +149,24 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 				bool CheckSelect=false;
 				if (LPanel.PInfo.SelectedItemsNumber)
 				{
-					PluginPanelItem *PPI=(PluginPanelItem*)malloc(Info.PanelControl(LPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,0));
-					if (PPI)
+					FarGetPluginPanelItem FGPPI={0,0};
+					FGPPI.Item=(PluginPanelItem*)malloc(Info.PanelControl(LPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,&FGPPI));
+					if (FGPPI.Item)
 					{
-						Info.PanelControl(LPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,PPI);
-						if (PPI->Flags&PPIF_SELECTED) CheckSelect=true;
-						free(PPI);
+						Info.PanelControl(LPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,&FGPPI);
+						if (FGPPI.Item->Flags&PPIF_SELECTED) CheckSelect=true;
+						free(FGPPI.Item);
 					}
 				}
 				if (!CheckSelect && RPanel.PInfo.SelectedItemsNumber)
 				{
-					PluginPanelItem *PPI=(PluginPanelItem*)malloc(Info.PanelControl(RPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,0));
-					if (PPI)
+					FarGetPluginPanelItem FGPPI={0,0};
+					FGPPI.Item=(PluginPanelItem*)malloc(Info.PanelControl(RPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,&FGPPI));
+					if (FGPPI.Item)
 					{
-						Info.PanelControl(RPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,PPI);
-						if (PPI->Flags&PPIF_SELECTED) CheckSelect=true;
-						free(PPI);
+						Info.PanelControl(RPanel.hPanel,FCTL_GETSELECTEDPANELITEM,0,&FGPPI);
+						if (FGPPI.Item->Flags&PPIF_SELECTED) CheckSelect=true;
+						free(FGPPI.Item);
 					}
 				}
 

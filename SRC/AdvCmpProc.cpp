@@ -1998,20 +1998,22 @@ GOTOFILE:
 							PanelInfo PInfo;
 							PInfo.StructSize=sizeof(PanelInfo);
 							Info.PanelControl(LPanel.hPanel,FCTL_GETPANELINFO,0,&PInfo);
+							FarGetPluginPanelItem FGPPI;
 							for (int i=0; i<PInfo.ItemsNumber && cur->strFileName.length(); i++)
 							{
-								PluginPanelItem *PPI=(PluginPanelItem*)malloc(Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,0));
-								if (PPI)
+								FGPPI.Size=0; FGPPI.Item=0;
+								FGPPI.Item=(PluginPanelItem*)malloc(Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI));
+								if (FGPPI.Item)
 								{
-									Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,PPI);
-									if (!FSF.LStricmp(cur->strFileName.get(), PPI->FileName))
+									Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI);
+									if (!FSF.LStricmp(cur->strFileName.get(),FGPPI.Item->FileName))
 									{
 										LRInfo.CurrentItem=i;
-										free(PPI);
+										free(FGPPI.Item);
 										break;
 									}
 									else
-										free(PPI);
+										free(FGPPI.Item);
 								}
 							}
 						}
@@ -2023,20 +2025,22 @@ GOTOFILE:
 							PanelInfo PInfo;
 							PInfo.StructSize=sizeof(PanelInfo);
 							Info.PanelControl(RPanel.hPanel,FCTL_GETPANELINFO,0,&PInfo);
+							FarGetPluginPanelItem FGPPI;
 							for (int i=0; i<PInfo.ItemsNumber && cur->strFileName.length(); i++)
 							{
-								PluginPanelItem *PPI=(PluginPanelItem*)malloc(Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,0));
-								if (PPI)
+								FGPPI.Size=0; FGPPI.Item=0;
+								FGPPI.Item=(PluginPanelItem*)malloc(Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI));
+								if (FGPPI.Item)
 								{
-									Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,PPI);
-									if (!FSF.LStricmp(cur->strFileName.get(), PPI->FileName))
+									Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI);
+									if (!FSF.LStricmp(cur->strFileName.get(),FGPPI.Item->FileName))
 									{
 										RRInfo.CurrentItem=i;
-										free(PPI);
+										free(FGPPI.Item);
 										break;
 									}
 									else
-										free(PPI);
+										free(FGPPI.Item);
 								}
 							}
 						}

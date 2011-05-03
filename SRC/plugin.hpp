@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 1988
+  Plugin API for Far Manager 3.0 build 2019
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 1988
+#define FARMANAGERVERSION_BUILD 2019
 
 #ifndef RC_INVOKED
 
@@ -477,6 +477,12 @@ struct DialogInfo
 	GUID Owner;
 };
 
+struct FarGetDialogItem
+{
+	size_t Size;
+	FarDialogItem* Item;
+};
+
 #define Dlg_RedrawDialog(Info,hDlg)            Info.SendDlgMessage(hDlg,DM_REDRAW,0,0)
 
 #define Dlg_GetDlgData(Info,hDlg)              Info.SendDlgMessage(hDlg,DM_GETDLGDATA,0,0)
@@ -638,6 +644,12 @@ struct PluginPanelItem
 	DWORD_PTR     UserData;
 	DWORD         CRC32;
 	DWORD_PTR     Reserved[2];
+};
+
+struct FarGetPluginPanelItem
+{
+	size_t Size;
+	PluginPanelItem* Item;
 };
 
 typedef unsigned __int64 PANELINFOFLAGS;
@@ -1593,7 +1605,8 @@ enum FAR_SETTINGS_CONTROL_COMMANDS
 	SCTL_GET,
 	SCTL_ENUM,
 	SCTL_DELETE,
-	SCTL_SUBKEY
+	SCTL_CREATESUBKEY,
+	SCTL_OPENSUBKEY
 };
 
 enum FARSETTINGSTYPES
