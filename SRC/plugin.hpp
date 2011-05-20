@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2020
+  Plugin API for Far Manager 3.0 build 2040
 */
 
 /*
@@ -43,7 +43,8 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2020
+#define FARMANAGERVERSION_BUILD 2040
+#define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
 
@@ -399,8 +400,8 @@ struct FarListInfo
 
 struct FarListItemData
 {
-	int   Index;
-	int   DataSize;
+	int Index;
+	size_t DataSize;
 	void *Data;
 	DWORD Reserved;
 };
@@ -1100,6 +1101,7 @@ struct MacroCheckMacroText
 #endif
 	;
 };
+
 
 
 typedef unsigned __int64 FARSETCOLORFLAGS;
@@ -1982,13 +1984,13 @@ static __inline BOOL CheckVersion(const struct VersionInfo* Current, const struc
 	return (Current->Major > Required->Major) || (Current->Major == Required->Major && Current->Minor > Required->Minor) || (Current->Major == Required->Major && Current->Minor == Required->Minor && Current->Revision > Required->Revision) || (Current->Major == Required->Major && Current->Minor == Required->Minor && Current->Revision == Required->Revision && Current->Build >= Required->Build);
 }
 
-static __inline struct VersionInfo MAKEFARVERSION(int Major, int Minor, int Revision, int Build)
+static __inline struct VersionInfo MAKEFARVERSION(DWORD Major, DWORD Minor, DWORD Revision, DWORD Build, enum VERSION_STAGE Stage)
 {
-	struct VersionInfo Info = {Major,Minor,Revision,Build};
+	struct VersionInfo Info = {Major, Minor, Revision, Build, Stage};
 	return Info;
 }
 
-#define FARMANAGERVERSION MAKEFARVERSION(FARMANAGERVERSION_MAJOR,FARMANAGERVERSION_MINOR, FARMANAGERVERSION_REVISION, FARMANAGERVERSION_BUILD)
+#define FARMANAGERVERSION MAKEFARVERSION(FARMANAGERVERSION_MAJOR,FARMANAGERVERSION_MINOR, FARMANAGERVERSION_REVISION, FARMANAGERVERSION_BUILD, FARMANAGERVERSION_STAGE)
 
 struct GlobalInfo
 {
@@ -2260,6 +2262,23 @@ struct DeleteFilesInfo
 	OPERATION_MODES OpMode;
 };
 
+struct ProcessPanelInputInfo
+{
+	size_t StructSize;
+	INPUT_RECORD Rec;
+};
+
+struct ProcessEditorInputInfo
+{
+	size_t StructSize;
+	INPUT_RECORD Rec;
+};
+
+
+struct ExitInfo
+{
+	size_t StructSize;
+};
 
 #ifdef __cplusplus
 extern "C"
@@ -2272,7 +2291,7 @@ extern "C"
 	int    WINAPI CompareW(const struct CompareInfo *Info);
 	int    WINAPI ConfigureW(const GUID* Guid);
 	int    WINAPI DeleteFilesW(const struct DeleteFilesInfo *Info);
-	void   WINAPI ExitFARW(void);
+	void   WINAPI ExitFARW(const struct ExitInfo *Info);
 	void   WINAPI FreeFindDataW(const struct FreeFindDataInfo *Info);
 	void   WINAPI FreeVirtualFindDataW(const struct FreeFindDataInfo *Info);
 	int    WINAPI GetFilesW(struct GetFilesInfo *Info);
@@ -2285,10 +2304,10 @@ extern "C"
 	HANDLE WINAPI OpenW(const struct OpenInfo *Info);
 	int    WINAPI ProcessDialogEventW(int Event,void *Param);
 	int    WINAPI ProcessEditorEventW(int Event,void *Param);
-	int    WINAPI ProcessEditorInputW(const INPUT_RECORD *Rec);
+	int    WINAPI ProcessEditorInputW(const ProcessEditorInputInfo *Info);
 	int    WINAPI ProcessEventW(HANDLE hPanel,int Event,void *Param);
 	int    WINAPI ProcessHostFileW(const struct ProcessHostFileInfo *Info);
-	int    WINAPI ProcessKeyW(HANDLE hPanel,const INPUT_RECORD *Rec);
+	int    WINAPI ProcessPanelInputW(HANDLE hPanel,const struct ProcessPanelInputInfo *Info);
 	int    WINAPI ProcessSynchroEventW(int Event,void *Param);
 	int    WINAPI ProcessViewerEventW(int Event,void *Param);
 	int    WINAPI PutFilesW(const struct PutFilesInfo *Info);
