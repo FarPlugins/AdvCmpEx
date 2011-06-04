@@ -88,6 +88,7 @@ extern struct Options {
 	int CmpCase,
 			CmpSize,
 			CmpTime,
+			Seconds,
 			LowPrecisionTime,
 			IgnoreTimeZone,
 			CmpContents,
@@ -131,6 +132,7 @@ extern struct FarPanelInfo {
 	bool bTMP;              // Tmp-панель? обрабатывается особо!
 	bool bARC;              // панель-архив? обрабатывается особо!
 	bool bCurFile;          // под курсором файл?
+	bool bDir;              // на панели есть каталоги?
 } LPanel, RPanel;
 
 // информация об окне Фара

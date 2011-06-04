@@ -278,7 +278,7 @@ void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info)
 		wchar_t PlugPath[MAX_PATH];
 		ExpandEnvironmentStringsW(L"%FARHOME%",PlugPath,(sizeof(PlugPath)/sizeof(PlugPath[0]))-9);
 		wcscat(PlugPath,L"\\Plugins");
-		LoadVisComp(PlugPath);
+//		LoadVisComp(PlugPath);
 		LoadGfl(PlugPath);
 	}
 }
@@ -347,8 +347,8 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		return hPanel;
 	}
 
-	LPanel.bTMP=LPanel.bARC=LPanel.bCurFile=false;
-	RPanel.bTMP=RPanel.bARC=RPanel.bCurFile=false;
+	LPanel.bTMP=LPanel.bARC=LPanel.bCurFile=LPanel.bDir=false;
+	RPanel.bTMP=RPanel.bARC=RPanel.bCurFile=RPanel.bDir=false;
 	struct DirList LList, RList;
 
 	if (LPanel.PInfo.ItemsNumber)
@@ -375,6 +375,8 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 							LPanel.bTMP=true;
 						if (i==LPanel.PInfo.CurrentItem && !(FGPPI.Item->FileAttributes&FILE_ATTRIBUTE_DIRECTORY))
 							LPanel.bCurFile=true;
+						if (!LPanel.bDir && !LPanel.bTMP && (FGPPI.Item->FileAttributes&FILE_ATTRIBUTE_DIRECTORY) && !(FGPPI.Item->FileName[1]==L'.' && !FGPPI.Item->FileName[2]))
+							LPanel.bDir=true;
 					}
 					free(FGPPI.Item);
 				}
@@ -430,6 +432,8 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 							RPanel.bTMP=true;
 						if (i==RPanel.PInfo.CurrentItem && !(FGPPI.Item->FileAttributes&FILE_ATTRIBUTE_DIRECTORY))
 							RPanel.bCurFile=true;
+						if (!RPanel.bDir && !RPanel.bTMP && (FGPPI.Item->FileAttributes&FILE_ATTRIBUTE_DIRECTORY) && !(FGPPI.Item->FileName[1]==L'.' && !FGPPI.Item->FileName[2]))
+							RPanel.bDir=true;
 					}
 					free(FGPPI.Item);
 				}
@@ -484,7 +488,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 	class AdvCmpDlgOpt AdvCmpOpt;
 	int ret=AdvCmpOpt.ShowOptDialog();
 
-	if (ret==36) // DlgOK
+	if (ret==38) // DlgOK
 	{
 		DWORD dwTicks=GetTickCount();
 
@@ -519,7 +523,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 				AdvCmp.ShowCmpDialog(&LList,&RList);
 		}
 	}
-	else if (ret==37) // DlgUNDERCURSOR
+	else if (ret==39) // DlgUNDERCURSOR
 	{
 		class AdvCmpProcCur AdvCmpCur;
 		AdvCmpCur.CompareCurFile(&LList,&RList);

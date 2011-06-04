@@ -591,7 +591,9 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 			if (Opt.ProcessSubfolders==2 && Opt.MaxScanDepth<ScanDepth+1)
 				return true;
 
-			if (ScanDepth>0 && (LPanel.bARC || RPanel.bARC))
+			bool bLPanelPlug=(LPanel.PInfo.Flags&PFLAGS_PLUGIN), bRPanelPlug=(RPanel.PInfo.Flags&PFLAGS_PLUGIN);
+
+			if (ScanDepth>0 && (bLPanelPlug || bRPanelPlug))
 				return true;
 
 			string strLFullDir(LDir), strRFullDir(RDir);
@@ -604,7 +606,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 			struct DirList LList, RList;
 			bool bEqual = true;
 
-			if (!(LPanel.bARC || RPanel.bARC))
+			if (!(bLPanelPlug || bRPanelPlug))
 			{
 				if (!GetDirList(strLFullDir,ScanDepth,false,&LList) || !GetDirList(strRFullDir,ScanDepth,false,&RList))
 				{
@@ -613,7 +615,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 					bOpenFail=true;
 				}
 			}
-			else if (LPanel.bARC || RPanel.bARC)
+			else if (bLPanelPlug || bRPanelPlug)
 			{
 				LList.Dir=(wchar_t*)malloc((wcslen(LDir)+1)*sizeof(wchar_t));
 				if (LList.Dir) wcscpy(LList.Dir,LDir);
@@ -624,28 +626,28 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 //				DebugMsg(L"RList.Dir",RList.Dir);
 //				DebugMsg(L"pRPPI->FileName",(wchar_t*)pRPPI->FileName);
 
-				if (LPanel.bARC && !bBrokenByEsc && !Info.GetPluginDirList(&MainGuid,LPanel.hPanel,pLPPI->FileName,&LList.PPI,&LList.ItemsNumber))
+				if (bLPanelPlug && !bBrokenByEsc && !Info.GetPluginDirList(&MainGuid,LPanel.hPanel,pLPPI->FileName,&LList.PPI,&LList.ItemsNumber))
 				{
 					bBrokenByEsc=true;
 					bEqual=false;
 					bOpenFail=true;
 				}
 
-				if (RPanel.bARC && !bBrokenByEsc && !Info.GetPluginDirList(&MainGuid,RPanel.hPanel,pRPPI->FileName,&RList.PPI,&RList.ItemsNumber))
+				if (bRPanelPlug && !bBrokenByEsc && !Info.GetPluginDirList(&MainGuid,RPanel.hPanel,pRPPI->FileName,&RList.PPI,&RList.ItemsNumber))
 				{
 					bBrokenByEsc=true;
 					bEqual=false;
 					bOpenFail=true;
 				}
 
-				if (!LPanel.bARC && !bBrokenByEsc && !Info.GetDirList(strLFullDir.get()+GetPosToName(strLFullDir.get()),&LList.PPI,&LList.ItemsNumber))
+				if (!bLPanelPlug && !bBrokenByEsc && !Info.GetDirList(strLFullDir.get()+GetPosToName(strLFullDir.get()),&LList.PPI,&LList.ItemsNumber))
 				{
 					bBrokenByEsc=true;
 					bEqual=false;
 					bOpenFail=true;
 				}
 
-				if (!RPanel.bARC && !bBrokenByEsc && !Info.GetDirList(strRFullDir.get()+GetPosToName(strRFullDir.get()),&RList.PPI,&RList.ItemsNumber))
+				if (!bRPanelPlug && !bBrokenByEsc && !Info.GetDirList(strRFullDir.get()+GetPosToName(strRFullDir.get()),&RList.PPI,&RList.ItemsNumber))
 				{
 					bBrokenByEsc=true;
 					bEqual=false;
@@ -665,19 +667,19 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 			if (bEqual)
 				bEqual=CompareDirs(&LList,&RList,Opt.Dialog,ScanDepth+1);  // Opt.Dialog==1 то всё сравним в подкаталоге, для показа в диалоге
 
-			if (!(LPanel.bARC || RPanel.bARC))
+			if (!(bLPanelPlug || bRPanelPlug))
 			{
 				FreeDirList(&LList);
 				FreeDirList(&RList);
 			}
-			else if (LPanel.bARC || RPanel.bARC)
+			else if (bLPanelPlug || bRPanelPlug)
 			{
 				free(LList.Dir);
 				free(RList.Dir);
-				if (LPanel.bARC) Info.FreePluginDirList(LList.PPI,LList.ItemsNumber);
-				if (RPanel.bARC) Info.FreePluginDirList(RList.PPI,RList.ItemsNumber);
-				if (!LPanel.bARC) Info.FreeDirList(LList.PPI,LList.ItemsNumber);
-				if (!RPanel.bARC) Info.FreeDirList(RList.PPI,RList.ItemsNumber);
+				if (bLPanelPlug) Info.FreePluginDirList(LList.PPI,LList.ItemsNumber);
+				if (bRPanelPlug) Info.FreePluginDirList(RList.PPI,RList.ItemsNumber);
+				if (!bLPanelPlug) Info.FreeDirList(LList.PPI,LList.ItemsNumber);
+				if (!bRPanelPlug) Info.FreeDirList(RList.PPI,RList.ItemsNumber);
 			}
 
 			return bEqual;
@@ -714,7 +716,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 		// время
 		if (Opt.CmpTime)
 		{
-			if (Opt.LowPrecisionTime || Opt.IgnoreTimeZone)
+			if (Opt.Seconds || Opt.IgnoreTimeZone)
 			{
 				union {
 					__int64 num;
@@ -725,29 +727,43 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 				} Precision, Difference, TimeDelta, temp;
 
 				Precision.hilo.hi = 0;
-				Precision.hilo.lo = Opt.LowPrecisionTime ? 20000000 : 0; //2s or 0s
+				Precision.hilo.lo = (Opt.Seconds && Opt.LowPrecisionTime) ? 20000000 : 0; //2s or 0s
 				Difference.num = __int64(9000000000); //15m
 
-				if (pLPPI->LastWriteTime.dwHighDateTime > pRPPI->LastWriteTime.dwHighDateTime)
+				FILETIME LLastWriteTime=pLPPI->LastWriteTime, RLastWriteTime=pRPPI->LastWriteTime;
+
+				if (Opt.Seconds && !Opt.LowPrecisionTime)
 				{
-					TimeDelta.hilo.hi=pLPPI->LastWriteTime.dwHighDateTime - pRPPI->LastWriteTime.dwHighDateTime;
-					TimeDelta.hilo.lo=pLPPI->LastWriteTime.dwLowDateTime - pRPPI->LastWriteTime.dwLowDateTime;
-					if (TimeDelta.hilo.lo > pLPPI->LastWriteTime.dwLowDateTime)
+					SYSTEMTIME Time;
+					FileTimeToSystemTime(&LLastWriteTime, &Time);
+					Time.wSecond=Time.wMilliseconds=0;
+					SystemTimeToFileTime(&Time,&LLastWriteTime);
+
+					FileTimeToSystemTime(&RLastWriteTime, &Time);
+					Time.wSecond=Time.wMilliseconds=0;
+					SystemTimeToFileTime(&Time,&RLastWriteTime);
+				}
+
+				if (LLastWriteTime.dwHighDateTime > RLastWriteTime.dwHighDateTime)
+				{
+					TimeDelta.hilo.hi=LLastWriteTime.dwHighDateTime - RLastWriteTime.dwHighDateTime;
+					TimeDelta.hilo.lo=LLastWriteTime.dwLowDateTime - RLastWriteTime.dwLowDateTime;
+					if (TimeDelta.hilo.lo > LLastWriteTime.dwLowDateTime)
 						--TimeDelta.hilo.hi;
 				}
 				else
 				{
-					if (pLPPI->LastWriteTime.dwHighDateTime == pRPPI->LastWriteTime.dwHighDateTime)
+					if (LLastWriteTime.dwHighDateTime == RLastWriteTime.dwHighDateTime)
 					{
 						TimeDelta.hilo.hi=0;
-						TimeDelta.hilo.lo=max(pRPPI->LastWriteTime.dwLowDateTime,pLPPI->LastWriteTime.dwLowDateTime)-
-															min(pRPPI->LastWriteTime.dwLowDateTime,pLPPI->LastWriteTime.dwLowDateTime);
+						TimeDelta.hilo.lo=max(RLastWriteTime.dwLowDateTime,LLastWriteTime.dwLowDateTime)-
+															min(RLastWriteTime.dwLowDateTime,LLastWriteTime.dwLowDateTime);
 					}
 					else
 					{
-						TimeDelta.hilo.hi=pRPPI->LastWriteTime.dwHighDateTime - pLPPI->LastWriteTime.dwHighDateTime;
-						TimeDelta.hilo.lo=pRPPI->LastWriteTime.dwLowDateTime - pLPPI->LastWriteTime.dwLowDateTime;
-						if (TimeDelta.hilo.lo > pRPPI->LastWriteTime.dwLowDateTime)
+						TimeDelta.hilo.hi=RLastWriteTime.dwHighDateTime - LLastWriteTime.dwHighDateTime;
+						TimeDelta.hilo.lo=RLastWriteTime.dwLowDateTime - LLastWriteTime.dwLowDateTime;
+						if (TimeDelta.hilo.lo > RLastWriteTime.dwLowDateTime)
 							--TimeDelta.hilo.hi;
 					}
 				}
@@ -864,7 +880,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
                                  OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, 0)) == INVALID_HANDLE_VALUE)
 				{
 					CmpInfo.ProcSize+=CmpInfo.CurCountSize;
-					bOpenFail;
+					bOpenFail=true;
 					return false;
 				}
 				// Сохраним время последнего доступа к файлу
@@ -878,7 +894,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 				{
 					if (hLFile) CloseHandle(hLFile);
 					CmpInfo.ProcSize+=CmpInfo.CurCountSize;
-					bOpenFail;
+					bOpenFail=true;
 					return false;
 				}
 				RAccess=pRPPI->LastAccessTime;
@@ -1259,10 +1275,12 @@ bool AdvCmpProc::BuildItemsIndex(bool bLeftPanel,const struct DirList *pList,str
 			if (Opt.Filter && !Info.FileFilterControl(Opt.hCustomFilter,FFCTL_ISFILEINFILTER,0,&pList->PPI[i]))
 				continue;
 
-			if (ScanDepth)
+			if (ScanDepth && !(LPanel.bTMP || RPanel.bTMP))
 			{
-				// архив + панель || панель + архив (элемент с панели)
-				if ((LPanel.bARC && !RPanel.bARC && !bLeftPanel) || (!LPanel.bARC && RPanel.bARC && bLeftPanel))
+				bool bLPanelPlug=(LPanel.PInfo.Flags&PFLAGS_PLUGIN), bRPanelPlug=(RPanel.PInfo.Flags&PFLAGS_PLUGIN);
+
+				// плагин + панель || панель + плагин (элемент с панели)
+				if ((bLPanelPlug && !bRPanelPlug && !bLeftPanel) || (!bLPanelPlug && bRPanelPlug && bLeftPanel))
 				{
 //DebugMsg((wchar_t *)pList->PPI[i].FileName);
 					string srtFileName(pList->PPI[i].FileName);
@@ -1282,8 +1300,8 @@ bool AdvCmpProc::BuildItemsIndex(bool bLeftPanel,const struct DirList *pList,str
 						continue;
 				}
 
-				// архив + панель || панель + архив (элемент с архива)
-				else if ((LPanel.bARC && !RPanel.bARC && bLeftPanel) || (!LPanel.bARC && RPanel.bARC && !bLeftPanel))
+				// плагин + панель || панель + плагин (элемент с плагина)
+				else if ((bLPanelPlug && !bRPanelPlug && bLeftPanel) || (!bLPanelPlug && bRPanelPlug && !bLeftPanel))
 				{
 //					string srtFileName(pList->PPI[i].FileName);
 					// вырежем всё до первого слеша, так как сама папка нам не нужна

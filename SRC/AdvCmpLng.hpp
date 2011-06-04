@@ -21,6 +21,8 @@ enum {
 	MCompareCase,
 	MCompareSize,
 	MCompareTime,
+	MCompareSeconds,
+	MCompareIgnoreSeconds,
 	MCompareLowPrecision,
 	MCompareIgnoreTimeZone,
 	MCompareContents,
