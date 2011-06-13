@@ -1341,46 +1341,6 @@ void AdvCmpProc::FreeItemsIndex(struct ItemsIndex *pIndex)
 	pIndex->iCount=0;
 }
 
-/****************************************************************************
- * Построение массива элементов, для диалога с результатами сравнения
- ****************************************************************************/
-bool AdvCmpProc::BuildFileList(const wchar_t *LDir,const PluginPanelItem *pLPPI,const wchar_t *RDir,const PluginPanelItem *pRPPI,DWORD dwFlag)
-{
-	// каталоги не добавляем
-	if (pLPPI && pRPPI && (pLPPI->FileAttributes&FILE_ATTRIBUTE_DIRECTORY) && (pRPPI->FileAttributes&FILE_ATTRIBUTE_DIRECTORY))
-		return true;
-
-	if (pLPPI && pRPPI && Opt.CmpTime && dwFlag==RCIF_DIFFER)
-	{
-		__int64 Delta=(((__int64)pLPPI->LastWriteTime.dwHighDateTime << 32) | pLPPI->LastWriteTime.dwLowDateTime) -
-									(((__int64)pRPPI->LastWriteTime.dwHighDateTime << 32) | pRPPI->LastWriteTime.dwLowDateTime);
-		if (Delta>0) dwFlag=RCIF_LNEW;
-		else if (Delta<0) dwFlag=RCIF_RNEW;
-	}
-
-	File add;
-	add.dwFlags=dwFlag;
-	add.strLDir=LDir;
-	add.strRDir=RDir;
-	if (pLPPI)
-	{
-		add.strFileName=pLPPI->FileName;
-		add.dwAttributes=pLPPI->FileAttributes;
-		add.ftLLastWriteTime.dwLowDateTime=pLPPI->LastWriteTime.dwLowDateTime;
-		add.ftLLastWriteTime.dwHighDateTime=pLPPI->LastWriteTime.dwHighDateTime;
-		add.nLFileSize=pLPPI->FileSize;
-	}
-	if (pRPPI)
-	{
-		if (!add.strFileName.length()) add.strFileName=pRPPI->FileName;
-		add.dwAttributes=pRPPI->FileAttributes;
-		add.ftRLastWriteTime.dwLowDateTime=pRPPI->LastWriteTime.dwLowDateTime;
-		add.ftRLastWriteTime.dwHighDateTime=pRPPI->LastWriteTime.dwHighDateTime;
-		add.nRFileSize=pRPPI->FileSize;
-	}
-	FileList.Push(&add);
-	return true;
-}
 
 /****************************************************************************
  * Сравнение двух каталогов, описанных структурами AInfo и PInfo.
@@ -1733,6 +1693,54 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 }
 
 
+
+/***************************************************************************
+ *
+ *                       ДИАЛОГ РЕЗУЛЬТАТОВ
+ *
+ ***************************************************************************/
+
+
+/****************************************************************************
+ * Построение массива элементов, для диалога с результатами сравнения
+ ****************************************************************************/
+bool AdvCmpProc::BuildFileList(const wchar_t *LDir,const PluginPanelItem *pLPPI,const wchar_t *RDir,const PluginPanelItem *pRPPI,DWORD dwFlag)
+{
+	if (pLPPI && pRPPI && Opt.CmpTime && dwFlag==RCIF_DIFFER)
+	{
+		__int64 Delta=(((__int64)pLPPI->LastWriteTime.dwHighDateTime << 32) | pLPPI->LastWriteTime.dwLowDateTime) -
+									(((__int64)pRPPI->LastWriteTime.dwHighDateTime << 32) | pRPPI->LastWriteTime.dwLowDateTime);
+		if (Delta>0) dwFlag=RCIF_LNEW;
+		else if (Delta<0) dwFlag=RCIF_RNEW;
+	}
+	// два каталога - особый случай!
+	if (pLPPI && pRPPI && (pLPPI->FileAttributes&FILE_ATTRIBUTE_DIRECTORY) && (pRPPI->FileAttributes&FILE_ATTRIBUTE_DIRECTORY))
+		dwFlag|=RCIF_DIR;
+
+	File add;
+	add.dwFlags=dwFlag;
+	add.strLDir=LDir;
+	add.strRDir=RDir;
+	if (pLPPI)
+	{
+		add.strFileName=pLPPI->FileName;
+		add.dwAttributes=pLPPI->FileAttributes;
+		add.ftLLastWriteTime.dwLowDateTime=pLPPI->LastWriteTime.dwLowDateTime;
+		add.ftLLastWriteTime.dwHighDateTime=pLPPI->LastWriteTime.dwHighDateTime;
+		add.nLFileSize=pLPPI->FileSize;
+	}
+	if (pRPPI)
+	{
+		if (!add.strFileName.length()) add.strFileName=pRPPI->FileName;
+		add.dwAttributes=pRPPI->FileAttributes;
+		add.ftRLastWriteTime.dwLowDateTime=pRPPI->LastWriteTime.dwLowDateTime;
+		add.ftRLastWriteTime.dwHighDateTime=pRPPI->LastWriteTime.dwHighDateTime;
+		add.nRFileSize=pRPPI->FileSize;
+	}
+	FileList.Push(&add);
+	return true;
+}
+
 /***************************************************************************
  * Изменение/обновление листа файлов в диалоге
  ***************************************************************************/
@@ -1761,19 +1769,27 @@ bool UpdateFarList(HANDLE hDlg, DList<File> *pFileList, bool bInit=false)
 		strRPanelDir.updsize();
 	}
 
+	int Index=0;
+
 	for (File *cur=pFileList->First(); cur; cur=pFileList->Next(cur))
 	{
-		// добавим элемент-папку. только при первом построении списка!
-		File *next=pFileList->Next(cur);
-		if (bInit && next && !(next->dwAttributes&FILE_ATTRIBUTE_DIRECTORY) && FSF.LStricmp(cur->strLDir.get(),next->strLDir.get()))
+		if (cur->dwFlags&RCIF_DIR)
+			continue;
+		// добавим виртуальный элемент-папку.
+		for (File *next=pFileList->Next(cur); next; next=pFileList->Next(next))
 		{
-			File add;
-			add.strLDir=next->strLDir;
-			add.strRDir=next->strRDir;
-			add.dwAttributes|=FILE_ATTRIBUTE_DIRECTORY;
-			pFileList->InsertBefore(next,&add);
+			if (next->dwFlags&RCIF_DIR)
+				continue;
+			if (!(next->dwAttributes&FILE_ATTRIBUTE_DIRECTORY) && FSF.LStricmp(cur->strLDir.get(),next->strLDir.get()))
+			{
+				File add;
+				add.strLDir=next->strLDir;
+				add.strRDir=next->strRDir;
+				add.dwAttributes|=FILE_ATTRIBUTE_DIRECTORY;
+				pFileList->InsertBefore(next,&add);
+			}
+			break;
 		}
-
 		wchar_t LTime[18]={0}, RTime[18]={0};
 		SYSTEMTIME ModificTime;
 		FILETIME local;
@@ -1835,8 +1851,6 @@ bool UpdateFarList(HANDLE hDlg, DList<File> *pFileList, bool bInit=false)
 		else
 			FSF.sprintf(buf, L"%*.*s%c%*.*s%c%*.*s%c%*.*s%c%c%c%s",14,14,LSize,0x2502,17,17,LTime,0x2551,17,17,RTime,0x2502,14,14,RSize,0x2551,Mark,0x2502,cur->strFileName.get());
 
-		struct FarList List;
-		List.ItemsNumber=1;
 		struct FarListItem Item;
 		Item.Flags=0;
 		if (cur->dwAttributes&FILE_ATTRIBUTE_DIRECTORY)
@@ -1847,8 +1861,17 @@ bool UpdateFarList(HANDLE hDlg, DList<File> *pFileList, bool bInit=false)
 		else if (cur->dwFlags==RCIF_EQUAL) Item.Flags|=LIF_GRAYED;
 		Item.Text=buf;
 		Item.Reserved[0]=Item.Reserved[1]=Item.Reserved[2]=0;
+		struct FarList List;
+		List.ItemsNumber=1;
 		List.Items=&Item;
-		Info.SendDlgMessage(hDlg,DM_LISTADD,0,&List);
+		if (Info.SendDlgMessage(hDlg,DM_LISTADD,0,&List))
+		{
+			struct FarListItemData Data;
+			Data.Index=Index++;
+			Data.DataSize=sizeof(*cur);
+			Data.Data=cur;
+			Info.SendDlgMessage(hDlg,DM_LISTSETDATA,0,&Data);
+		}
 	}
 
 	if (buf) free(buf);
@@ -1923,18 +1946,19 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 			const INPUT_RECORD* record=(const INPUT_RECORD *)Param2;
 			if (record->EventType==MOUSE_EVENT)
 				if (Param1==0 && record->Event.MouseEvent.dwButtonState==FROM_LEFT_1ST_BUTTON_PRESSED && record->Event.MouseEvent.dwEventFlags==DOUBLE_CLICK)
-					goto GOTOFILE;
+					goto GOTOCMPFILE;
 			if (record->EventType==KEY_EVENT)
 			{
 				long Key=FSF.FarInputRecordToKey(record);
 
 				if (Key==KEY_ENTER || Key==KEY_NUMENTER)
 				{
-GOTOFILE:
+GOTOCMPFILE:
 					int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
-					File *cur=NULL; unsigned index;
-					for (cur=pFileList->First(), index=0; cur && index<Pos; cur=pFileList->Next(cur), index++)
-						;
+					File *cur=(File *)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
+//					File *cur=NULL; unsigned index;
+//					for (cur=pFileList->First(), index=0; cur && index<Pos; cur=pFileList->Next(cur), index++)
+//						;
 					if (cur)
 					{
 						if ((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN) ||
@@ -1958,6 +1982,7 @@ GOTOFILE:
 						}
 						else
 						{
+							bool bFindProg=false;
 							WIN32_FIND_DATA wfdFindData;
 							HANDLE hFind;
 							wchar_t DiffProgram[MAX_PATH];
@@ -1965,6 +1990,7 @@ GOTOFILE:
 							wcscat(DiffProgram,L"\\WinMerge\\WinMergeU.exe");
 							if ((hFind=FindFirstFileW(DiffProgram,&wfdFindData)) != INVALID_HANDLE_VALUE)
 							{
+								bFindProg=true;
 								FindClose(hFind);
 								STARTUPINFO si;
 								PROCESS_INFORMATION pi;
@@ -1974,6 +2000,8 @@ GOTOFILE:
 								FSF.sprintf(Command, L"\"%s\" -e \"%s\" \"%s\"", DiffProgram,strLFullFileName.get()+GetPosToName(strLFullFileName.get()),strRFullFileName.get()+GetPosToName(strRFullFileName.get()));
 								CreateProcess(0,Command,0,0,false,0,0,0,&si,&pi);
 							}
+							if (!bFindProg)
+								MessageBeep(MB_ICONASTERISK);
 						}
 					}
 					return true;
@@ -1982,9 +2010,10 @@ GOTOFILE:
 				{
 //GOTOFILE:
 					int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
-					File *cur=NULL; unsigned index;
-					for (cur=pFileList->First(), index=0; cur && index<Pos; cur=pFileList->Next(cur), index++)
-						;
+					File *cur=(File *)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
+//					File *cur=NULL; unsigned index;
+//					for (cur=pFileList->First(), index=0; cur && index<Pos; cur=pFileList->Next(cur), index++)
+//						;
 					if (cur)
 					{
 						if ((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN))
@@ -2008,59 +2037,93 @@ GOTOFILE:
 						}
 
 						PanelRedrawInfo LRInfo={0,0}, RRInfo={0,0};
+						bool bSetLDir=false, bSetLFile=false;
+						bool bSetRDir=false, bSetRFile=false;
 
-						bool bSetLDir=false;
 						if (FSF.LStricmp(strLPanelDir.get(),cur->strLDir.get()+GetPosToName(cur->strLDir.get())))
+						{
 							bSetLDir=Info.PanelControl(LPanel.hPanel,FCTL_SETPANELDIR,0,(cur->strLDir.get()+GetPosToName(cur->strLDir.get())));
+							Info.PanelControl(LPanel.hPanel,FCTL_BEGINSELECTION,0,0);
+						}
 						{
 							PanelInfo PInfo;
 							PInfo.StructSize=sizeof(PanelInfo);
 							Info.PanelControl(LPanel.hPanel,FCTL_GETPANELINFO,0,&PInfo);
 							FarGetPluginPanelItem FGPPI;
-							for (int i=0; i<PInfo.ItemsNumber && cur->strFileName.length(); i++)
+
+							for (int i=0; i<PInfo.ItemsNumber; i++)
 							{
 								FGPPI.Size=0; FGPPI.Item=0;
 								FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI));
 								if (FGPPI.Item)
 								{
 									Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI);
-									if (!FSF.LStricmp(cur->strFileName.get(),FGPPI.Item->FileName))
+									if (!bSetLFile && cur->strFileName.length() && !FSF.LStricmp(cur->strFileName.get(),FGPPI.Item->FileName))
 									{
 										LRInfo.CurrentItem=i;
-										free(FGPPI.Item);
-										break;
+										bSetLFile=true;
 									}
-									else
-										free(FGPPI.Item);
+									if (bSetLDir)
+									{
+										for (File *tmp=pFileList->First(); tmp; tmp=pFileList->Next(tmp))
+										{
+											if (FSF.LStricmp(tmp->strLDir.get(),cur->strLDir.get()))
+												continue;
+											if (!FSF.LStricmp(tmp->strFileName.get(),FGPPI.Item->FileName))
+											{
+												Info.PanelControl(LPanel.hPanel,FCTL_SETSELECTION,i,(void*)(tmp->dwFlags&RCIF_DIFFER));
+												break;
+											}
+										}
+									}
+									free(FGPPI.Item);
 								}
 							}
+							if (bSetLDir)
+								Info.PanelControl(LPanel.hPanel,FCTL_ENDSELECTION,0,0);
 						}
 
-						bool bSetRDir=false;
 						if (FSF.LStricmp(strRPanelDir.get(),cur->strRDir.get()+GetPosToName(cur->strRDir.get())))
+						{
 							bSetRDir=Info.PanelControl(RPanel.hPanel,FCTL_SETPANELDIR,0,(cur->strRDir.get()+GetPosToName(cur->strRDir.get())));
+							Info.PanelControl(RPanel.hPanel,FCTL_BEGINSELECTION,0,0);
+						}
 						{
 							PanelInfo PInfo;
 							PInfo.StructSize=sizeof(PanelInfo);
 							Info.PanelControl(RPanel.hPanel,FCTL_GETPANELINFO,0,&PInfo);
 							FarGetPluginPanelItem FGPPI;
-							for (int i=0; i<PInfo.ItemsNumber && cur->strFileName.length(); i++)
+
+							for (int i=0; i<PInfo.ItemsNumber; i++)
 							{
 								FGPPI.Size=0; FGPPI.Item=0;
 								FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI));
 								if (FGPPI.Item)
 								{
 									Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI);
-									if (!FSF.LStricmp(cur->strFileName.get(),FGPPI.Item->FileName))
+									if (!bSetRFile && cur->strFileName.length() && !FSF.LStricmp(cur->strFileName.get(),FGPPI.Item->FileName))
 									{
 										RRInfo.CurrentItem=i;
-										free(FGPPI.Item);
-										break;
+										bSetRFile=true;
 									}
-									else
-										free(FGPPI.Item);
+									if (bSetRDir)
+									{
+										for (File *tmp=pFileList->First(); tmp; tmp=pFileList->Next(tmp))
+										{
+											if (FSF.LStricmp(tmp->strRDir.get(),cur->strRDir.get()))
+												continue;
+											if (!FSF.LStricmp(tmp->strFileName.get(),FGPPI.Item->FileName))
+											{
+												Info.PanelControl(RPanel.hPanel,FCTL_SETSELECTION,i,(void*)(tmp->dwFlags&RCIF_DIFFER));
+												break;
+											}
+										}
+									}
+									free(FGPPI.Item);
 								}
 							}
+							if (bSetRDir)
+								Info.PanelControl(RPanel.hPanel,FCTL_ENDSELECTION,0,0);
 						}
 
 						Info.PanelControl(LPanel.hPanel,FCTL_REDRAWPANEL,0,&LRInfo);

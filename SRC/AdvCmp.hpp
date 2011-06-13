@@ -170,6 +170,8 @@ enum ResultCmpItemFlag {
 
 	RCIF_LNEW = 0x6,        // слева новый  |>|
 	RCIF_RNEW = 0xA,        // справа новый |<|
+
+	RCIF_DIR = 0x10,        // флаг: два каталога - особый случай!
 };
 
 // элемент для показа в диалоге результатов
@@ -197,7 +199,7 @@ struct File
 		ftLLastWriteTime.dwHighDateTime=0;
 		ftRLastWriteTime.dwLowDateTime=0;
 		ftRLastWriteTime.dwHighDateTime=0;
-		dwFlags=0;
+		dwFlags=RCIF_NONE;
 	}
 
 	const File& operator=(const File &f)
