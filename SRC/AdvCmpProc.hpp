@@ -30,8 +30,42 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #pragma once
-#include "DList.hpp"
 #include "AdvCmp.hpp"
+
+// элемент для показа в диалоге результатов
+struct File
+{
+	wchar_t *FileName;
+	wchar_t *LDir;
+	wchar_t *RDir;
+	DWORD dwAttributes;
+	unsigned __int64 nLFileSize;
+	unsigned __int64 nRFileSize;
+	FILETIME ftLLastWriteTime;
+	FILETIME ftRLastWriteTime;
+	DWORD dwFlags;
+
+	File()
+	{
+		FileName=NULL;
+		LDir=NULL;
+		RDir=NULL;
+		dwAttributes=0;
+		nLFileSize=0;
+		nRFileSize=0;
+		ftLLastWriteTime.dwLowDateTime=0;
+		ftLLastWriteTime.dwHighDateTime=0;
+		ftRLastWriteTime.dwLowDateTime=0;
+		ftRLastWriteTime.dwHighDateTime=0;
+		dwFlags=RCIF_NONE;
+	}
+};
+
+// массив элементов, для диалога с результатами сравнения
+struct FileList {
+	File *F;
+	int iCount;
+};
 
 // сама сравнивалка :)
 class AdvCmpProc
@@ -50,7 +84,7 @@ class AdvCmpProc
 		};
 
 		// массив элементов, для диалога с результатами сравнения
-		DList<File> FileList;
+		struct FileList FList;
 
 	private:
 		bool CheckForEsc(void);

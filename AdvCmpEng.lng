@@ -87,3 +87,5 @@
 "Some files (folders) couldn't been opened"
 
 "<Folder>"
+
+"Items %u: identical %u, different %u, unique %u - %u"

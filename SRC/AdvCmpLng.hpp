@@ -104,5 +104,7 @@ enum {
 	MOpenErrorTitle,
 	MOpenErrorBody,
 
-	MFolder
+	MFolder,
+
+	MListBottom
 };

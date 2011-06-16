@@ -174,53 +174,6 @@ enum ResultCmpItemFlag {
 	RCIF_DIR = 0x10,        // флаг: два каталога - особый случай!
 };
 
-// элемент для показа в диалоге результатов
-struct File
-{
-	string strFileName;
-	string strLDir;
-	string strRDir;
-	DWORD dwAttributes;
-	unsigned __int64 nLFileSize;
-	unsigned __int64 nRFileSize;
-	FILETIME ftLLastWriteTime;
-	FILETIME ftRLastWriteTime;
-	DWORD dwFlags;
-
-	File()
-	{
-		strFileName.clear();
-		strLDir.clear();
-		strRDir.clear();
-		dwAttributes=0;
-		nLFileSize=0;
-		nRFileSize=0;
-		ftLLastWriteTime.dwLowDateTime=0;
-		ftLLastWriteTime.dwHighDateTime=0;
-		ftRLastWriteTime.dwLowDateTime=0;
-		ftRLastWriteTime.dwHighDateTime=0;
-		dwFlags=RCIF_NONE;
-	}
-
-	const File& operator=(const File &f)
-	{
-		if (this != &f)
-		{
-			strFileName=f.strFileName;
-			strLDir=f.strLDir;
-			strRDir=f.strRDir;
-			dwAttributes=f.dwAttributes;
-			nLFileSize=f.nLFileSize;
-			nRFileSize=f.nRFileSize;
-			ftLLastWriteTime.dwLowDateTime=f.ftLLastWriteTime.dwLowDateTime;
-			ftLLastWriteTime.dwHighDateTime=f.ftLLastWriteTime.dwHighDateTime;
-			ftRLastWriteTime.dwLowDateTime=f.ftRLastWriteTime.dwLowDateTime;
-			ftRLastWriteTime.dwHighDateTime=f.ftRLastWriteTime.dwHighDateTime;
-			dwFlags=f.dwFlags;
-		}
-		return *this;
-	}
-};
 
 /****************************************************************************
  * Кеш сравнения "по содержимому"

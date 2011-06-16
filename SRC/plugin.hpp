@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2040
+  Plugin API for Far Manager 3.0 build 2066
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2040
+#define FARMANAGERVERSION_BUILD 2066
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -57,6 +57,7 @@ other possible license with no implications from the above license on them.
 #define CP_UNICODE 1200
 #define CP_REVERSEBOM 1201
 #define CP_AUTODETECT ((UINT)-1)
+#define CP_REDETECT   ((UINT)-2)
 
 typedef unsigned __int64 FARCOLORFLAGS;
 static const FARCOLORFLAGS
@@ -831,6 +832,8 @@ static const EDITOR_FLAGS
 	EF_DELETEONCLOSE         = 0x0000000000000010ULL,
 	EF_IMMEDIATERETURN       = 0x0000000000000100ULL,
 	EF_DELETEONLYFILEONCLOSE = 0x0000000000000200ULL,
+	EF_LOCKED                = 0x0000000000000400ULL,
+	EF_DISABLESAVEPOS        = 0x0000000000000800ULL,
 	EN_NONE                  = 0;
 
 enum EDITOR_EXITCODE
@@ -1328,6 +1331,7 @@ enum EDITOR_CONTROL_COMMANDS
 	ECTL_GETSTACKBOOKMARKS,
 	ECTL_UNDOREDO,
 	ECTL_GETFILENAME,
+	ECTL_DELCOLOR,
 };
 
 enum EDITOR_SETPARAMETER_TYPES
@@ -1511,7 +1515,19 @@ struct EditorColor
 	int EndPos;
 	EDITORCOLORFLAGS Flags;
 	struct FarColor Color;
+	GUID Owner;
+	unsigned Priority;
 };
+
+struct EditorDeleteColor
+{
+	size_t StructSize;
+	GUID Owner;
+	int StringNumber;
+	int StartPos;
+};
+
+#define EDITOR_COLOR_NORMAL_PRIORITY 0x80000000U
 
 struct EditorSaveFile
 {
