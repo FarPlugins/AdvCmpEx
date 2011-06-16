@@ -1825,8 +1825,8 @@ bool UpdateFarList(HANDLE hDlg, FileList *pFileList)
 		strRPanelDir.updsize();
 	}
 
-	int Index=0, Equal=0, Diff=0, LDiff=0, RDiff=0;
-	wchar_t *buf=(wchar_t *)malloc(65536*sizeof(wchar_t));
+	int Index=0, Items=0, Equal=0, Diff=0, LDiff=0, RDiff=0;
+	wchar_t buf[65536];
 
 	for (int i=0; i<pFileList->iCount; i++)
 	{
@@ -1834,12 +1834,6 @@ bool UpdateFarList(HANDLE hDlg, FileList *pFileList)
 
 		if (cur->dwFlags&RCIF_DIR)
 			continue;
-//			if ((cur->dwFlags&RCIF_DIR) && (cur->dwFlags&RCIF_EQUAL))
-//		{
-//			File *next=&pFileList->F[i+1];
-//			if (next && FSF.LStricmp(cur->LDir,next->LDir))
-//				continue;
-//		}
 
 		wchar_t LTime[18]={0}, RTime[18]={0};
 		SYSTEMTIME ModificTime;
@@ -1867,8 +1861,8 @@ bool UpdateFarList(HANDLE hDlg, FileList *pFileList)
 		}
 		else
 		{
-			if (LTime[0] /*|| !cur->dwFlags*/) strcentr(LSize,GetMsg(MFolder),nSIZE,L' ');
-			if (RTime[0] /*|| !cur->dwFlags*/) strcentr(RSize,GetMsg(MFolder),nSIZE,L' ');
+			if (LTime[0]) strcentr(LSize,GetMsg(MFolder),nSIZE,L' ');
+			if (RTime[0]) strcentr(RSize,GetMsg(MFolder),nSIZE,L' ');
 		}
 
 		wchar_t Mark;
@@ -1886,10 +1880,52 @@ bool UpdateFarList(HANDLE hDlg, FileList *pFileList)
 				Mark=L' '; break;
 		}
 
+		// виртуальная папка
+		bool bAddVirtDir=false;
+		string strVirtDir;
+
+		// если попали сразу в подкаталог... добавим виртуальную папку в начало
+		if (!Index && FSF.LStricmp(cur->LDir+GetPosToName(cur->LDir),strLPanelDir.get()))
+		{
+			strVirtDir=cur->LDir+(GetPosToName(cur->LDir)+strLPanelDir.length());
+			if (strVirtDir.length()>0 && strVirtDir[(size_t)(strVirtDir.length()-1)]!=L'\\') strVirtDir+=L"\\";
+			struct FarListItem Item;
+			Item.Flags=0x2b;
+			Item.Flags|=LIF_CHECKED;
+			wchar_t Size[65];
+			strcentr(Size,GetMsg(MFolder),nSIZE,L' ');
+			FSF.sprintf(buf, L"%*.*s%c%*.*s%c%c%c%s",nSIZE,nSIZE,Size,0x2551,nSIZE,nSIZE,Size,0x2551,L' ',0x2502,strVirtDir.get());
+			Item.Text=buf;
+			Item.Reserved[0]=Item.Reserved[1]=Item.Reserved[2]=0;
+			struct FarList List;
+			List.ItemsNumber=1;
+			List.Items=&Item;
+			Info.SendDlgMessage(hDlg,DM_LISTADD,0,&List);
+			Index++;
+		}
+		else
+		{
+			for (int j=i+1; j<pFileList->iCount; j++)
+			{
+				File *next=&pFileList->F[j];
+
+				if (next->dwFlags&RCIF_DIR)
+					continue;
+
+				if (FSF.LStricmp(cur->LDir,next->LDir))
+				{
+					bAddVirtDir=true;
+					strVirtDir=next->LDir+(GetPosToName(next->LDir)+strLPanelDir.length());
+					if (strVirtDir.length()>0 && strVirtDir[(size_t)(strVirtDir.length()-1)]!=L'\\') strVirtDir+=L"\\";
+				}
+				break;
+			}
+		}
+
 		if (cur->dwAttributes&FILE_ATTRIBUTE_DIRECTORY)
 		{
 			string strDir;
-			if (LTime[0] /*|| !cur->dwFlags*/)
+			if (LTime[0])
 				strDir=cur->LDir+(GetPosToName(cur->LDir)+strLPanelDir.length());
 			if (RTime[0])
 				strDir=cur->RDir+(GetPosToName(cur->RDir)+strRPanelDir.length());
@@ -1909,23 +1945,36 @@ bool UpdateFarList(HANDLE hDlg, FileList *pFileList)
 			Item.Flags=0x2b; 
 			Item.Flags|=LIF_CHECKED;
 		}
-		else if (cur->dwFlags==RCIF_EQUAL) Item.Flags|=LIF_GRAYED;
+		else if (cur->dwFlags==RCIF_EQUAL) 
+			Item.Flags|=LIF_GRAYED;
 		Item.Text=buf;
 		Item.Reserved[0]=Item.Reserved[1]=Item.Reserved[2]=0;
 		struct FarList List;
 		List.ItemsNumber=1;
 		List.Items=&Item;
+
 		if (Info.SendDlgMessage(hDlg,DM_LISTADD,0,&List))
 		{
+			Items++;
 			struct FarListItemData Data;
 			Data.Index=Index++;
 			Data.DataSize=sizeof(*cur);
 			Data.Data=cur;
 			Info.SendDlgMessage(hDlg,DM_LISTSETDATA,0,&Data);
 		}
-	}
 
-	if (buf) free(buf);
+		if (bAddVirtDir)
+		{
+			strcentr(LSize,GetMsg(MFolder),nSIZE,L' ');
+			FSF.sprintf(buf, L"%*.*s%c%*.*s%c%c%c%s",nSIZE,nSIZE,LSize,0x2551,nSIZE,nSIZE,LSize,0x2551,L' ',0x2502,strVirtDir.get());
+			Item.Flags=0x2b; 
+			Item.Flags|=LIF_CHECKED;
+			Item.Text=buf;
+			List.Items=&Item;
+			Info.SendDlgMessage(hDlg,DM_LISTADD,0,&List);
+			Index++;
+		}
+	}
 
 	wchar_t Title[MAX_PATH];
 	wchar_t Bottom[MAX_PATH];
@@ -1935,7 +1984,7 @@ bool UpdateFarList(HANDLE hDlg, FileList *pFileList)
 	ListTitle.Bottom=Bottom;
 	ListTitle.BottomLen=sizeof(Bottom);;
 	Info.SendDlgMessage(hDlg,DM_LISTGETTITLES,0,&ListTitle);
-	FSF.sprintf(Bottom,GetMsg(MListBottom),Index,Equal,Diff,LDiff,RDiff);
+	FSF.sprintf(Bottom,GetMsg(MListBottom),Items,Equal,Diff,LDiff,RDiff);
 	ListTitle.Bottom=Bottom;
 	Info.SendDlgMessage(hDlg,DM_LISTSETTITLES,0,&ListTitle);
 
