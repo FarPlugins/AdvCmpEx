@@ -65,6 +65,10 @@ struct File
 struct FileList {
 	File *F;
 	int iCount;
+	bool bShowIdentical;
+	bool bShowDifferent;
+	bool bShowLUnique;
+	bool bShowRUnique;
 };
 
 // сама сравнивалка :)

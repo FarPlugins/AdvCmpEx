@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2066
+  Plugin API for Far Manager 3.0 build 2068
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2066
+#define FARMANAGERVERSION_BUILD 2068
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -61,8 +61,8 @@ other possible license with no implications from the above license on them.
 
 typedef unsigned __int64 FARCOLORFLAGS;
 static const FARCOLORFLAGS
-	FMSG_FG_4BIT  = 0x0000000000000001ULL,
-	FMSG_BG_4BIT  = 0x0000000000000002ULL;
+	FCF_FG_4BIT  = 0x0000000000000001ULL,
+	FCF_BG_4BIT  = 0x0000000000000002ULL;
 
 struct FarColor
 {
@@ -2320,7 +2320,7 @@ extern "C"
 	HANDLE WINAPI OpenW(const struct OpenInfo *Info);
 	int    WINAPI ProcessDialogEventW(int Event,void *Param);
 	int    WINAPI ProcessEditorEventW(int Event,void *Param);
-	int    WINAPI ProcessEditorInputW(const ProcessEditorInputInfo *Info);
+	int    WINAPI ProcessEditorInputW(const struct ProcessEditorInputInfo *Info);
 	int    WINAPI ProcessEventW(HANDLE hPanel,int Event,void *Param);
 	int    WINAPI ProcessHostFileW(const struct ProcessHostFileInfo *Info);
 	int    WINAPI ProcessPanelInputW(HANDLE hPanel,const struct ProcessPanelInputInfo *Info);
