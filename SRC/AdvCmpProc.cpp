@@ -1826,7 +1826,7 @@ bool UpdateFarList(HANDLE hDlg, FileList *pFileList, bool bSort=false)
 		strRPanelDir.updsize();
 	}
 
-	int Index=0, Items=0, Equal=0, Diff=0, LDiff=0, RDiff=0;
+	int Index=0, Items=0, Equal=0, Diff=0, LNew=0, RNew=0;
 	wchar_t buf[65536];
 
 	for (int i=0; i<pFileList->iCount; i++)
@@ -1852,9 +1852,9 @@ bool UpdateFarList(HANDLE hDlg, FileList *pFileList, bool bSort=false)
 			case RCIF_DIFFER:
 				Mark=0x2260; Diff++; break;
 			case RCIF_LNEW:
-				Mark=0x2192; LDiff++; break;
+				Mark=0x2192; LNew++; break;
 			case RCIF_RNEW:
-				Mark=0x2190; RDiff++; break;
+				Mark=0x2190; RNew++; break;
 			default:
 				Mark=L' '; break;
 		}
@@ -2004,7 +2004,7 @@ bool UpdateFarList(HANDLE hDlg, FileList *pFileList, bool bSort=false)
 	ListTitle.Bottom=Bottom;
 	ListTitle.BottomLen=sizeof(Bottom);;
 	Info.SendDlgMessage(hDlg,DM_LISTGETTITLES,0,&ListTitle);
-	FSF.sprintf(Bottom,GetMsg(MListBottom),Items,Equal,pFileList->bShowIdentical?L' ':L'*',Diff,pFileList->bShowDifferent?L' ':L'*',LDiff,pFileList->bShowLUnique?L' ':L'*',RDiff,pFileList->bShowRUnique?L' ':L'*');
+	FSF.sprintf(Bottom,GetMsg(MListBottom),Items,Equal,pFileList->bShowIdentical?L' ':L'*',Diff,pFileList->bShowDifferent?L' ':L'*',LNew,pFileList->bShowLUnique?L' ':L'*',RNew,pFileList->bShowRUnique?L' ':L'*');
 	ListTitle.Bottom=Bottom;
 	Info.SendDlgMessage(hDlg,DM_LISTSETTITLES,0,&ListTitle);
 

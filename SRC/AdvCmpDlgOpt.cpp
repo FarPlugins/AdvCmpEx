@@ -257,6 +257,8 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORE,(void*)false);
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORETEMPL,(void*)false);
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHE,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEIGNORE,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHEUSE,(void*)false);
 				}
 				//-----------
 				if (!Cache.ItemsNumber)
