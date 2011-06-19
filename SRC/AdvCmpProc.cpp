@@ -929,7 +929,11 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 			{
 				char *LPtr=Opt.Buf[0]+LBufPos, *RPtr=Opt.Buf[1]+RBufPos;
 				bool bLExpectNewLine=false, bRExpectNewLine=false;
+
 				SHFILEINFO shinfo;
+				bool bExe=(SHGetFileInfoW(strLFullFileName,0,&shinfo,sizeof(shinfo),SHGFI_EXETYPE) ||
+									SHGetFileInfoW(strRFullFileName,0,&shinfo,sizeof(shinfo),SHGFI_EXETYPE));
+
 				DWORD dwFileCRC=0;
 				__int64 PartlyKbSize=(__int64)Opt.PartlyKbSize*1024;
 				// частичное сравнение
@@ -1051,10 +1055,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 					}
 
 					// обычное сравнение (фильтр отключен или файлы исполнимые)
-					if ( !Opt.Ignore ||
-								( SHGetFileInfoW(strLFullFileName,0,&shinfo,sizeof(shinfo),SHGFI_EXETYPE) ||
-									SHGetFileInfoW(strRFullFileName,0,&shinfo,sizeof(shinfo),SHGFI_EXETYPE) )
-							)
+					if (!Opt.Ignore || bExe)
 					{
 						if (memcmp(Opt.Buf[0], Opt.Buf[1], LBufPos))
 						{
@@ -1066,21 +1067,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 
 						// считали всё, выходим
 						if (LBufPos != Opt.BufSize || RBufPos != Opt.BufSize)
-						{
-							if (Opt.Cache && !(LPanel.bARC || RPanel.bARC))
-{
-								Opt.Cache=SetCacheResult(dwLFileName,dwRFileName,
-																				((__int64)pLPPI->LastWriteTime.dwHighDateTime << 32) | pLPPI->LastWriteTime.dwLowDateTime,
-																				((__int64)pRPPI->LastWriteTime.dwHighDateTime << 32) | pRPPI->LastWriteTime.dwLowDateTime,
-																					bEqual?RCIF_EQUAL:RCIF_DIFFER);
-//              DebugMsg(L"SetCacheResult",(wchar_t*)pLPPI->FindData.lpwszFileName,bEqual?RCIF_EQUAL:RCIF_DIFFER);
-//              wchar_t buf[200];
-//              FSF.sprintf(buf, L"SetCacheResult: L - %X R- %X", dwLFileName, dwRFileName);
-//              DebugMsg(buf,(wchar_t*)pLPPI->FindData.lpwszFileName,bEqual?RCIF_EQUAL:RCIF_DIFFER);
-
-}
 							break;
-						}
 					}
 					else
 					// фильтр включен
@@ -1182,6 +1169,20 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 					}
 					if (!LReadSize && !RReadSize)
 						break;
+				}
+
+				// поместим в кэш результат
+				if (Opt.Cache && !(LPanel.bARC || RPanel.bARC) && (!Opt.Ignore || bExe) && !Opt.Partly)
+				{
+					Opt.Cache=SetCacheResult(dwLFileName,dwRFileName,
+																		((__int64)pLPPI->LastWriteTime.dwHighDateTime << 32) | pLPPI->LastWriteTime.dwLowDateTime,
+																		((__int64)pRPPI->LastWriteTime.dwHighDateTime << 32) | pRPPI->LastWriteTime.dwLowDateTime,
+																		bEqual?RCIF_EQUAL:RCIF_DIFFER);
+//              DebugMsg(L"SetCacheResult",(wchar_t*)pLPPI->FindData.lpwszFileName,bEqual?RCIF_EQUAL:RCIF_DIFFER);
+//              wchar_t buf[200];
+//              FSF.sprintf(buf, L"SetCacheResult: L - %X R- %X", dwLFileName, dwRFileName);
+//              DebugMsg(buf,(wchar_t*)pLPPI->FindData.lpwszFileName,bEqual?RCIF_EQUAL:RCIF_DIFFER);
+
 				}
 			}
 			CloseHandle(hLFile);
@@ -1521,6 +1522,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 					}
 					i++; j++;
 					CmpInfo.LDiff++; CmpInfo.RDiff++;
+					dwFlag=RCIF_DIFFER;
 					if (Opt.ProcessTillFirstDiff && !bBrokenByEsc)
 					{     // нужно ли продолжать сравнивать
 						bCompareAll=(Opt.ShowMsg && !YesNoMsg(MFirstDiffTitle, MFirstDiffBody));
