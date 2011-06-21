@@ -2110,6 +2110,7 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 					if (i==9) // виртуальная папка
 					{
 						int color=0x1F;
+						Colors->Colors[i].Flags=FCF_FG_4BIT|FCF_BG_4BIT;
 						Colors->Colors[i].ForegroundColor=color;
 						Colors->Colors[i].BackgroundColor=color>>4;
 					}
