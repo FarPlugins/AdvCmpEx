@@ -289,6 +289,12 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 				if (!Opt.SkipSubstr)
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgECMPSKIP,(void*)false);
 				//------------
+				if (LPanel.bTMP || RPanel.bTMP)
+				{
+					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgDIALOG,(void*)BSTATE_UNCHECKED);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDIALOG,(void*)false);
+				}
+				//------------
 				if (!LPanel.bCurFile || !RPanel.bCurFile)
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgUNDERCURSOR,(void*)false);
 

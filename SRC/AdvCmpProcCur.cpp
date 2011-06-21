@@ -220,7 +220,14 @@ INT_PTR WINAPI AdvCmpProcCur::ShowCmpCurDialogProc(HANDLE hDlg,int Msg,int Param
 	{
 		case DN_CTLCOLORDLGITEM:
 			if (Param1!=0)
-				return (Info.AdvControl(&MainGuid,ACTL_GETCOLOR,COL_PANELTEXT,0)<<16)|(Info.AdvControl(&MainGuid,ACTL_GETCOLOR,COL_PANELTEXT,0)<<8)|(Info.AdvControl(&MainGuid,ACTL_GETCOLOR,COL_PANELSELECTEDTITLE,0));
+			{
+				FarColor Color;
+				struct FarDialogItemColors *Colors=(FarDialogItemColors*)Param2;
+				Info.AdvControl(&MainGuid,ACTL_GETCOLOR,COL_PANELSELECTEDTITLE,&Color);
+				Colors->Colors[0] = Color;
+				Info.AdvControl(&MainGuid,ACTL_GETCOLOR,COL_PANELTEXT,&Color);
+				Colors->Colors[1] = Colors->Colors[2] = Color;
+			}
 			break;
 
 		case DN_DRAWDLGITEM:
@@ -443,9 +450,11 @@ int AdvCmpProcCur::ShowCmpCurDialog(const PluginPanelItem *pLPPI,const PluginPan
 							RModificTime.wHour,RModificTime.wMinute,RModificTime.wSecond,RModificTime.wDay,RModificTime.wMonth,RModificTime.wYear,10,10,RAttributes);
 	DialogItems[8].Data=Buf2;
 
-	int color=Info.AdvControl(&MainGuid,ACTL_GETCOLOR,COL_PANELTEXT,0);
-	color=color&0xF0;
-	color=color|(color>>4);
+	FarColor Color;
+	Info.AdvControl(&MainGuid,ACTL_GETCOLOR,COL_PANELTEXT,&Color);
+	int color=0x1B;
+	if((Color.Flags&FCF_FG_4BIT) && (Color.Flags&FCF_BG_4BIT))
+		color=Color.ForegroundColor|(Color.BackgroundColor<<4);
 
 	UpdateImage(&LPicData,true);
 	UpdateImage(&RPicData,true);
@@ -457,7 +466,7 @@ int AdvCmpProcCur::ShowCmpCurDialog(const PluginPanelItem *pLPPI,const PluginPan
 		DialogItems[0].VBuf=VirtualBuffer;
 		for(unsigned int i=0;i<VBufSize;i++)
 		{
-			VirtualBuffer[i].Char.UnicodeChar=L'.';
+			VirtualBuffer[i].Char.UnicodeChar=L' ';
 			VirtualBuffer[i].Attributes=color;
 		}
 

@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2068
+  Plugin API for Far Manager 3.0 build 2070
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2068
+#define FARMANAGERVERSION_BUILD 2070
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -145,8 +145,6 @@ static __inline BOOL IsEdit(enum FARDIALOGITEMTYPES Type)
 typedef unsigned __int64 FARDIALOGITEMFLAGS;
 static const FARDIALOGITEMFLAGS
 	DIF_NONE                  = 0,
-	DIF_COLORMASK             = 0x00000000000000ffULL,
-	DIF_SETCOLOR              = 0x0000000000000100ULL,
 	DIF_BOXCOLOR              = 0x0000000000000200ULL,
 	DIF_GROUP                 = 0x0000000000000400ULL,
 	DIF_LEFTTEXT              = 0x0000000000000800ULL,
@@ -421,12 +419,12 @@ struct FarListTitles
 	const wchar_t *Bottom;
 };
 
-struct FarListColors
+struct FarDialogItemColors
 {
 	unsigned __int64 Flags;
-	DWORD  Reserved;
-	int    ColorCount;
-	LPBYTE Colors;
+	size_t ColorsCount;
+	struct FarColor* Colors;
+	void* Reserved;
 };
 
 struct FarDialogItem
@@ -776,7 +774,7 @@ enum FILE_CONTROL_COMMANDS
 typedef void (WINAPI *FARAPITEXT)(
     int X,
     int Y,
-    int Color,
+    const FarColor* Color,
     const wchar_t *Str
 );
 
@@ -1116,9 +1114,9 @@ static const FARSETCOLORFLAGS
 struct FarSetColors
 {
 	FARSETCOLORFLAGS Flags;
-	int StartIndex;
-	int ColorCount;
-	LPBYTE Colors;
+	size_t StartIndex;
+	size_t ColorsCount;
+	FarColor* Colors;
 };
 
 enum WINDOWINFO_TYPE

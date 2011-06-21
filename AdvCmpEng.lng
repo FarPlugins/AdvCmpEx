@@ -88,4 +88,4 @@
 
 "<Folder>"
 
-"Items %u: identical %u%c different %u%c unique %u%c - %u%c"
+"Items %u (%u)%c identical %u%c different %u%c unique %u%c - %u%c"

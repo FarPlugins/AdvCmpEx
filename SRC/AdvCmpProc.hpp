@@ -44,6 +44,7 @@ struct File
 	FILETIME ftLLastWriteTime;
 	FILETIME ftRLastWriteTime;
 	DWORD dwFlags;
+	bool bSelect;
 
 	File()
 	{
@@ -58,6 +59,7 @@ struct File
 		ftRLastWriteTime.dwLowDateTime=0;
 		ftRLastWriteTime.dwHighDateTime=0;
 		dwFlags=RCIF_NONE;
+		bSelect=false;
 	}
 };
 
@@ -65,6 +67,14 @@ struct File
 struct FileList {
 	File *F;
 	int iCount;
+	// для строки статуса:
+	int Items;
+	int Select;
+	int Identical;
+	int Different;
+	int LUnique;
+	int RUnique;
+	bool bShowSelect;
 	bool bShowIdentical;
 	bool bShowDifferent;
 	bool bShowLUnique;

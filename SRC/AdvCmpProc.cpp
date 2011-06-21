@@ -159,6 +159,13 @@ AdvCmpProc::AdvCmpProc()
 
 	FList.F=NULL;
 	FList.iCount=0;
+	FList.Items=0;
+	FList.Select=0;
+	FList.Identical=0;
+	FList.Different=0;
+	FList.LUnique=0;
+	FList.RUnique=0;
+	FList.bShowSelect=true;
 	FList.bShowIdentical=true;
 	FList.bShowDifferent=true;
 	FList.bShowLUnique=true;
@@ -1747,15 +1754,21 @@ bool AdvCmpProc::BuildFileList(const wchar_t *LDir,const PluginPanelItem *pLPPI,
 	FList.F[FList.iCount].RDir=(wchar_t*)malloc((wcslen(RDir)+1)*sizeof(wchar_t));
 	if (FList.F[FList.iCount].RDir)
 		wcscpy(FList.F[FList.iCount].RDir,RDir);
+	FList.F[FList.iCount].dwAttributes=(pLPPI?pLPPI->FileAttributes:pRPPI->FileAttributes);
 
 	if (pLPPI)
 	{
 		FList.F[FList.iCount].FileName=(wchar_t*)malloc((wcslen(pLPPI->FileName)+1)*sizeof(wchar_t));
 		if (FList.F[FList.iCount].FileName) wcscpy(FList.F[FList.iCount].FileName,pLPPI->FileName);
-		FList.F[FList.iCount].dwAttributes=pLPPI->FileAttributes;
 		FList.F[FList.iCount].ftLLastWriteTime.dwLowDateTime=pLPPI->LastWriteTime.dwLowDateTime;
 		FList.F[FList.iCount].ftLLastWriteTime.dwHighDateTime=pLPPI->LastWriteTime.dwHighDateTime;
 		FList.F[FList.iCount].nLFileSize=pLPPI->FileSize;
+	}
+	else
+	{
+		FList.F[FList.iCount].ftLLastWriteTime.dwLowDateTime=0;
+		FList.F[FList.iCount].ftLLastWriteTime.dwHighDateTime=0;
+		FList.F[FList.iCount].nLFileSize=0;
 	}
 	if (pRPPI)
 	{
@@ -1764,10 +1777,15 @@ bool AdvCmpProc::BuildFileList(const wchar_t *LDir,const PluginPanelItem *pLPPI,
 			FList.F[FList.iCount].FileName=(wchar_t*)malloc((wcslen(pRPPI->FileName)+1)*sizeof(wchar_t));
 			if (FList.F[FList.iCount].FileName) wcscpy(FList.F[FList.iCount].FileName,pRPPI->FileName);
 		}
-		FList.F[FList.iCount].dwAttributes=pRPPI->FileAttributes;
 		FList.F[FList.iCount].ftRLastWriteTime.dwLowDateTime=pRPPI->LastWriteTime.dwLowDateTime;
 		FList.F[FList.iCount].ftRLastWriteTime.dwHighDateTime=pRPPI->LastWriteTime.dwHighDateTime;
 		FList.F[FList.iCount].nRFileSize=pRPPI->FileSize;
+	}
+	else
+	{
+		FList.F[FList.iCount].ftRLastWriteTime.dwLowDateTime=0;
+		FList.F[FList.iCount].ftRLastWriteTime.dwHighDateTime=0;
+		FList.F[FList.iCount].nRFileSize=0;
 	}
 
 	FList.iCount++;
@@ -1801,8 +1819,15 @@ int __cdecl SortList(const void *el1, const void *el2)
 /***************************************************************************
  * Изменение/обновление листа файлов в диалоге
  ***************************************************************************/
-bool UpdateFarList(HANDLE hDlg, FileList *pFileList, bool bSort=false)
+bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bSort=false)
 {
+	pFileList->Items=0;
+	pFileList->Select=0;
+	pFileList->Identical=0;
+	pFileList->Different=0;
+	pFileList->LUnique=0;
+	pFileList->RUnique=0;
+
 	// запросим информацию
 	FarListInfo ListInfo;
 	Info.SendDlgMessage(hDlg,DM_LISTINFO,0,&ListInfo);
@@ -1831,7 +1856,7 @@ bool UpdateFarList(HANDLE hDlg, FileList *pFileList, bool bSort=false)
 		strRPanelDir.updsize();
 	}
 
-	int Index=0, Items=0, Equal=0, Diff=0, LNew=0, RNew=0;
+	int Index=0;
 	wchar_t buf[65536];
 
 	for (int i=0; i<pFileList->iCount; i++)
@@ -1839,6 +1864,8 @@ bool UpdateFarList(HANDLE hDlg, FileList *pFileList, bool bSort=false)
 		File *cur=&pFileList->F[i];
 
 		if (cur->dwFlags&RCIF_DIR)
+			continue;
+		if (cur->bSelect && !pFileList->bShowSelect)
 			continue;
 		if ((cur->dwFlags==RCIF_EQUAL) && !pFileList->bShowIdentical)
 			continue;
@@ -1853,13 +1880,13 @@ bool UpdateFarList(HANDLE hDlg, FileList *pFileList, bool bSort=false)
 		switch (cur->dwFlags)
 		{
 			case RCIF_EQUAL:
-				Mark=L'='; Equal++; break;
+				Mark=L'='; pFileList->Identical++; break;
 			case RCIF_DIFFER:
-				Mark=0x2260; Diff++; break;
+				Mark=0x2260; pFileList->Different++; break;
 			case RCIF_LNEW:
-				Mark=0x2192; LNew++; break;
+				Mark=0x2192; pFileList->LUnique++; break;
 			case RCIF_RNEW:
-				Mark=0x2190; RNew++; break;
+				Mark=0x2190; pFileList->RUnique++; break;
 			default:
 				Mark=L' '; break;
 		}
@@ -1905,9 +1932,7 @@ bool UpdateFarList(HANDLE hDlg, FileList *pFileList, bool bSort=false)
 			strVirtDir=cur->LDir+(GetPosToName(cur->LDir)+strLPanelDir.length());
 			if (strVirtDir.length()>0 && strVirtDir[(size_t)(strVirtDir.length()-1)]!=L'\\') strVirtDir+=L"\\";
 			struct FarListItem Item;
-			Item.Flags=0x2b;
-			Item.Flags|=LIF_CHECKED;
-			Item.Flags|=LIF_DISABLE;
+			Item.Flags=LIF_DISABLE;
 			wchar_t Size[65];
 			strcentr(Size,GetMsg(MFolder),nSIZE,L' ');
 			FSF.sprintf(buf, L"%*.*s%c%*.*s%c%c%c%s",nSIZE,nSIZE,Size,0x2551,nSIZE,nSIZE,Size,0x2551,L' ',0x2502,strVirtDir.get());
@@ -1926,6 +1951,8 @@ bool UpdateFarList(HANDLE hDlg, FileList *pFileList, bool bSort=false)
 				File *next=&pFileList->F[j];
 
 				if (next->dwFlags&RCIF_DIR)
+					continue;
+				if (next->bSelect && !pFileList->bShowSelect)
 					continue;
 				if ((next->dwFlags==RCIF_EQUAL) && !pFileList->bShowIdentical)
 					continue;
@@ -1964,22 +1991,24 @@ bool UpdateFarList(HANDLE hDlg, FileList *pFileList, bool bSort=false)
 
 		struct FarListItem Item;
 		Item.Flags=0;
-		if (cur->dwAttributes&FILE_ATTRIBUTE_DIRECTORY)
-		{
-			Item.Flags=0x2b; 
-			Item.Flags|=LIF_CHECKED;
-		}
-		else if (cur->dwFlags==RCIF_EQUAL) 
+		if (cur->dwFlags==RCIF_EQUAL)
 			Item.Flags|=LIF_GRAYED;
+		if (cur->bSelect)
+		{
+			Item.Flags|=LIF_CHECKED;
+			pFileList->Select++;
+		}
 		Item.Text=buf;
 		Item.Reserved[0]=Item.Reserved[1]=Item.Reserved[2]=0;
 		struct FarList List;
 		List.ItemsNumber=1;
 		List.Items=&Item;
 
+		// если удачно добавили элемент...
 		if (Info.SendDlgMessage(hDlg,DM_LISTADD,0,&List))
 		{
-			Items++;
+			pFileList->Items++;
+			// ... то ассоциируем данные с элементом листа
 			struct FarListItemData Data;
 			Data.Index=Index++;
 			Data.DataSize=sizeof(*cur);
@@ -1991,9 +2020,7 @@ bool UpdateFarList(HANDLE hDlg, FileList *pFileList, bool bSort=false)
 		{
 			strcentr(LSize,GetMsg(MFolder),nSIZE,L' ');
 			FSF.sprintf(buf, L"%*.*s%c%*.*s%c%c%c%s",nSIZE,nSIZE,LSize,0x2551,nSIZE,nSIZE,LSize,0x2551,L' ',0x2502,strVirtDir.get());
-			Item.Flags=0x2b; 
-			Item.Flags|=LIF_CHECKED;
-			Item.Flags|=LIF_DISABLE;
+			Item.Flags=LIF_DISABLE;
 			Item.Text=buf;
 			List.Items=&Item;
 			Info.SendDlgMessage(hDlg,DM_LISTADD,0,&List);
@@ -2001,22 +2028,28 @@ bool UpdateFarList(HANDLE hDlg, FileList *pFileList, bool bSort=false)
 		}
 	}
 
-	wchar_t Title[MAX_PATH];
-	wchar_t Bottom[MAX_PATH];
+	static wchar_t Title[MAX_PATH];
+	static wchar_t Bottom[MAX_PATH];
 	FarListTitles ListTitle;
 	ListTitle.Title=Title;
 	ListTitle.TitleLen=sizeof(Title);
 	ListTitle.Bottom=Bottom;
 	ListTitle.BottomLen=sizeof(Bottom);;
 	Info.SendDlgMessage(hDlg,DM_LISTGETTITLES,0,&ListTitle);
-	FSF.sprintf(Bottom,GetMsg(MListBottom),Items,Equal,pFileList->bShowIdentical?L' ':L'*',Diff,pFileList->bShowDifferent?L' ':L'*',LNew,pFileList->bShowLUnique?L' ':L'*',RNew,pFileList->bShowRUnique?L' ':L'*');
+	FSF.sprintf(Bottom,GetMsg(MListBottom),pFileList->Items,pFileList->Select,pFileList->bShowSelect?L' ':L'*',
+							pFileList->Identical,pFileList->bShowIdentical?L' ':L'*',
+							pFileList->Different,pFileList->bShowDifferent?L' ':L'*',
+							pFileList->LUnique,pFileList->bShowLUnique?L' ':L'*',pFileList->RUnique,pFileList->bShowRUnique?L' ':L'*');
 	ListTitle.Bottom=Bottom;
 	Info.SendDlgMessage(hDlg,DM_LISTSETTITLES,0,&ListTitle);
 
-	FarListPos ListPos;
-	ListPos.SelectPos=0; //ListInfo.SelectPos;
-	ListPos.TopPos=-1/*ListInfo.TopPos*/;
-	Info.SendDlgMessage(hDlg,DM_LISTSETCURPOS,0,&ListPos);
+	if (bSetCurPos)
+	{
+		FarListPos ListPos;
+		ListPos.SelectPos=0; //ListInfo.SelectPos;
+		ListPos.TopPos=-1/*ListInfo.TopPos*/;
+		Info.SendDlgMessage(hDlg,DM_LISTSETCURPOS,0,&ListPos);
+	}
 
 	Info.SendDlgMessage(hDlg,DM_LISTSETMOUSEREACTION,0,(void*)LMRT_NEVER);
 	return true;
@@ -2029,7 +2062,7 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 	switch(Msg)
 	{
 		case DN_INITDIALOG:
-			UpdateFarList(hDlg,pFileList,true);
+			MakeFarList(hDlg,pFileList,true,true);
 			break;
 
 		case DN_RESIZECONSOLE:
@@ -2050,8 +2083,9 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 		case DN_CTLCOLORDLGLIST:
 			if (Param1==0)
 			{
-				static BYTE ColorDlgList[15];
-				BYTE ColorIndex[]=
+				struct FarDialogItemColors *Colors=(FarDialogItemColors*)Param2;
+				FarColor Color;
+				int ColorIndex[15]=
 				{
 					COL_PANELTEXT,
 					COL_PANELBOX,
@@ -2069,13 +2103,17 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 					COL_PANELHIGHLIGHTTEXT,   // одинаковые элементы
 					COL_PANELCURSOR
 				};
-				for (int i=0; i<sizeof(ColorDlgList); i++)
-					ColorDlgList[i]=Info.AdvControl(&MainGuid,ACTL_GETCOLOR,ColorIndex[i],0);
-				ColorDlgList[9]=0x1F;
-				FarListColors *flc=(FarListColors *)Param2;
-				flc->Flags=flc->Reserved=0;
-				flc->ColorCount=sizeof(ColorDlgList);
-				flc->Colors=ColorDlgList;
+				for (int i=0; i<15; i++)
+				{
+					Info.AdvControl(&MainGuid,ACTL_GETCOLOR,ColorIndex[i],&Color);
+					Colors->Colors[i] = Color;
+					if (i==9) // виртуальная папка
+					{
+						int color=0x1F;
+						Colors->Colors[i].ForegroundColor=color;
+						Colors->Colors[i].BackgroundColor=color>>4;
+					}
+				}
 				return true;
 			}
 
@@ -2098,12 +2136,14 @@ GOTOCMPFILE:
 					{
 						if ((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN) ||
 								(cur->dwAttributes&FILE_ATTRIBUTE_DIRECTORY) ||
-								!(cur->ftLLastWriteTime.dwLowDateTime || cur->ftLLastWriteTime.dwHighDateTime) ||
-								!(cur->ftRLastWriteTime.dwLowDateTime || cur->ftRLastWriteTime.dwHighDateTime) )
+								!(cur->ftLLastWriteTime.dwLowDateTime && cur->ftLLastWriteTime.dwHighDateTime) ||
+								!(cur->ftRLastWriteTime.dwLowDateTime && cur->ftRLastWriteTime.dwHighDateTime) )
 						{
+//DebugMsg(cur->FileName,L"return");
 							MessageBeep(MB_OK);
 							return true;
 						}
+//DebugMsg(cur->FileName,L"continue");
 						string strLFullFileName=cur->LDir;
 						if (strLFullFileName.length()>0 && strLFullFileName[(size_t)(strLFullFileName.length()-1)]!=L'\\') strLFullFileName+=L"\\";
 						strLFullFileName+=cur->FileName;
@@ -2141,28 +2181,96 @@ GOTOCMPFILE:
 					}
 					return true;
 				}
+				else if (Key==KEY_INS)
+				{
+					struct FarListPos FLP;
+					Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,&FLP);
+					File *cur=(File *)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)FLP.SelectPos);
+					if (cur)
+					{
+						int i=0;
+						for (i=0; i<pFileList->iCount; i++)
+						{
+							if (!FSF.LStricmp(pFileList->F[i].LDir,cur->LDir))
+								if (!FSF.LStricmp(pFileList->F[i].FileName,cur->FileName))
+								{
+									if (pFileList->F[i].bSelect)
+									{
+										pFileList->F[i].bSelect=false;
+										pFileList->Select--;
+									}
+									else
+									{
+										pFileList->F[i].bSelect=true;
+										pFileList->Select++;
+									}
+									break;
+								}
+						}
+						if (i>=pFileList->iCount)
+							return true;
+
+						struct FarListGetItem FLGI;
+						FLGI.ItemIndex=FLP.SelectPos;
+						if (Info.SendDlgMessage(hDlg,DM_LISTGETITEM,0,&FLGI))
+						{
+							(FLGI.Item.Flags&LIF_CHECKED)?(FLGI.Item.Flags&= ~LIF_CHECKED):(FLGI.Item.Flags|=LIF_CHECKED);
+							struct FarListUpdate FLU;
+							FLU.Index=FLGI.ItemIndex;
+							FLU.Item=FLGI.Item;
+							if (Info.SendDlgMessage(hDlg,DM_LISTUPDATE,0,&FLU))
+							{
+								cur->bSelect?cur->bSelect=false:cur->bSelect=true;
+								FLP.SelectPos++;
+								Info.SendDlgMessage(hDlg,DM_LISTSETCURPOS,0,&FLP);
+
+								static wchar_t Title[MAX_PATH];
+								static wchar_t Bottom[MAX_PATH];
+								FarListTitles ListTitle;
+								ListTitle.Title=Title;
+								ListTitle.TitleLen=sizeof(Title);
+								ListTitle.Bottom=Bottom;
+								ListTitle.BottomLen=sizeof(Bottom);;
+								Info.SendDlgMessage(hDlg,DM_LISTGETTITLES,0,&ListTitle);
+								FSF.sprintf(Bottom,GetMsg(MListBottom),pFileList->Items,pFileList->Select,pFileList->bShowSelect?L' ':L'*',
+														pFileList->Identical,pFileList->bShowIdentical?L' ':L'*',
+														pFileList->Different,pFileList->bShowDifferent?L' ':L'*',
+														pFileList->LUnique,pFileList->bShowLUnique?L' ':L'*',pFileList->RUnique,pFileList->bShowRUnique?L' ':L'*');
+								ListTitle.Bottom=Bottom;
+								Info.SendDlgMessage(hDlg,DM_LISTSETTITLES,0,&ListTitle);
+							}
+						}
+					}
+					return true;
+				}
+				else if (Key==(KEY_CTRL+L'\\'))
+				{
+					pFileList->bShowSelect=(pFileList->bShowSelect?false:true);
+					MakeFarList(hDlg,pFileList);
+					return true;
+				}
 				else if (Key==(KEY_CTRL+L'='))
 				{
 					pFileList->bShowIdentical=(pFileList->bShowIdentical?false:true);
-					UpdateFarList(hDlg,pFileList);
+					MakeFarList(hDlg,pFileList);
 					return true;
 				}
 				else if (Key==(KEY_CTRL+L'-'))
 				{
 					pFileList->bShowDifferent=(pFileList->bShowDifferent?false:true);
-					UpdateFarList(hDlg,pFileList);
+					MakeFarList(hDlg,pFileList);
 					return true;
 				}
 				else if (Key==(KEY_CTRL+L'['))
 				{
 					pFileList->bShowLUnique=(pFileList->bShowLUnique?false:true);
-					UpdateFarList(hDlg,pFileList);
+					MakeFarList(hDlg,pFileList);
 					return true;
 				}
 				else if (Key==(KEY_CTRL+L']'))
 				{
 					pFileList->bShowRUnique=(pFileList->bShowRUnique?false:true);
-					UpdateFarList(hDlg,pFileList);
+					MakeFarList(hDlg,pFileList);
 					return true;
 				}
 				else if (Key==(KEY_CTRL|KEY_PGUP) || Key==(KEY_RCTRL|KEY_PGUP))
