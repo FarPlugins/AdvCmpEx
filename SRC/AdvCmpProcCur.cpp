@@ -452,22 +452,23 @@ int AdvCmpProcCur::ShowCmpCurDialog(const PluginPanelItem *pLPPI,const PluginPan
 
 	FarColor Color;
 	Info.AdvControl(&MainGuid,ACTL_GETCOLOR,COL_PANELTEXT,&Color);
+/*
 	int color=0x1B;
 	if((Color.Flags&FCF_FG_4BIT) && (Color.Flags&FCF_BG_4BIT))
 		color=Color.ForegroundColor|(Color.BackgroundColor<<4);
-
+*/
 	UpdateImage(&LPicData,true);
 	UpdateImage(&RPicData,true);
 
 	unsigned int VBufSize=(WinInfo.Con.Right-WinInfo.Con.Left)*(WinInfo.Con.Bottom-WinInfo.Con.Top-2-1);
-	CHAR_INFO *VirtualBuffer=(CHAR_INFO *)malloc(VBufSize*sizeof(CHAR_INFO));
+	FAR_CHAR_INFO *VirtualBuffer=(FAR_CHAR_INFO *)malloc(VBufSize*sizeof(FAR_CHAR_INFO));
 	if (VirtualBuffer)
 	{
 		DialogItems[0].VBuf=VirtualBuffer;
 		for(unsigned int i=0;i<VBufSize;i++)
 		{
-			VirtualBuffer[i].Char.UnicodeChar=L' ';
-			VirtualBuffer[i].Attributes=color;
+			VirtualBuffer[i].Char=L' ';
+			VirtualBuffer[i].Attributes=Color;
 		}
 
 		HANDLE hDlg=Info.DialogInit(&MainGuid,&CurDlgGuid,0,0,WinInfo.Con.Right,WinInfo.Con.Bottom-WinInfo.Con.Top,NULL,DialogItems,

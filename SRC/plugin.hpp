@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2070
+  Plugin API for Far Manager 3.0 build 2072
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2070
+#define FARMANAGERVERSION_BUILD 2072
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -427,6 +427,12 @@ struct FarDialogItemColors
 	void* Reserved;
 };
 
+struct FAR_CHAR_INFO
+{
+	WCHAR Char;
+	FarColor Attributes;
+};
+
 struct FarDialogItem
 {
 	enum FARDIALOGITEMTYPES Type;
@@ -436,7 +442,7 @@ struct FarDialogItem
 		DWORD_PTR Reserved;
 		int Selected;
 		struct FarList *ListItems;
-		CHAR_INFO *VBuf;
+		FAR_CHAR_INFO *VBuf;
 	}
 #ifndef __cplusplus
 	Param
