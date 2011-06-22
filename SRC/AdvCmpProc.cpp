@@ -2244,31 +2244,31 @@ GOTOCMPFILE:
 					}
 					return true;
 				}
-				else if (Key==(KEY_CTRL+L'\\'))
+				else if (Key==(KEY_CTRL+L'\\') && !(pFileList->bShowSelect && pFileList->Select==0))
 				{
 					pFileList->bShowSelect=(pFileList->bShowSelect?false:true);
 					MakeFarList(hDlg,pFileList);
 					return true;
 				}
-				else if (Key==(KEY_CTRL+L'='))
+				else if (Key==(KEY_CTRL+L'=') && !(pFileList->bShowIdentical && pFileList->Identical==0))
 				{
 					pFileList->bShowIdentical=(pFileList->bShowIdentical?false:true);
 					MakeFarList(hDlg,pFileList);
 					return true;
 				}
-				else if (Key==(KEY_CTRL+L'-'))
+				else if (Key==(KEY_CTRL+L'-') && !(pFileList->bShowDifferent && pFileList->Different==0))
 				{
 					pFileList->bShowDifferent=(pFileList->bShowDifferent?false:true);
 					MakeFarList(hDlg,pFileList);
 					return true;
 				}
-				else if (Key==(KEY_CTRL+L'['))
+				else if (Key==(KEY_CTRL+L'[') && !(pFileList->bShowLUnique && pFileList->LUnique==0))
 				{
 					pFileList->bShowLUnique=(pFileList->bShowLUnique?false:true);
 					MakeFarList(hDlg,pFileList);
 					return true;
 				}
-				else if (Key==(KEY_CTRL+L']'))
+				else if (Key==(KEY_CTRL+L']') && !(pFileList->bShowRUnique && pFileList->RUnique==0))
 				{
 					pFileList->bShowRUnique=(pFileList->bShowRUnique?false:true);
 					MakeFarList(hDlg,pFileList);
