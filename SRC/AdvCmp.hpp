@@ -167,11 +167,17 @@ enum ResultCmpItemFlag {
 	RCIF_NONE   = 0,
 	RCIF_EQUAL  = 0x1,      // одинаковые   |=|
 	RCIF_DIFFER = 0x2,      // разные       |?|
+	RCIF_LNEW   = 0x4,      // слева новый  |>|
+	RCIF_RNEW   = 0x8,      // справа новый |<|
 
-	RCIF_LNEW = 0x6,        // слева новый  |>|
-	RCIF_RNEW = 0xA,        // справа новый |<|
+	// пользовательские флаги:
+	RCIF_USER       = 0xF0,
+	RCIF_USERSELECT = 0x10, // элемент выделен
+	RCIF_USERNONE   = 0x20, // скинут флаг отличия
+	RCIF_USERLNEW   = 0x40, // слева новый
+	RCIF_USERRNEW   = 0x80, // справа новый
 
-	RCIF_DIR = 0x10,        // флаг: два каталога - особый случай!
+	RCIF_DIR    = 0x100,    // флаг: два каталога - особый случай!
 };
 
 

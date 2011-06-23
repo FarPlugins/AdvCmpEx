@@ -44,7 +44,6 @@ struct File
 	FILETIME ftLLastWriteTime;
 	FILETIME ftRLastWriteTime;
 	DWORD dwFlags;
-	bool bSelect;
 
 	File()
 	{
@@ -59,7 +58,6 @@ struct File
 		ftRLastWriteTime.dwLowDateTime=0;
 		ftRLastWriteTime.dwHighDateTime=0;
 		dwFlags=RCIF_NONE;
-		bSelect=false;
 	}
 };
 
@@ -79,6 +77,7 @@ struct FileList {
 	bool bShowDifferent;
 	bool bShowLUnique;
 	bool bShowRUnique;
+	bool bClearUserFlags;
 };
 
 // сама сравнивалка :)

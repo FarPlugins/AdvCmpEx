@@ -180,6 +180,7 @@ AdvCmpProc::AdvCmpProc()
 	FList.bShowDifferent=true;
 	FList.bShowLUnique=true;
 	FList.bShowRUnique=true;
+	FList.bClearUserFlags=false;
 
 	Opt.BufSize=65536<<4;
 	Opt.Buf[0]=NULL;
@@ -1863,32 +1864,38 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 	{
 		File *cur=&pFileList->F[i];
 
+		if (pFileList->bClearUserFlags)
+			cur->dwFlags&= ~RCIF_USER;
+
+		wchar_t Mark=L' ';
+
 		if (cur->dwFlags&RCIF_DIR)
 			continue;
-		if (cur->bSelect && !pFileList->bShowSelect)
+		if ((cur->dwFlags&RCIF_USERSELECT) && !pFileList->bShowSelect)
 			continue;
-		if ((cur->dwFlags==RCIF_EQUAL) && !pFileList->bShowIdentical)
-			continue;
-		if ((cur->dwFlags==RCIF_DIFFER) && !pFileList->bShowDifferent)
-			continue;
-		if ((cur->dwFlags==RCIF_LNEW) && !pFileList->bShowLUnique)
-			continue;
-		if ((cur->dwFlags==RCIF_RNEW) && !pFileList->bShowRUnique)
-			continue;
-
-		wchar_t Mark;
-		switch (cur->dwFlags)
+		if (cur->dwFlags&RCIF_EQUAL)
 		{
-			case RCIF_EQUAL:
-				Mark=L'='; pFileList->Identical++; break;
-			case RCIF_DIFFER:
-				Mark=0x2260; pFileList->Different++; break;
-			case RCIF_LNEW:
-				Mark=0x2192; pFileList->LUnique++; break;
-			case RCIF_RNEW:
-				Mark=0x2190; pFileList->RUnique++; break;
-			default:
-				Mark=L' '; break;
+			if (!pFileList->bShowIdentical)
+				continue;
+			Mark=L'='; pFileList->Identical++;
+		}
+		if (cur->dwFlags&RCIF_DIFFER)
+		{
+			if (!pFileList->bShowDifferent)
+				continue;
+			Mark=0x2260; pFileList->Different++;
+		}
+		if (cur->dwFlags&RCIF_LNEW)
+		{
+			if (!pFileList->bShowLUnique)
+				continue;
+			Mark=0x2192; pFileList->LUnique++;
+		}
+		if (cur->dwFlags&RCIF_RNEW)
+		{
+			if (!pFileList->bShowRUnique)
+				continue;
+			Mark=0x2190; pFileList->RUnique++;
 		}
 
 		wchar_t LTime[18]={0}, RTime[18]={0};
@@ -1950,17 +1957,20 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 			{
 				File *next=&pFileList->F[j];
 
+				if (pFileList->bClearUserFlags)
+					next->dwFlags&= ~RCIF_USER; // всеравно же скидывать
+
 				if (next->dwFlags&RCIF_DIR)
 					continue;
-				if (next->bSelect && !pFileList->bShowSelect)
+				if ((next->dwFlags&RCIF_USERSELECT) && !pFileList->bShowSelect)
 					continue;
-				if ((next->dwFlags==RCIF_EQUAL) && !pFileList->bShowIdentical)
+				if ((next->dwFlags&RCIF_EQUAL) && !pFileList->bShowIdentical)
 					continue;
-				if ((next->dwFlags==RCIF_DIFFER) && !pFileList->bShowDifferent)
+				if ((next->dwFlags&RCIF_DIFFER) && !pFileList->bShowDifferent)
 					continue;
-				if ((next->dwFlags==RCIF_LNEW) && !pFileList->bShowLUnique)
+				if ((next->dwFlags&RCIF_LNEW) && !pFileList->bShowLUnique)
 					continue;
-				if ((next->dwFlags==RCIF_RNEW) && !pFileList->bShowRUnique)
+				if ((next->dwFlags&RCIF_RNEW) && !pFileList->bShowRUnique)
 					continue;
 
 				if (FSF.LStricmp(cur->LDir,next->LDir))
@@ -1991,9 +2001,9 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 
 		struct FarListItem Item;
 		Item.Flags=0;
-		if (cur->dwFlags==RCIF_EQUAL)
+		if (cur->dwFlags&RCIF_EQUAL)
 			Item.Flags|=LIF_GRAYED;
-		if (cur->bSelect)
+		if (cur->dwFlags&RCIF_USERSELECT)
 		{
 			Item.Flags|=LIF_CHECKED;
 			pFileList->Select++;
@@ -2192,14 +2202,14 @@ GOTOCMPFILE:
 							if (!FSF.LStricmp(pFileList->F[i].LDir,cur->LDir))
 								if (!FSF.LStricmp(pFileList->F[i].FileName,cur->FileName))
 								{
-									if (pFileList->F[i].bSelect)
+									if (pFileList->F[i].dwFlags&RCIF_USERSELECT)
 									{
-										pFileList->F[i].bSelect=false;
+										pFileList->F[i].dwFlags&= ~RCIF_USERSELECT;
 										pFileList->Select--;
 									}
 									else
 									{
-										pFileList->F[i].bSelect=true;
+										pFileList->F[i].dwFlags|=RCIF_USERSELECT;
 										pFileList->Select++;
 									}
 									break;
@@ -2218,7 +2228,7 @@ GOTOCMPFILE:
 							FLU.Item=FLGI.Item;
 							if (Info.SendDlgMessage(hDlg,DM_LISTUPDATE,0,&FLU))
 							{
-								cur->bSelect?cur->bSelect=false:cur->bSelect=true;
+								(cur->dwFlags&RCIF_USERSELECT)?(cur->dwFlags&=~RCIF_USERSELECT):(cur->dwFlags|=RCIF_USERSELECT);
 								FLP.SelectPos++;
 								Info.SendDlgMessage(hDlg,DM_LISTSETCURPOS,0,&FLP);
 
@@ -2238,6 +2248,25 @@ GOTOCMPFILE:
 								Info.SendDlgMessage(hDlg,DM_LISTSETTITLES,0,&ListTitle);
 							}
 						}
+					}
+					return true;
+				}
+				else if (Key==KEY_CTRLR)
+				{
+					if (	(!pFileList->bShowSelect || pFileList->Select)
+							|| !pFileList->bShowIdentical
+							|| !pFileList->bShowDifferent
+							|| !pFileList->bShowLUnique
+							|| !pFileList->bShowRUnique )
+					{
+						pFileList->bShowSelect=true;
+						pFileList->bShowIdentical=true;
+						pFileList->bShowDifferent=true;
+						pFileList->bShowLUnique=true;
+						pFileList->bShowRUnique=true;
+						pFileList->bClearUserFlags=true;
+						MakeFarList(hDlg,pFileList);
+						pFileList->bClearUserFlags=false; // восстановим!
 					}
 					return true;
 				}
@@ -2342,7 +2371,7 @@ DebugMsg(strLPanelDir.get(),L"strLPanelDir.get()");
 												continue;
 											if (!FSF.LStricmp(pFileList->F[j].FileName,FGPPI.Item->FileName))
 											{
-												Info.PanelControl(LPanel.hPanel,FCTL_SETSELECTION,i,(void*)(pFileList->F[j].dwFlags&RCIF_DIFFER));
+												Info.PanelControl(LPanel.hPanel,FCTL_SETSELECTION,i,(void*)((pFileList->F[j].dwFlags&RCIF_DIFFER) || (pFileList->F[j].dwFlags&RCIF_LNEW) || (pFileList->F[j].dwFlags&RCIF_RNEW)));
 												break;
 											}
 										}
@@ -2385,7 +2414,7 @@ DebugMsg(strLPanelDir.get(),L"strLPanelDir.get()");
 												continue;
 											if (!FSF.LStricmp(pFileList->F[j].FileName,FGPPI.Item->FileName))
 											{
-												Info.PanelControl(RPanel.hPanel,FCTL_SETSELECTION,i,(void*)(pFileList->F[j].dwFlags&RCIF_DIFFER));
+												Info.PanelControl(RPanel.hPanel,FCTL_SETSELECTION,i,(void*)((pFileList->F[j].dwFlags&RCIF_DIFFER) || (pFileList->F[j].dwFlags&RCIF_LNEW) || (pFileList->F[j].dwFlags&RCIF_RNEW)));
 												break;
 											}
 										}
