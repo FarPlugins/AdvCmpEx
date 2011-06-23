@@ -110,21 +110,6 @@ void strcentr(wchar_t *Dest, const wchar_t *Src, int len, wchar_t sym)
 }
 
 /****************************************************************************
- * Возвращает начало файла, без префиксов "\\?\"
- ****************************************************************************/
-int GetPosToName(wchar_t *FileName)
-{
-	if (FileName[0]==L'\\' && FileName[1]==L'\\' && FileName[2]==L'?')
-	{
-		if (FileName[5]==L':')
-			return 4;
-		else if (FileName[5]==L'N')
-			return 7;
-	}
-	return 0;
-}
-
-/****************************************************************************
  * Преобразует int в wchar_t поразрядно: из 1234567890 в "1 234 567 890"
  ****************************************************************************/
 wchar_t* itoaa(__int64 num, wchar_t *buf)
@@ -148,6 +133,31 @@ wchar_t* itoaa(__int64 num, wchar_t *buf)
 	*p=*--t;
 
 	return buf;
+}
+
+/****************************************************************************
+ * Возвращает смещение начала файла, т.е. без префиксов "\\?\"
+ ****************************************************************************/
+wchar_t *GetPosToName(const wchar_t *FileName)
+{
+	if (FileName && FileName[0]==L'\\' && FileName[1]==L'\\' && FileName[2]==L'?')
+	{
+		if (FileName[5]==L':')
+			return (wchar_t *)&FileName[4];
+		else if (FileName[5]==L'N')
+			return (wchar_t *)&FileName[7];
+	}
+	return (wchar_t *)FileName;
+}
+
+/****************************************************************************
+ * Возвращает полное имя файла, и опционально без префиксов "\\?\"
+ ****************************************************************************/
+void GetFullFileName(string &strFullFileName, const wchar_t *Dir, const wchar_t *FileName, bool bNative)
+{
+	if (Dir) strFullFileName=bNative?Dir:GetPosToName(Dir);
+	if ((strFullFileName.length()>0 && strFullFileName[(size_t)(strFullFileName.length()-1)]!=L'\\') || !strFullFileName.length()) strFullFileName+=L"\\";
+	strFullFileName+=FileName;
 }
 
 
@@ -450,9 +460,7 @@ int AdvCmpProc::GetDirList(const wchar_t *Dir, int ScanDepth, bool OnlyInfo, str
 					break;
 				if (!Opt.ProcessSubfolders)
 					continue;
-				strPathMask=Dir;
-				if (strPathMask.length()>0 && strPathMask[(size_t)(strPathMask.length()-1)]!=L'\\') strPathMask+=L"\\";
-				strPathMask+=wfdFindData.cFileName;
+				GetFullFileName(strPathMask,Dir,wfdFindData.cFileName);
 				ret=GetDirList(strPathMask,ScanDepth+1,OnlyInfo,0);
 			}
 			else
@@ -619,11 +627,9 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 			if (ScanDepth>0 && (bLPanelPlug || bRPanelPlug))
 				return true;
 
-			string strLFullDir(LDir), strRFullDir(RDir);
-			if ((strLFullDir.length()>0 && strLFullDir[(size_t)(strLFullDir.length()-1)]!=L'\\') || !strLFullDir.length()) strLFullDir+=L"\\";
-			if ((strRFullDir.length()>0 && strRFullDir[(size_t)(strRFullDir.length()-1)]!=L'\\') || !strRFullDir.length()) strRFullDir+=L"\\";
-			strLFullDir+=pLPPI->FileName;
-			strRFullDir+=pRPPI->FileName;
+			string strLFullDir, strRFullDir;
+			GetFullFileName(strLFullDir,LDir,pLPPI->FileName);
+			GetFullFileName(strRFullDir,RDir,pRPPI->FileName);
 
 			// Составим списки элементов в подкаталогах
 			struct DirList LList, RList;
@@ -663,14 +669,14 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 					bOpenFail=true;
 				}
 
-				if (!bLPanelPlug && !bBrokenByEsc && !Info.GetDirList(strLFullDir.get()+GetPosToName(strLFullDir.get()),&LList.PPI,&LList.ItemsNumber))
+				if (!bLPanelPlug && !bBrokenByEsc && !Info.GetDirList(GetPosToName(strLFullDir.get()),&LList.PPI,&LList.ItemsNumber))
 				{
 					bBrokenByEsc=true;
 					bEqual=false;
 					bOpenFail=true;
 				}
 
-				if (!bRPanelPlug && !bBrokenByEsc && !Info.GetDirList(strRFullDir.get()+GetPosToName(strRFullDir.get()),&RList.PPI,&RList.ItemsNumber))
+				if (!bRPanelPlug && !bBrokenByEsc && !Info.GetDirList(GetPosToName(strRFullDir.get()),&RList.PPI,&RList.ItemsNumber))
 				{
 					bBrokenByEsc=true;
 					bEqual=false;
@@ -857,11 +863,9 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 				else return false;
 			}
 
-			string strLFullFileName(LDir), strRFullFileName(RDir);
-			if ((strLFullFileName.length()>0 && strLFullFileName[(size_t)(strLFullFileName.length()-1)]!=L'\\') || !strLFullFileName.length()) strLFullFileName+=L"\\";
-			if ((strRFullFileName.length()>0 && strRFullFileName[(size_t)(strRFullFileName.length()-1)]!=L'\\') || !strRFullFileName.length()) strRFullFileName+=L"\\";
-			strLFullFileName+=pLPPI->FileName;
-			strRFullFileName+=pRPPI->FileName;
+			string strLFullFileName, strRFullFileName;
+			GetFullFileName(strLFullFileName,LDir,pLPPI->FileName);
+			GetFullFileName(strRFullFileName,RDir,pRPPI->FileName);
 
 			// работа с кешем
 			DWORD dwLFileName, dwRFileName;
@@ -1392,9 +1396,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 					{
 						if (pLList->PPI[i].FileAttributes&FILE_ATTRIBUTE_DIRECTORY)
 						{
-							strDir=pLList->Dir;
-							if (strDir.length()>0 && strDir[(size_t)(strDir.length()-1)]!=L'\\') strDir+=L"\\";
-							strDir+=pLList->PPI[i].FileName;
+							GetFullFileName(strDir,pLList->Dir,pLList->PPI[i].FileName);
 							GetDirList(strDir,ScanDepth,true);
 						}
 						else
@@ -1423,9 +1425,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 					{
 						if (pRList->PPI[i].FileAttributes&FILE_ATTRIBUTE_DIRECTORY)
 						{
-							strDir=pRList->Dir;
-							if (strDir.length()>0 && strDir[(size_t)(strDir.length()-1)]!=L'\\') strDir+=L"\\";
-							strDir+=pRList->PPI[i].FileName;
+							GetFullFileName(strDir,pRList->Dir,pRList->PPI[i].FileName);
 							GetDirList(strDir,ScanDepth,true);
 						}
 						else
@@ -1927,9 +1927,9 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 		string strVirtDir;
 
 		// если попали сразу в подкаталог... добавим виртуальную папку в начало
-		if (!Index && FSF.LStricmp(cur->LDir+GetPosToName(cur->LDir),strLPanelDir.get()))
+		if (!Index && FSF.LStricmp(GetPosToName(cur->LDir),strLPanelDir.get()))
 		{
-			strVirtDir=cur->LDir+(GetPosToName(cur->LDir)+strLPanelDir.length());
+			strVirtDir=GetPosToName(cur->LDir)+strLPanelDir.length();
 			if (strVirtDir.length()>0 && strVirtDir[(size_t)(strVirtDir.length()-1)]!=L'\\') strVirtDir+=L"\\";
 			struct FarListItem Item;
 			Item.Flags=LIF_DISABLE;
@@ -1966,7 +1966,7 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 				if (FSF.LStricmp(cur->LDir,next->LDir))
 				{
 					bAddVirtDir=true;
-					strVirtDir=next->LDir+(GetPosToName(next->LDir)+strLPanelDir.length());
+					strVirtDir=GetPosToName(next->LDir)+strLPanelDir.length();
 					if (strVirtDir.length()>0 && strVirtDir[(size_t)(strVirtDir.length()-1)]!=L'\\') strVirtDir+=L"\\";
 				}
 				break;
@@ -1977,9 +1977,9 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 		{
 			string strDir;
 			if (LTime[0])
-				strDir=cur->LDir+(GetPosToName(cur->LDir)+strLPanelDir.length());
+				strDir=GetPosToName(cur->LDir)+strLPanelDir.length();
 			if (RTime[0])
-				strDir=cur->RDir+(GetPosToName(cur->RDir)+strRPanelDir.length());
+				strDir=GetPosToName(cur->RDir)+strRPanelDir.length();
 			strDir+=L"\\";
 			strDir+=cur->FileName;
 			if (strDir.length()>0 && strDir[(size_t)(strDir.length()-1)]!=L'\\') strDir+=L"\\";
@@ -2145,12 +2145,9 @@ GOTOCMPFILE:
 							return true;
 						}
 //DebugMsg(cur->FileName,L"continue");
-						string strLFullFileName=cur->LDir;
-						if (strLFullFileName.length()>0 && strLFullFileName[(size_t)(strLFullFileName.length()-1)]!=L'\\') strLFullFileName+=L"\\";
-						strLFullFileName+=cur->FileName;
-						string strRFullFileName=cur->RDir;
-						if (strRFullFileName.length()>0 && strRFullFileName[(size_t)(strRFullFileName.length()-1)]!=L'\\') strRFullFileName+=L"\\";
-						strRFullFileName+=cur->FileName;
+						string strLFullFileName, strRFullFileName;
+						GetFullFileName(strLFullFileName,cur->LDir,cur->FileName);
+						GetFullFileName(strRFullFileName,cur->RDir,cur->FileName);
 
 						if (pCompareFiles)
 						{
@@ -2173,7 +2170,7 @@ GOTOCMPFILE:
 								memset(&si, 0, sizeof(si));
 								si.cb = sizeof(si);
 								wchar_t Command[32768];
-								FSF.sprintf(Command, L"\"%s\" -e \"%s\" \"%s\"", DiffProgram,strLFullFileName.get()+GetPosToName(strLFullFileName.get()),strRFullFileName.get()+GetPosToName(strRFullFileName.get()));
+								FSF.sprintf(Command, L"\"%s\" -e \"%s\" \"%s\"", DiffProgram,GetPosToName(strLFullFileName.get()),GetPosToName(strRFullFileName.get()));
 								CreateProcess(0,Command,0,0,false,0,0,0,&si,&pi);
 							}
 							if (!bFindProg)
@@ -2314,9 +2311,9 @@ DebugMsg(cur->LDir,L"cur->LDir");
 DebugMsg(strLPanelDir.get(),L"strLPanelDir.get()");
 						}
 */
-						if (FSF.LStricmp(strLPanelDir.get(),cur->LDir+GetPosToName(cur->LDir)))
+						if (FSF.LStricmp(strLPanelDir.get(),GetPosToName(cur->LDir)))
 						{
-							bSetLDir=Info.PanelControl(LPanel.hPanel,FCTL_SETPANELDIR,0,/*(LPanel.PInfo.Flags&PFLAGS_PLUGIN)?strLPanelDir.get():*/(cur->LDir+GetPosToName(cur->LDir)));
+							bSetLDir=Info.PanelControl(LPanel.hPanel,FCTL_SETPANELDIR,0,/*(LPanel.PInfo.Flags&PFLAGS_PLUGIN)?strLPanelDir.get():*/GetPosToName(cur->LDir));
 							Info.PanelControl(LPanel.hPanel,FCTL_BEGINSELECTION,0,0);
 						}
 						{
@@ -2357,9 +2354,9 @@ DebugMsg(strLPanelDir.get(),L"strLPanelDir.get()");
 								Info.PanelControl(LPanel.hPanel,FCTL_ENDSELECTION,0,0);
 						}
 
-						if (FSF.LStricmp(strRPanelDir.get(),cur->RDir+GetPosToName(cur->RDir)))
+						if (FSF.LStricmp(strRPanelDir.get(),GetPosToName(cur->RDir)))
 						{
-							bSetRDir=Info.PanelControl(RPanel.hPanel,FCTL_SETPANELDIR,0,(cur->RDir+GetPosToName(cur->RDir)));
+							bSetRDir=Info.PanelControl(RPanel.hPanel,FCTL_SETPANELDIR,0,GetPosToName(cur->RDir));
 							Info.PanelControl(RPanel.hPanel,FCTL_BEGINSELECTION,0,0);
 						}
 						{
@@ -2435,7 +2432,7 @@ int AdvCmpProc::ShowCmpDialog(const struct DirList *pLList,const struct DirList 
 		strTmp+=pLList->Dir;
 	}
 	else
-		strTmp=pLList->Dir+GetPosToName(pLList->Dir);
+		strTmp=GetPosToName(pLList->Dir);
 	FSF.TruncPathStr(strTmp.get(),len-2);
 	strTmp.updsize();
 	string strTmp2=L" ";
@@ -2453,7 +2450,7 @@ int AdvCmpProc::ShowCmpDialog(const struct DirList *pLList,const struct DirList 
 		strTmp+=pRList->Dir;
 	}
 	else
-		strTmp=pRList->Dir+GetPosToName(pRList->Dir);
+		strTmp=GetPosToName(pRList->Dir);
 	FSF.TruncPathStr(strTmp.get(),len-2);
 	strTmp.updsize();
 	strTmp2=L" ";

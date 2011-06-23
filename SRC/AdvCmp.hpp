@@ -196,6 +196,9 @@ void ErrorMsg(DWORD Title, DWORD Body);
 bool YesNoMsg(DWORD Title, DWORD Body);
 int DebugMsg(wchar_t *msg, wchar_t *msg2 = L" ", unsigned int i = 1000);
 wchar_t* itoaa(__int64 num, wchar_t *buf);
+wchar_t *GetPosToName(const wchar_t *FileName);
+void GetFullFileName(string &strFullFileName, const wchar_t *Dir, const wchar_t *FileName, bool bNative=true);
+
 
 
 /****************************************************************************

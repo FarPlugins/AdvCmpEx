@@ -490,12 +490,8 @@ int AdvCmpProcCur::ShowCmpCurDialog(const PluginPanelItem *pLPPI,const PluginPan
 
 bool AdvCmpProcCur::CompareCurFile(const struct DirList *pLList,const struct DirList *pRList)
 {
-	strLFullFileName=pLList->Dir;
-	if (strLFullFileName.length()>0 && strLFullFileName[(size_t)(strLFullFileName.length()-1)]!=L'\\') strLFullFileName+=L"\\";
-	strLFullFileName+=pLList->PPI[LPanel.PInfo.CurrentItem].FileName;
-	strRFullFileName=pRList->Dir;
-	if (strRFullFileName.length()>0 && strRFullFileName[(size_t)(strRFullFileName.length()-1)]!=L'\\') strRFullFileName+=L"\\";
-	strRFullFileName+=pRList->PPI[RPanel.PInfo.CurrentItem].FileName;
+	GetFullFileName(strLFullFileName,pLList->Dir,pLList->PPI[LPanel.PInfo.CurrentItem].FileName);
+	GetFullFileName(strRFullFileName,pRList->Dir,pRList->PPI[RPanel.PInfo.CurrentItem].FileName);
 
 	PicExts=NULL;
 	PicExtsNum=0;
