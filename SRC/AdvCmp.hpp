@@ -73,6 +73,9 @@ DEFINE_GUID(CmpDlgGuid,0x50e6209d, 0x3d39, 0x42ad, 0xb6, 0x4a, 0xca, 0x96, 0x9, 
 // {8FC5FB22-E223-41ef-9EB6-A77D9302D462}
 DEFINE_GUID(CurDlgGuid,0x8fc5fb22, 0xe223, 0x41ef, 0x9e, 0xb6, 0xa7, 0x7d, 0x93, 0x2, 0xd4, 0x62);
 
+// {543FD7B0-0B51-4F81-819A-449C503EEEC2}
+DEFINE_GUID(OptSyncDlgGuid,0x543fd7b0, 0xb51, 0x4f81, 0x81, 0x9a, 0x44, 0x9c, 0x50, 0x3e, 0xee, 0xc2);
+
 
 /****************************************************************************
  * Копии стандартных структур FAR
@@ -112,7 +115,10 @@ extern struct Options {
 			Sound,
 			TotalProcess,
 			Dialog,
-
+			Sync,
+			SyncOnlyRight,
+			SyncLPanel,
+			SyncRPanel,
 			ProcessHidden,
 			BufSize;
 	char *Buf[2];
@@ -120,6 +126,7 @@ extern struct Options {
 	HANDLE hCustomFilter;
 } Opt;
 
+extern HANDLE hConInp;     // хэндл консол. ввода
 extern bool bBrokenByEsc;  //прекратить/прекратили операцию сравнения?
 extern bool bOpenFail;     // невозможно открыть каталог/файл
 extern bool bGflLoaded;    // libgfl340.dll загружена?
@@ -178,7 +185,6 @@ enum ResultCmpItemFlag {
 	RCIF_USERRNEW   = 0x80, // установлен флаг "справа новый"
 
 	// дополнительные флаги, для итогового диалога:
-	RCIF_DIR    = 0x100,    // два каталога - особый случай!
 	RCIF_LUNIQ  = 0x400,    // слева уникальный
 	RCIF_RUNIQ  = 0x800,    // справа уникальный
 };

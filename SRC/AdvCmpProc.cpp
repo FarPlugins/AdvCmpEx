@@ -32,6 +32,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma hdrstop
 #include "AdvCmpProc.hpp"
 
+
+/****************************************************************************
+ *
+ *                    Разные оччччень полезные функции :-)
+ *
+ ****************************************************************************/
+
 /****************************************************************************
  * Поиск и вырезание Substr в именах файлов.
  ****************************************************************************/
@@ -136,6 +143,27 @@ wchar_t* itoaa(__int64 num, wchar_t *buf)
 }
 
 /****************************************************************************
+ * Рисует строку-прогресс
+ ****************************************************************************/
+void ProgressLine(wchar_t *Dest, unsigned __int64 nCurrent, unsigned __int64 nTotal)
+{
+	int n=0, len=WinInfo.TruncLen-4;
+	if (nTotal>0) n=nCurrent*len / nTotal;
+	if (n>len) n=len;
+	wchar_t *Buf=(wchar_t*)malloc(WinInfo.TruncLen*sizeof(wchar_t));
+	if (Buf)
+	{
+		wmemset(Buf,0x00002588,n);
+		wmemset(&Buf[n],0x00002591,len-n);
+		Buf[len]=L'\0';
+		FSF.sprintf(Dest,L"%s%3d%%",Buf,nTotal?(nCurrent*100 / nTotal):0);
+		free(Buf);
+	}
+	else
+		*Dest=0;
+}
+
+/****************************************************************************
  * Возвращает смещение начала файла, т.е. без префиксов "\\?\"
  ****************************************************************************/
 wchar_t *GetPosToName(const wchar_t *FileName)
@@ -160,11 +188,83 @@ void GetFullFileName(string &strFullFileName, const wchar_t *Dir, const wchar_t 
 	strFullFileName+=FileName;
 }
 
+/****************************************************************************
+ * Возвращает строку с временем файла
+ ****************************************************************************/
+wchar_t *GetStrFileTime(FILETIME *LastWriteTime, wchar_t *Time, bool FullYear=true)
+{
+	SYSTEMTIME ModificTime;
+	FILETIME LocalTime;
+	FileTimeToLocalFileTime(LastWriteTime,&LocalTime);
+	FileTimeToSystemTime(&LocalTime,&ModificTime);
+	// для Time достаточно [20] !!!
+	if (Time)
+		FSF.sprintf(Time, FullYear?L"%02d.%02d.%04d %02d:%02d:%02d":L"%02d.%02d.%02d %02d:%02d:%02d",ModificTime.wDay,ModificTime.wMonth,FullYear?ModificTime.wYear:ModificTime.wYear%100,ModificTime.wHour,ModificTime.wMinute,ModificTime.wSecond);
+	return Time;
+}
+
+/****************************************************************************
+ * Проверка на Esc. Возвращает true, если пользователь нажал Esc
+ ****************************************************************************/
+bool CheckForEsc(void)
+{
+	if (hConInp == INVALID_HANDLE_VALUE)
+		return false;
+
+	static DWORD dwTicks;
+	DWORD dwNewTicks = GetTickCount();
+	if (dwNewTicks - dwTicks < 500)
+		return false;
+	dwTicks = dwNewTicks;
+
+	INPUT_RECORD rec;
+	DWORD ReadCount;
+	while (PeekConsoleInput(hConInp, &rec, 1, &ReadCount) && ReadCount)
+	{
+		ReadConsoleInput(hConInp, &rec, 1, &ReadCount);
+		if ( rec.EventType == KEY_EVENT && rec.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE && rec.Event.KeyEvent.bKeyDown )
+		{
+			// Опциональное подтверждение прерывания по Esc
+			if (Info.AdvControl(&MainGuid, ACTL_GETCONFIRMATIONS,0,0) & FCS_INTERRUPTOPERATION)
+			{
+				if (YesNoMsg(MEscTitle, MEscBody))
+					return bBrokenByEsc = true;
+			}
+			else
+				return bBrokenByEsc = true;
+		}
+	}
+	return false;
+}
+
+/****************************************************************************
+ * Усекает начало длинных имен файлов (или дополняет короткие имена)
+ * для правильного показа в сообщении сравнения
+ ****************************************************************************/
+void TruncCopy(wchar_t *Dest, const wchar_t *Src, int TruncLen, const wchar_t *FormatMsg=NULL)
+{
+	string strSrc(Src);
+	int iLen=0;
+	if (FormatMsg) // чего-нибудь допишем...
+	{
+		FSF.sprintf(Dest,FormatMsg,FSF.TruncPathStr(strSrc.get(),TruncLen-wcslen(FormatMsg)+2));
+		iLen=wcslen(Dest);
+	}
+	else // иначе, тупо скопируем имя
+		iLen=wcslen(wcscpy(Dest,FSF.TruncPathStr(strSrc.get(),TruncLen)));
+
+	if (iLen<TruncLen) // для красивости дополним пробелами
+	{
+		wmemset(&Dest[iLen],L' ',TruncLen-iLen);
+		Dest[TruncLen]=L'\0';
+	}
+}
+
+
 
 AdvCmpProc::AdvCmpProc()
 {
 	hScreen=Info.SaveScreen(0,0,-1,-1);
-	hConInp=CreateFileW(L"CONIN$", GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
 	bStartMsg=true;
 
 	FList.F=NULL;
@@ -173,13 +273,13 @@ AdvCmpProc::AdvCmpProc()
 	FList.Select=0;
 	FList.Identical=0;
 	FList.Different=0;
-	FList.LUnique=0;
-	FList.RUnique=0;
+	FList.LNew=0;
+	FList.RNew=0;
 	FList.bShowSelect=true;
 	FList.bShowIdentical=true;
 	FList.bShowDifferent=true;
-	FList.bShowLUnique=true;
-	FList.bShowRUnique=true;
+	FList.bShowLNew=true;
+	FList.bShowRNew=true;
 	FList.bClearUserFlags=false;
 
 	Opt.BufSize=65536<<4;
@@ -214,7 +314,6 @@ AdvCmpProc::~AdvCmpProc()
 	Info.FileFilterControl(LPanel.hFilter,FFCTL_FREEFILEFILTER,0,0);
 	Info.FileFilterControl(RPanel.hFilter,FFCTL_FREEFILEFILTER,0,0);
 
-	CloseHandle(hConInp);
 	Info.RestoreScreen(hScreen);
 	// Восстановим заголовок консоли ФАРа...
 	if (TitleSaved) SetConsoleTitle(strFarTitle);
@@ -231,42 +330,11 @@ AdvCmpProc::~AdvCmpProc()
 
 
 /****************************************************************************
- *************************** ShowMessage functions **************************
+ *
+ *                          SHOWMESSAGE FUNCTIONS
+ *
  ****************************************************************************/
 
-/****************************************************************************
- * Проверка на Esc. Возвращает true, если пользователь нажал Esc
- ****************************************************************************/
-bool AdvCmpProc::CheckForEsc(void)
-{
-	if (hConInp == INVALID_HANDLE_VALUE)
-		return false;
-
-	static DWORD dwTicks;
-	DWORD dwNewTicks = GetTickCount();
-	if (dwNewTicks - dwTicks < 500)
-		return false;
-	dwTicks = dwNewTicks;
-
-	INPUT_RECORD rec;
-	DWORD ReadCount;
-	while (PeekConsoleInput(hConInp, &rec, 1, &ReadCount) && ReadCount)
-	{
-		ReadConsoleInput(hConInp, &rec, 1, &ReadCount);
-		if ( rec.EventType == KEY_EVENT && rec.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE && rec.Event.KeyEvent.bKeyDown )
-		{
-			// Опциональное подтверждение прерывания по Esc
-			if (Info.AdvControl(&MainGuid, ACTL_GETCONFIRMATIONS,0,0) & FCS_INTERRUPTOPERATION)
-			{
-				if (YesNoMsg(MEscTitle, MEscBody))
-					return bBrokenByEsc = true;
-			}
-			else
-				return bBrokenByEsc = true;
-		}
-	}
-	return false;
-}
 
 /****************************************************************************
  * Получить заголовок консоли ФАРа
@@ -291,54 +359,9 @@ bool AdvCmpProc::GetFarTitle(string &strTitle)
 }
 
 /****************************************************************************
- * Усекает начало длинных имен файлов (или дополняет короткие имена)
- * для правильного показа в сообщении сравнения
- ****************************************************************************/
-void AdvCmpProc::TrunCopy(wchar_t *Dest, const wchar_t *Src, bool bDir, const wchar_t *Msg)
-{
-	string strSrc(Src);
-	int iLen=0;
-	if (bDir)
-	{
-		FSF.sprintf(Dest,Msg,FSF.TruncStr(strSrc.get(),WinInfo.TruncLen-wcslen(Msg)+2));
-		iLen=wcslen(Dest);
-	}
-	else
-		iLen=wcslen(wcscpy(Dest,FSF.TruncStr(strSrc.get(),WinInfo.TruncLen)));
-
-	if (iLen<WinInfo.TruncLen)
-	{
-		wmemset(&Dest[iLen],L' ',WinInfo.TruncLen-iLen);
-		Dest[WinInfo.TruncLen]=L'\0';
-	}
-}
-
-
-/****************************************************************************
- * Рисует строку-прогресс
- ****************************************************************************/
-void AdvCmpProc::ProgressLine(wchar_t *Dest, unsigned __int64 nCurrent, unsigned __int64 nTotal)
-{
-	int n=0, len=WinInfo.TruncLen-4;
-	if (nTotal>0) n=nCurrent*len / nTotal;
-	if (n>len) n=len;
-	wchar_t *Buf=(wchar_t*)malloc(WinInfo.TruncLen*sizeof(wchar_t));
-	if (Buf)
-	{
-		wmemset(Buf,0x00002588,n);
-		wmemset(&Buf[n],0x00002591,len-n);
-		Buf[len]=L'\0';
-		FSF.sprintf(Dest,L"%s%3d%%",Buf,nTotal?(nCurrent*100 / nTotal):0);
-		free(Buf);
-	}
-	else
-		*Dest=0;
-}
-
-/****************************************************************************
  * Показывает сообщение о сравнении двух файлов
  ****************************************************************************/
-void AdvCmpProc::ShowMessage(const wchar_t *Dir1, const wchar_t *Name1, const wchar_t *Dir2, const wchar_t *Name2, bool bRedraw)
+void AdvCmpProc::ShowCmpMsg(const wchar_t *Dir1, const wchar_t *Name1, const wchar_t *Dir2, const wchar_t *Name2, bool bRedraw)
 {
 	// Для перерисовки не чаще 3-х раз в 1 сек.
 	if (!bRedraw)
@@ -353,10 +376,10 @@ void AdvCmpProc::ShowMessage(const wchar_t *Dir1, const wchar_t *Name1, const wc
 	wchar_t Buf[MAX_PATH], ItemsOut[MAX_PATH];
 
 	wchar_t TruncDir1[MAX_PATH], TruncDir2[MAX_PATH], TruncName1[MAX_PATH], TruncName2[MAX_PATH];
-	TrunCopy(TruncDir1, Dir1, true, GetMsg(MComparing));
-	TrunCopy(TruncName1, Name1, false, L"");
-	TrunCopy(TruncDir2, Dir2, true, GetMsg(MComparingWith));
-	TrunCopy(TruncName2, Name2, false, L"");
+	TruncCopy(TruncDir1, GetPosToName(Dir1), WinInfo.TruncLen, GetMsg(MComparing));
+	TruncCopy(TruncName1, Name1, WinInfo.TruncLen);
+	TruncCopy(TruncDir2, GetPosToName(Dir2), WinInfo.TruncLen, GetMsg(MComparingWith));
+	TruncCopy(TruncName2, Name2, WinInfo.TruncLen);
 
 	wchar_t LDiff[100], RDiff[100], DiffOut[MAX_PATH];
 	FSF.sprintf(Buf,GetMsg(MComparingDiffN),itoaa(CmpInfo.LDiff,LDiff),itoaa(CmpInfo.RDiff,RDiff));
@@ -403,7 +426,9 @@ void AdvCmpProc::ShowMessage(const wchar_t *Dir1, const wchar_t *Name1, const wc
 
 
 /****************************************************************************
- ************************** CompareFiles functions **************************
+ *
+ *                          COMPAREFILES FUNCTIONS
+ *
  ****************************************************************************/
 
 void AdvCmpProc::WFD2PPI(WIN32_FIND_DATA &wfd, PluginPanelItem &ppi)
@@ -470,7 +495,7 @@ int AdvCmpProc::GetDirList(const wchar_t *Dir, int ScanDepth, bool OnlyInfo, str
 				{
 					CmpInfo.Count+=1;
 					CmpInfo.CountSize+=((unsigned __int64)wfdFindData.nFileSizeHigh << 32) | wfdFindData.nFileSizeLow;
-					ShowMessage(L"*",L"*",L"*",L"*",false);
+					ShowCmpMsg(L"*",L"*",L"*",L"*",false);
 				}
 				else
 				{
@@ -930,7 +955,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 
 			//---------------------------------------------------------------------------
 
-			ShowMessage(LDir,pLPPI->FileName,RDir,pRPPI->FileName,true);
+			ShowCmpMsg(LDir,pLPPI->FileName,RDir,pRPPI->FileName,true);
 
 			DWORD LReadSize=1, RReadSize=1;
 			DWORD LBufPos=1, RBufPos=1;     // позиция в Opt.Buf
@@ -1032,7 +1057,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 					if (!bEqual)
 						break;
 
-					ShowMessage(LDir,pLPPI->FileName,RDir,pRPPI->FileName,false);
+					ShowCmpMsg(LDir,pLPPI->FileName,RDir,pRPPI->FileName,false);
 
 					// сравниваем с архивом
 					if (RPanel.bARC)
@@ -1231,7 +1256,9 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 
 
 /****************************************************************************
- *************************** CompareDirs functions **************************
+*
+                         COMPAREDIRS FUNCTIONS
+*
  ****************************************************************************/
 
 
@@ -1379,7 +1406,7 @@ void AdvCmpProc::FreeItemsIndex(struct ItemsIndex *pIndex)
 bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *pRList,bool bCompareAll,int ScanDepth)
 {
 	// Стартуем с сообщением о сравнении
-	ShowMessage(pLList->Dir,L"*",pRList->Dir,L"*",true);
+	ShowCmpMsg(pLList->Dir,L"*",pRList->Dir,L"*",true);
 
 	// соберем информацию, сколько элементов будем сравнивать и их размер
 	if (ScanDepth==0 && Opt.TotalProcess)
@@ -1746,15 +1773,10 @@ bool AdvCmpProc::BuildFileList(const wchar_t *LDir,const PluginPanelItem *pLPPI,
 		if (Delta>0) FList.F[FList.iCount].dwFlags=RCIF_LNEW;
 		else if (Delta<0) FList.F[FList.iCount].dwFlags=RCIF_RNEW;
 	}
-	// два каталога - особый случай!
-	if (pLPPI && pRPPI)
-	{
-		if ((pLPPI->FileAttributes&FILE_ATTRIBUTE_DIRECTORY) && (pRPPI->FileAttributes&FILE_ATTRIBUTE_DIRECTORY))
-			FList.F[FList.iCount].dwFlags|=RCIF_DIR;
-	}
-	else if (pLPPI)
+
+	if (pLPPI && !pRPPI)
 		FList.F[FList.iCount].dwFlags|=RCIF_LUNIQ;
-	else if (pRPPI)
+	else if (!pLPPI && pRPPI)
 		FList.F[FList.iCount].dwFlags|=RCIF_RUNIQ;
 
 	FList.F[FList.iCount].LDir=(wchar_t*)malloc((wcslen(LDir)+1)*sizeof(wchar_t));
@@ -1763,7 +1785,6 @@ bool AdvCmpProc::BuildFileList(const wchar_t *LDir,const PluginPanelItem *pLPPI,
 	FList.F[FList.iCount].RDir=(wchar_t*)malloc((wcslen(RDir)+1)*sizeof(wchar_t));
 	if (FList.F[FList.iCount].RDir)
 		wcscpy(FList.F[FList.iCount].RDir,RDir);
-	FList.F[FList.iCount].dwAttributes=(pLPPI?pLPPI->FileAttributes:pRPPI->FileAttributes);
 
 	if (pLPPI)
 	{
@@ -1772,12 +1793,14 @@ bool AdvCmpProc::BuildFileList(const wchar_t *LDir,const PluginPanelItem *pLPPI,
 		FList.F[FList.iCount].ftLLastWriteTime.dwLowDateTime=pLPPI->LastWriteTime.dwLowDateTime;
 		FList.F[FList.iCount].ftLLastWriteTime.dwHighDateTime=pLPPI->LastWriteTime.dwHighDateTime;
 		FList.F[FList.iCount].nLFileSize=pLPPI->FileSize;
+		FList.F[FList.iCount].dwLAttributes=pLPPI->FileAttributes;
 	}
 	else
 	{
 		FList.F[FList.iCount].ftLLastWriteTime.dwLowDateTime=0;
 		FList.F[FList.iCount].ftLLastWriteTime.dwHighDateTime=0;
 		FList.F[FList.iCount].nLFileSize=0;
+		FList.F[FList.iCount].dwLAttributes=0;
 	}
 	if (pRPPI)
 	{
@@ -1789,12 +1812,14 @@ bool AdvCmpProc::BuildFileList(const wchar_t *LDir,const PluginPanelItem *pLPPI,
 		FList.F[FList.iCount].ftRLastWriteTime.dwLowDateTime=pRPPI->LastWriteTime.dwLowDateTime;
 		FList.F[FList.iCount].ftRLastWriteTime.dwHighDateTime=pRPPI->LastWriteTime.dwHighDateTime;
 		FList.F[FList.iCount].nRFileSize=pRPPI->FileSize;
+		FList.F[FList.iCount].dwRAttributes=pRPPI->FileAttributes;
 	}
 	else
 	{
 		FList.F[FList.iCount].ftRLastWriteTime.dwLowDateTime=0;
 		FList.F[FList.iCount].ftRLastWriteTime.dwHighDateTime=0;
 		FList.F[FList.iCount].nRFileSize=0;
+		FList.F[FList.iCount].dwRAttributes=0;
 	}
 
 	FList.iCount++;
@@ -1810,14 +1835,17 @@ int __cdecl SortList(const void *el1, const void *el2)
 
 	if (!cmp)
 	{
-		if (Item1->dwAttributes&FILE_ATTRIBUTE_DIRECTORY)
+		DWORD dwAttributes1=!(Item1->dwFlags&RCIF_LUNIQ)?Item1->dwRAttributes:Item1->dwLAttributes;
+		DWORD dwAttributes2=!(Item2->dwFlags&RCIF_LUNIQ)?Item2->dwRAttributes:Item2->dwLAttributes;
+
+		if (dwAttributes1&FILE_ATTRIBUTE_DIRECTORY)
 		{
-			if (!(Item2->dwAttributes&FILE_ATTRIBUTE_DIRECTORY))
+			if (!(dwAttributes2&FILE_ATTRIBUTE_DIRECTORY))
 				return 1;
 		}
 		else
 		{
-			if (Item2->dwAttributes&FILE_ATTRIBUTE_DIRECTORY)
+			if (dwAttributes2&FILE_ATTRIBUTE_DIRECTORY)
 				return -1;
 		}
 		cmp=FSF.LStricmp(Item1->FileName,Item2->FileName);
@@ -1834,8 +1862,8 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 	pFileList->Select=0;
 	pFileList->Identical=0;
 	pFileList->Different=0;
-	pFileList->LUnique=0;
-	pFileList->RUnique=0;
+	pFileList->LNew=0;
+	pFileList->RNew=0;
 
 	// запросим информацию
 	FarListInfo ListInfo;
@@ -1877,7 +1905,7 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 
 		wchar_t Mark=L' ';
 
-		if (cur->dwFlags&RCIF_DIR)
+		if ((cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY) && (cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY))
 			continue;
 		if ((cur->dwFlags&RCIF_USERSELECT) && !pFileList->bShowSelect)
 			continue;
@@ -1895,37 +1923,28 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 		}
 		if (cur->dwFlags&RCIF_LNEW)
 		{
-			if (!pFileList->bShowLUnique)
+			if (!pFileList->bShowLNew)
 				continue;
-			Mark=0x2192; pFileList->LUnique++;
+			Mark=0x2192; pFileList->LNew++;
 		}
 		if (cur->dwFlags&RCIF_RNEW)
 		{
-			if (!pFileList->bShowRUnique)
+			if (!pFileList->bShowRNew)
 				continue;
-			Mark=0x2190; pFileList->RUnique++;
+			Mark=0x2190; pFileList->RNew++;
 		}
 
-		wchar_t LTime[18]={0}, RTime[18]={0};
-		SYSTEMTIME ModificTime;
-		FILETIME local;
+		wchar_t LTime[20]={0}, RTime[20]={0};
+
 		if (!(cur->dwFlags&RCIF_RUNIQ))  // есть элемент слева
-		{
-			FileTimeToLocalFileTime(&cur->ftLLastWriteTime, &local);
-			FileTimeToSystemTime(&local, &ModificTime);
-			FSF.sprintf(LTime, L"%02d.%02d.%02d %02d:%02d:%02d",ModificTime.wDay,ModificTime.wMonth,ModificTime.wYear%100,ModificTime.wHour,ModificTime.wMinute,ModificTime.wSecond);
-		}
+			GetStrFileTime(&cur->ftLLastWriteTime,LTime,false);
 		if (!(cur->dwFlags&RCIF_LUNIQ))  // есть элемент справа
-		{
-			FileTimeToLocalFileTime(&(cur->ftRLastWriteTime), &local);
-			FileTimeToSystemTime(&local, &ModificTime);
-			FSF.sprintf(RTime, L"%02d.%02d.%02d %02d:%02d:%02d",ModificTime.wDay,ModificTime.wMonth,ModificTime.wYear%100,ModificTime.wHour,ModificTime.wMinute,ModificTime.wSecond);
-		}
+			GetStrFileTime(&cur->ftRLastWriteTime,RTime,false);
 
 		wchar_t LSize[65]={0}, RSize[65]={0};
 		const int nSIZE=32; // размер ячейки для FSF.sprintf(%*.*)
 
-		if (!(cur->dwAttributes&FILE_ATTRIBUTE_DIRECTORY))
+		if (!(cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY) && !(cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY))
 		{
 			if (LTime[0]) cur->nLFileSize>99999999999?FSF.itoa64(cur->nLFileSize,LSize,10):itoaa(cur->nLFileSize,LSize);
 			if (RTime[0]) cur->nRFileSize>99999999999?FSF.itoa64(cur->nRFileSize,RSize,10):itoaa(cur->nRFileSize,RSize);
@@ -1935,7 +1954,6 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 			if (LTime[0]) strcentr(LSize,GetMsg(MFolder),nSIZE,L' ');
 			if (RTime[0]) strcentr(RSize,GetMsg(MFolder),nSIZE,L' ');
 		}
-
 
 		// виртуальная папка
 		bool bAddVirtDir=false;
@@ -1968,7 +1986,7 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 				if (pFileList->bClearUserFlags)
 					next->dwFlags&= ~RCIF_USER; // всеравно же скидывать
 
-				if (next->dwFlags&RCIF_DIR)
+				if ((next->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY) && (next->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY))
 					continue;
 				if ((next->dwFlags&RCIF_USERSELECT) && !pFileList->bShowSelect)
 					continue;
@@ -1976,9 +1994,9 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 					continue;
 				if ((next->dwFlags&RCIF_DIFFER) && !pFileList->bShowDifferent)
 					continue;
-				if ((next->dwFlags&RCIF_LNEW) && !pFileList->bShowLUnique)
+				if ((next->dwFlags&RCIF_LNEW) && !pFileList->bShowLNew)
 					continue;
-				if ((next->dwFlags&RCIF_RNEW) && !pFileList->bShowRUnique)
+				if ((next->dwFlags&RCIF_RNEW) && !pFileList->bShowRNew)
 					continue;
 
 				if (FSF.LStricmp(cur->LDir,next->LDir))
@@ -1991,7 +2009,7 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 			}
 		}
 
-		if (cur->dwAttributes&FILE_ATTRIBUTE_DIRECTORY)
+		if (cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY || cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY)
 		{
 			string strDir;
 			if (LTime[0])
@@ -2057,7 +2075,7 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 	FSF.sprintf(Bottom,GetMsg(MListBottom),pFileList->Items,pFileList->Select,pFileList->bShowSelect?L' ':L'*',
 							pFileList->Identical,pFileList->bShowIdentical?L' ':L'*',
 							pFileList->Different,pFileList->bShowDifferent?L' ':L'*',
-							pFileList->LUnique,pFileList->bShowLUnique?L' ':L'*',pFileList->RUnique,pFileList->bShowRUnique?L' ':L'*');
+							pFileList->LNew,pFileList->bShowLNew?L' ':L'*',pFileList->RNew,pFileList->bShowRNew?L' ':L'*');
 	ListTitle.Bottom=Bottom;
 	Info.SendDlgMessage(hDlg,DM_LISTSETTITLES,0,&ListTitle);
 
@@ -2073,6 +2091,84 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 	return true;
 }
 
+int GetSyncOpt(FileList *pFileList)
+{
+	int ret=-1; // продолжаем редактировать список
+	int ItemsLNew=0, ItemsRNew=0;
+
+	for (int i=0; i<pFileList->iCount; i++)
+	{
+		File *cur=&pFileList->F[i];
+
+		if ((cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY) && (cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY))
+			continue;
+		if ((cur->dwFlags&RCIF_EQUAL) || ((cur->dwFlags&RCIF_DIFFER) && !(cur->dwFlags&RCIF_USER)) || (cur->dwFlags&RCIF_USERNONE))
+			continue;
+		if ((cur->dwFlags&RCIF_USERLNEW) || ((cur->dwFlags&RCIF_LNEW) && !(cur->dwFlags&RCIF_USER)))
+		{
+			ItemsLNew++;
+			continue;
+		}
+		if ((cur->dwFlags&RCIF_USERRNEW) || ((cur->dwFlags&RCIF_RNEW) && !(cur->dwFlags&RCIF_USER)))
+		{
+			ItemsRNew++;
+		}
+	}
+
+	// нет элементов для синхронизации, выходим
+	if (!ItemsLNew && !ItemsRNew)
+	{
+		if (Opt.ShowMsg)
+		{
+			const wchar_t *MsgItems[] = { GetMsg(MSyncTitle), GetMsg(MNoSyncBody), GetMsg(MOK) };
+			Info.Message(&MainGuid,0,0,MsgItems,sizeof(MsgItems) / sizeof(MsgItems[0]),1);
+		}
+		return ret=1; //нет элементов
+	}
+
+	Opt.SyncLPanel=ItemsRNew, Opt.SyncRPanel=ItemsLNew;
+
+	wchar_t buf1[80], buf2[80];
+	FSF.sprintf(buf1,GetMsg(MSyncLPanel),ItemsRNew);
+	FSF.sprintf(buf2,GetMsg(MSyncRPanel),ItemsLNew);
+
+	struct FarDialogItem DialogItems[] = {
+		//			Type	X1	Y1	X2	Y2				Selected	History	Mask	Flags	Data	MaxLen	UserParam
+		/* 0*/{DI_DOUBLEBOX,  3, 1,50, 6,         0, 0, 0,             0, GetMsg(MSyncTitle),0,0},
+		/* 1*/{DI_CHECKBOX,   5, 2, 0, 0, Opt.SyncRPanel, 0, 0,Opt.SyncRPanel?0:DIF_DISABLE,buf2,0,0},
+		/* 2*/{DI_CHECKBOX,   5, 3, 0, 0, Opt.SyncLPanel, 0, 0,Opt.SyncLPanel?0:DIF_DISABLE,buf1,0,0},
+		/* 3*/{DI_TEXT,      -1, 4, 0, 0,         0, 0, 0, DIF_SEPARATOR, L"",0,0},
+		/* 4*/{DI_BUTTON,     0, 5, 0, 0,         0, 0, 0, DIF_DEFAULTBUTTON|DIF_CENTERGROUP, GetMsg(MOK),0,0},
+		/* 5*/{DI_BUTTON,     0, 5, 0, 0,         0, 0, 0, DIF_CENTERGROUP, GetMsg(MSyncEdit),0,0},
+		/* 6*/{DI_BUTTON,     0, 5, 0, 0,         0, 0, 0, DIF_CENTERGROUP, GetMsg(MCancel),0,0}
+	};
+
+	HANDLE hDlg=Info.DialogInit(&MainGuid, &OptSyncDlgGuid,-1,-1,54,8,L"DlgCmp",DialogItems,sizeof(DialogItems)/sizeof(DialogItems[0]),0,0,0,0);
+
+	if (hDlg != INVALID_HANDLE_VALUE)
+	{
+		ret=Info.DialogRun(hDlg);
+		if (ret==4)
+		{
+			Opt.SyncRPanel=Info.SendDlgMessage(hDlg,DM_GETCHECK,1,0);
+			Opt.SyncLPanel=Info.SendDlgMessage(hDlg,DM_GETCHECK,2,0);
+			ret=(Opt.SyncLPanel || Opt.SyncRPanel)?2:1;   // синхронизируем, иначе - пропустим
+		}
+		else if (ret==5)
+			ret=-1;
+		else
+		{
+			bBrokenByEsc=true;
+			ret=0; // отменили синхронизацию
+		}
+		Info.DialogFree(hDlg);
+	}
+	else
+		ret=0;
+
+	return ret;
+}
+
 
 INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 {
@@ -2082,6 +2178,8 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 		case DN_INITDIALOG:
 			MakeFarList(hDlg,pFileList,true,true);
 			break;
+
+	/************************************************************************/
 
 		case DN_RESIZECONSOLE:
 		{
@@ -2097,6 +2195,8 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 			Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
 			return true;
 		}
+
+	/************************************************************************/
 
 		case DN_CTLCOLORDLGLIST:
 			if (Param1==0)
@@ -2136,6 +2236,21 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 				return true;
 			}
 
+	/************************************************************************/
+
+		case DN_CLOSE:
+			if (Opt.Sync && Param1==-1)
+			{
+				Opt.Sync=GetSyncOpt(pFileList);
+				if (Opt.Sync==-1)
+					return false;
+				else
+					return true;
+			}
+			break;
+
+	/************************************************************************/
+
 		case DN_CONTROLINPUT:
 		{
 			const INPUT_RECORD* record=(const INPUT_RECORD *)Param2;
@@ -2154,7 +2269,8 @@ GOTOCMPFILE:
 					if (cur)
 					{
 						if ((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN) ||
-								(cur->dwAttributes&FILE_ATTRIBUTE_DIRECTORY) || (cur->dwFlags&RCIF_LUNIQ) || (cur->dwFlags&RCIF_RUNIQ))
+								(cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY) || (cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY) ||
+								(cur->dwFlags&RCIF_LUNIQ) || (cur->dwFlags&RCIF_RUNIQ))
 						{
 //DebugMsg(cur->FileName,L"return");
 							MessageBeep(MB_OK);
@@ -2248,7 +2364,7 @@ GOTOCMPFILE:
 									FSF.sprintf(Bottom,GetMsg(MListBottom),pFileList->Items,pFileList->Select,pFileList->bShowSelect?L' ':L'*',
 															pFileList->Identical,pFileList->bShowIdentical?L' ':L'*',
 															pFileList->Different,pFileList->bShowDifferent?L' ':L'*',
-															pFileList->LUnique,pFileList->bShowLUnique?L' ':L'*',pFileList->RUnique,pFileList->bShowRUnique?L' ':L'*');
+															pFileList->LNew,pFileList->bShowLNew?L' ':L'*',pFileList->RNew,pFileList->bShowRNew?L' ':L'*');
 									ListTitle.Bottom=Bottom;
 									Info.SendDlgMessage(hDlg,DM_LISTSETTITLES,0,&ListTitle);
 
@@ -2265,8 +2381,8 @@ GOTOCMPFILE:
 					pFileList->bShowSelect=true;
 					pFileList->bShowIdentical=true;
 					pFileList->bShowDifferent=true;
-					pFileList->bShowLUnique=true;
-					pFileList->bShowRUnique=true;
+					pFileList->bShowLNew=true;
+					pFileList->bShowRNew=true;
 					pFileList->bClearUserFlags=true;
 					MakeFarList(hDlg,pFileList);
 					pFileList->bClearUserFlags=false; // восстановим!
@@ -2290,15 +2406,15 @@ GOTOCMPFILE:
 					MakeFarList(hDlg,pFileList);
 					return true;
 				}
-				else if (Key==(KEY_CTRL+L'[') && !(pFileList->bShowLUnique && pFileList->LUnique==0))
+				else if (Key==(KEY_CTRL+L'[') && !(pFileList->bShowLNew && pFileList->LNew==0))
 				{
-					pFileList->bShowLUnique=(pFileList->bShowLUnique?false:true);
+					pFileList->bShowLNew=(pFileList->bShowLNew?false:true);
 					MakeFarList(hDlg,pFileList);
 					return true;
 				}
-				else if (Key==(KEY_CTRL+L']') && !(pFileList->bShowRUnique && pFileList->RUnique==0))
+				else if (Key==(KEY_CTRL+L']') && !(pFileList->bShowRNew && pFileList->RNew==0))
 				{
-					pFileList->bShowRUnique=(pFileList->bShowRUnique?false:true);
+					pFileList->bShowRNew=(pFileList->bShowRNew?false:true);
 					MakeFarList(hDlg,pFileList);
 					return true;
 				}
@@ -2314,6 +2430,8 @@ GOTOCMPFILE:
 							MessageBeep(MB_OK);
 							return true;
 						}
+
+						Opt.Sync=0; //скидываем!!!
 
 						// каталог на панели
 						string strLPanelDir, strRPanelDir;
@@ -2504,5 +2622,429 @@ int AdvCmpProc::ShowCmpDialog(const struct DirList *pLList,const struct DirList 
 		Info.DialogFree(hDlg);
 	}
 	if (buf) free(buf);
+
+	if (Opt.Sync)
+		Synchronize(&FList);
+
 	return 1;
+}
+
+/***************************************************************************
+ *
+ *                               СИНХРОНИЗАЦИЯ
+ *
+ ***************************************************************************/
+
+enum QueryOverwriteFileResult
+{
+	QOF_ABORT=-1,
+	QOF_OVERWRITE,
+	QOF_OVERWRITEALL,
+	QOF_SKIP,
+	QOF_SKIPALL
+};
+
+int AdvCmpProc::QueryOverwriteFile(const wchar_t *FileName, FILETIME *srcTime, FILETIME *destTime, __int64 srcSize, __int64 destSize, int direction, bool bReadOnlyType)
+{
+	wchar_t Warning[67], Name[67];
+	wchar_t New[67], Existing[67];
+	wchar_t Time[20], Size[20];
+	const int LEN=66;
+
+	strcentr(Warning,GetMsg(bReadOnlyType?MFileIsReadOnly:MFileAlreadyExists),LEN,L' ');
+	TruncCopy(Name,GetPosToName(FileName),LEN);
+	FSF.sprintf(New, L"%-30.30s %15.15s %19.19s",direction<0?GetMsg(MNewToL):GetMsg(MNewToR),itoaa(srcSize,Size), GetStrFileTime(srcTime,Time));
+	FSF.sprintf(Existing, L"%-30.30s %15.15s %19.19s",GetMsg(MExisting),itoaa(destSize,Size),GetStrFileTime(destTime,Time));
+
+	const wchar_t *MsgItems[]=
+	{
+		GetMsg(MWarning),
+		Warning,
+		Name,
+		L"\1",
+		New,
+		Existing,
+		L"\1",
+		GetMsg(MOverwrite), GetMsg(MOverwriteAll), GetMsg(MSkip), GetMsg(MSkipAll), GetMsg(MCancel)
+	};
+
+	int ExitCode=Info.Message(&MainGuid,FMSG_WARNING|FMSG_LEFTALIGN,NULL,MsgItems,sizeof(MsgItems)/sizeof(MsgItems[0]), 5);
+
+	return (ExitCode<=QOF_SKIPALL?ExitCode:QOF_ABORT);
+}
+
+bool bStartSyncMsg=true;
+
+void ShowSyncMsg(const wchar_t *Name1, const wchar_t *Name2, __int64 Progress, __int64 Max, bool bRedraw)
+{
+	// Для перерисовки не чаще 3-х раз в 1 сек.
+	if (!bRedraw)
+	{
+		static DWORD dwTicks;
+		DWORD dwNewTicks = GetTickCount();
+		if (dwNewTicks - dwTicks < 350)
+			return;
+		dwTicks = dwNewTicks;
+	}
+
+	wchar_t TruncName1[MAX_PATH], TruncName2[MAX_PATH];
+	TruncCopy(TruncName1,GetPosToName(Name1),WinInfo.TruncLen);
+	TruncCopy(TruncName2,GetPosToName(Name2),WinInfo.TruncLen);
+
+	wchar_t ProgressBar[MAX_PATH];
+	ProgressLine(ProgressBar,Progress,Max);
+
+	const wchar_t *MsgItems[] =
+	{
+		GetMsg(MSyncTitle),
+		GetMsg(MCopying),
+		TruncName1,
+		GetMsg(MCopyingTo),
+		TruncName2,
+		L"\1",
+		ProgressBar
+	};
+
+	Info.Message(&MainGuid,bStartSyncMsg?FMSG_LEFTALIGN:FMSG_LEFTALIGN|FMSG_KEEPBACKGROUND,NULL,MsgItems,sizeof(MsgItems)/sizeof(MsgItems[0]),0);
+	bStartSyncMsg=false;
+}
+
+struct SynchronizeFileCopyCallbackData
+{
+	wchar_t *srcFileName;
+	wchar_t *destFileName;
+};
+
+DWORD WINAPI SynchronizeFileCopyCallback(
+	LARGE_INTEGER TotalFileSize,
+	LARGE_INTEGER TotalBytesTransferred,
+	LARGE_INTEGER StreamSize,
+	LARGE_INTEGER StreamBytesTransferred,
+	DWORD dwStreamNumber,
+	DWORD dwCallbackReason,
+	HANDLE hSourceFile,
+	HANDLE hDestinationFile,
+	LPVOID lpData
+)
+{
+	__int64 progress=TotalBytesTransferred.QuadPart, max=TotalFileSize.QuadPart;
+
+	if (lpData)
+	{
+		struct SynchronizeFileCopyCallbackData * data = (SynchronizeFileCopyCallbackData *)lpData;
+		ShowSyncMsg(data->srcFileName,data->destFileName,progress,max,false);
+	}
+	else
+		ShowSyncMsg(L"", L"", progress, max,false);
+
+	if (CheckForEsc())
+		return PROGRESS_CANCEL;
+	else
+		return PROGRESS_CONTINUE;
+}
+
+int AdvCmpProc::FileExists(const wchar_t *FileName, __int64 *pSize, FILETIME *pTime, DWORD *pAttrib)
+{
+	int ret=0;
+	HANDLE h=CreateFileW(FileName,0,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+
+	if (h != INVALID_HANDLE_VALUE)
+	{
+		DWORD Size;
+		*pSize = GetFileSize(h, &Size);
+		*pSize = (*pSize&0xffffffff) | ((__int64)Size << 32);
+
+		if ((*pSize&0xffffffff) == 0xffffffff && GetLastError != NO_ERROR)
+			*pSize=0;
+
+		FILETIME FileTime;
+		if (GetFileTime(h,0,0,&FileTime))
+			*pTime=FileTime;
+
+		DWORD nAttrib=GetFileAttributesW(FileName);
+		*pAttrib = (nAttrib == -1) ? 0 : nAttrib;
+
+		CloseHandle(h);
+		ret=1;
+	}
+
+	return ret;
+}
+
+int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName, int direction)
+{
+	int ret=1;
+
+	// если сказали - "а мы не хотим туда копировать", то пропустим...
+	if (((direction < 0) && !Opt.SyncLPanel) || ((direction > 0) && !Opt.SyncRPanel))
+		return ret;
+
+	__int64 srcSize=0, destSize=0;
+	DWORD srcAttrib=0, destAttrib=0;
+	FILETIME srcTime, destTime;
+
+	if (srcFileName && destFileName && FileExists(srcFileName,&srcSize,&srcTime,&srcAttrib))
+	{
+		ShowSyncMsg(srcFileName,destFileName,0,srcSize,true);
+		int doCopy=1;
+
+		if (FileExists(destFileName,&destSize,&destTime,&destAttrib))
+		{
+			// Overwrite confirmation
+			if (((direction < 0) && bAskLOverwrite) || ((direction > 0) && bAskROverwrite))
+			{
+				switch(QueryOverwriteFile(destFileName,&srcTime,&destTime,srcSize,destSize,direction,false))
+				{
+					case QOF_OVERWRITE:
+						doCopy=1;
+						break;
+					case QOF_OVERWRITEALL:
+						doCopy=1;
+						if (direction<0) bAskLOverwrite=false;
+						else bAskROverwrite=false;
+						break;
+					case QOF_SKIP:
+						doCopy=0;
+						break;
+					case QOF_SKIPALL:
+						doCopy=0;
+						if (direction<0) Opt.SyncLPanel=0;
+						else Opt.SyncRPanel=0;
+						break;
+					default:
+						doCopy=0;
+						ret=0;
+						bBrokenByEsc=true;
+						break;
+				}
+			}
+
+			// ReadOnly overwrite confirmation
+			if ((destAttrib & FILE_ATTRIBUTE_READONLY))
+			{
+				if (((direction < 0) && bSkipLReadOnly) || ((direction > 0) && bSkipRReadOnly))
+				{
+					doCopy=0;
+				}
+				else if (((direction < 0) && bAskLReadOnly) || ((direction > 0) && bAskRReadOnly))
+				{
+					switch(QueryOverwriteFile(destFileName,&srcTime,&destTime,srcSize,destSize,direction,true))
+					{
+						case QOF_OVERWRITE:
+							doCopy=1;
+							break;
+						case QOF_OVERWRITEALL:
+							doCopy=1;
+							if (direction < 0) bAskLReadOnly=false;
+							else bAskRReadOnly=false;
+							break;
+						case QOF_SKIP:
+							doCopy=0;
+							break;
+						case QOF_SKIPALL:
+							doCopy=0;
+							if (direction < 0) bSkipLReadOnly=true;
+							else bSkipRReadOnly=true;
+							break;
+						default:
+							doCopy=0;
+							ret=0;
+							bBrokenByEsc=true;
+							break;
+					}
+				}
+
+				if (doCopy)
+					SetFileAttributesW(destFileName,destAttrib & ~(FILE_ATTRIBUTE_READONLY));
+			}
+		}
+
+		if (doCopy)
+		{
+			struct SynchronizeFileCopyCallbackData copyData;
+			copyData.srcFileName=(wchar_t *)srcFileName;
+			copyData.destFileName=(wchar_t *)destFileName;
+
+RetryCopy:
+			SetLastError(0);
+			if (!CopyFileEx(srcFileName,destFileName,SynchronizeFileCopyCallback,&copyData,NULL,0))
+			{
+				DWORD dwErr=GetLastError();
+				int nErrMsg=MFailedCopySrcFile;
+				// Check, wich file failes?
+				HANDLE hFile;
+				// ERROR_SHARING_VIOLATION==32
+				hFile=CreateFileW(srcFileName,GENERIC_READ,FILE_SHARE_READ,0,OPEN_EXISTING,0,NULL);
+				if (hFile==INVALID_HANDLE_VALUE)
+					nErrMsg=MFailedOpenSrcFile; // Source file failed
+				else
+				{
+					CloseHandle(hFile);
+					hFile=CreateFileW(destFileName,GENERIC_WRITE,FILE_SHARE_READ,0,OPEN_EXISTING,0,NULL);
+					if (hFile==INVALID_HANDLE_VALUE)
+					{
+						if (GetLastError() == ERROR_FILE_NOT_FOUND)
+							nErrMsg=MFailedCreateDstFile; // Failed to create destination file
+						else
+							nErrMsg=MFailedOpenDstFile; // Failed to open destination file
+					}
+					else
+						CloseHandle(hFile);
+				}
+
+				const wchar_t *MsgItems[]=
+				{
+					GetMsg(MWarning),
+					GetMsg(nErrMsg),
+					GetPosToName(srcFileName),
+					GetMsg(MFailedCopyDstFile),
+					GetPosToName(destFileName),
+					GetMsg(MRetry), GetMsg(MSkip), GetMsg(MCancel)
+				};
+
+				SetLastError(dwErr);
+				int ExitCode= bBrokenByEsc ? 2/*MCancel*/ : Info.Message(&MainGuid,FMSG_WARNING|FMSG_ERRORTYPE,0,MsgItems,sizeof(MsgItems)/sizeof(MsgItems[0]),3);
+
+				if (!ExitCode)
+					goto RetryCopy;
+				else if (ExitCode != 1)
+					ret=0;
+			}
+		}
+	}
+	return ret;
+}
+
+int AdvCmpProc::SyncDir(const wchar_t *srcDirName, const wchar_t *destDirName, int direction)
+{
+	if (!srcDirName || !*srcDirName || !destDirName || !*destDirName)
+	{
+		SetLastError(E_INVALIDARG);
+		return 0;
+	}
+
+	WIN32_FIND_DATA wfdFindData;
+	HANDLE hFind=FindFirstFileW(destDirName,&wfdFindData);
+
+	if (hFind==INVALID_HANDLE_VALUE)
+	{
+		if (!CreateDirectoryW(destDirName,NULL))
+			return 0;
+	}
+	else
+	{
+		FindClose(hFind);
+		if (!(wfdFindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+			return 0;
+	}
+
+	int ret=1;
+	string strSrcDirMask(srcDirName);
+	strSrcDirMask+=L"\\*";
+
+	if ((hFind=FindFirstFileW(strSrcDirMask,&wfdFindData))!= INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+			string strNewSrc, strNewDest;
+			GetFullFileName(strNewSrc,srcDirName,wfdFindData.cFileName);
+			GetFullFileName(strNewDest,destDirName,wfdFindData.cFileName);
+
+			if (wfdFindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+			{
+				if (!(wfdFindData.cFileName[0]==L'.' && !wfdFindData.cFileName[1]) && !(wfdFindData.cFileName[0]==L'.' && wfdFindData.cFileName[1]==L'.' && !wfdFindData.cFileName[2]))
+				{
+					if (!SyncDir(strNewSrc,strNewDest,direction))
+						ret=0;
+				}
+			}
+			else
+			{
+				if (!SyncFile(strNewSrc,strNewDest,direction))
+					ret=0;
+			}
+		}
+		while (ret && FindNextFile(hFind,&wfdFindData));
+		FindClose(hFind);
+	}
+	return ret;
+}
+
+
+int AdvCmpProc::Synchronize(FileList *pFileList)
+{
+	int ret=0;
+
+	if (Opt.Sync==2) // есть элементы, синхронизируем
+	{
+		bBrokenByEsc=false;
+		bStartSyncMsg=true;
+		bAskLOverwrite=bAskROverwrite=Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0,0) & FCS_COPYOVERWRITE;
+		bAskLReadOnly=bAskRReadOnly=Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0,0) & FCS_OVERWRITEDELETEROFILES;
+		bSkipLReadOnly=bSkipLReadOnly=false;
+
+		hConInp=CreateFileW(L"CONIN$", GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+		DWORD dwTicks=GetTickCount();
+
+		for (int i=0; i<pFileList->iCount; i++)
+		{
+			File *cur=&pFileList->F[i];
+			int direction;
+			if ((cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY) && (cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY))
+				continue;
+			if ((cur->dwFlags&RCIF_EQUAL) || ((cur->dwFlags&RCIF_DIFFER) && !(cur->dwFlags&RCIF_USER)) || (cur->dwFlags&RCIF_USERNONE))
+				continue;
+			if ((cur->dwFlags&RCIF_USERLNEW) || ((cur->dwFlags&RCIF_LNEW) && !(cur->dwFlags&RCIF_USER)))
+			{
+				direction=1; // слева новый, значит копируем направо
+				string strSrcName, strDestName;
+				GetFullFileName(strSrcName,cur->LDir,cur->FileName);
+				GetFullFileName(strDestName,cur->RDir,cur->FileName);
+
+				if (cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY)
+				{
+					if (!(ret=SyncDir(strSrcName,strDestName,direction)))
+						break;
+				}
+				else
+				{
+					if (!(ret=SyncFile(strSrcName,strDestName,direction)))
+						break;
+				}
+				continue;
+			}
+			if ((cur->dwFlags&RCIF_USERRNEW) || ((cur->dwFlags&RCIF_RNEW) && !(cur->dwFlags&RCIF_USER)))
+			{
+				direction=-1; // справа новый, значит копируем налево
+				string strSrcName, strDestName;
+				GetFullFileName(strSrcName,cur->RDir,cur->FileName);
+				GetFullFileName(strDestName,cur->LDir,cur->FileName);
+
+				if (cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY)
+				{
+					if (!(ret=SyncDir(strSrcName,strDestName,direction)))
+						break;
+				}
+				else
+				{
+					if (!(ret=SyncFile(strSrcName,strDestName,direction)))
+						break;
+				}
+				continue;
+			}
+		}
+
+		if (hConInp!=INVALID_HANDLE_VALUE) CloseHandle(hConInp);
+
+		if (ret && !bBrokenByEsc)
+		{
+			if (Opt.Sound && (GetTickCount()-dwTicks > 30000)) MessageBeep(MB_ICONASTERISK);
+			Info.AdvControl(&MainGuid,ACTL_PROGRESSNOTIFY,0,0);
+		}
+	}
+
+	Info.PanelControl(LPanel.hPanel,FCTL_UPDATEPANEL,0,0);
+	Info.PanelControl(RPanel.hPanel,FCTL_UPDATEPANEL,0,0);
+
+	return ret;
 }

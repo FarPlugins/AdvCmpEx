@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2072
+  Plugin API for Far Manager 3.0 build 2078
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2072
+#define FARMANAGERVERSION_BUILD 2078
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -430,7 +430,7 @@ struct FarDialogItemColors
 struct FAR_CHAR_INFO
 {
 	WCHAR Char;
-	FarColor Attributes;
+	struct FarColor Attributes;
 };
 
 struct FarDialogItem
@@ -442,7 +442,7 @@ struct FarDialogItem
 		DWORD_PTR Reserved;
 		int Selected;
 		struct FarList *ListItems;
-		FAR_CHAR_INFO *VBuf;
+		struct FAR_CHAR_INFO *VBuf;
 	}
 #ifndef __cplusplus
 	Param
@@ -557,7 +557,7 @@ typedef HANDLE(WINAPI *FARAPIDIALOGINIT)(
     int                   X2,
     int                   Y2,
     const wchar_t        *HelpTopic,
-    struct FarDialogItem *Item,
+    const struct FarDialogItem *Item,
     unsigned int          ItemsNumber,
     DWORD                 Reserved,
     FARDIALOGFLAGS        Flags,

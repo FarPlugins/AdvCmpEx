@@ -52,7 +52,7 @@ bool bBrokenByEsc;
 bool bOpenFail;
 bool bGflLoaded=false;
 HMODULE GflHandle=NULL;
-
+HANDLE hConInp=INVALID_HANDLE_VALUE;
 
 /****************************************************************************
  * Обёртка сервисной функции FAR: получение строки из .lng-файла
@@ -488,28 +488,34 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 	class AdvCmpDlgOpt AdvCmpOpt;
 	int ret=AdvCmpOpt.ShowOptDialog();
 
-	if (ret==38) // DlgOK
+	if (ret==40) // DlgOK
 	{
 		DWORD dwTicks=GetTickCount();
+		// откроем, для проверок на Esc
+		hConInp=CreateFileW(L"CONIN$", GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
 
 		class AdvCmpProc AdvCmp;
 		bool bDifferenceNotFound=AdvCmp.CompareDirs(&LList,&RList,true,0);
 
+		if (hConInp!=INVALID_HANDLE_VALUE) CloseHandle(hConInp);
+
 		// Отмечаем файлы и перерисовываем панели. Если нужно показываем сообщение...
 		if (!bBrokenByEsc)
 		{
-			Info.PanelControl(LPanel.hPanel,FCTL_BEGINSELECTION,0,0);
-			Info.PanelControl(RPanel.hPanel,FCTL_BEGINSELECTION,0,0);
+			{
+				Info.PanelControl(LPanel.hPanel,FCTL_BEGINSELECTION,0,0);
+				Info.PanelControl(RPanel.hPanel,FCTL_BEGINSELECTION,0,0);
 
-			for (int i=0; i<LList.ItemsNumber; i++)
-				Info.PanelControl(LPanel.hPanel,FCTL_SETSELECTION,i,(void*)(LList.PPI[i].Flags&PPIF_SELECTED));
-			for (int i=0; i<RList.ItemsNumber; i++)
-				Info.PanelControl(RPanel.hPanel,FCTL_SETSELECTION,i,(void*)(RList.PPI[i].Flags&PPIF_SELECTED));
+				for (int i=0; i<LList.ItemsNumber; i++)
+					Info.PanelControl(LPanel.hPanel,FCTL_SETSELECTION,i,(void*)(LList.PPI[i].Flags&PPIF_SELECTED));
+				for (int i=0; i<RList.ItemsNumber; i++)
+					Info.PanelControl(RPanel.hPanel,FCTL_SETSELECTION,i,(void*)(RList.PPI[i].Flags&PPIF_SELECTED));
 
-			Info.PanelControl(LPanel.hPanel,FCTL_ENDSELECTION,0,0);
-			Info.PanelControl(LPanel.hPanel,FCTL_REDRAWPANEL,0,0);
-			Info.PanelControl(RPanel.hPanel,FCTL_ENDSELECTION,0,0);
-			Info.PanelControl(RPanel.hPanel,FCTL_REDRAWPANEL,0,0);
+				Info.PanelControl(LPanel.hPanel,FCTL_ENDSELECTION,0,0);
+				Info.PanelControl(LPanel.hPanel,FCTL_REDRAWPANEL,0,0);
+				Info.PanelControl(RPanel.hPanel,FCTL_ENDSELECTION,0,0);
+				Info.PanelControl(RPanel.hPanel,FCTL_REDRAWPANEL,0,0);
+			}
 
 			if (Opt.Sound && (GetTickCount()-dwTicks > 30000)) MessageBeep(MB_ICONASTERISK);
 			Info.AdvControl(&MainGuid,ACTL_PROGRESSNOTIFY,0,0);
@@ -523,7 +529,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 				AdvCmp.ShowCmpDialog(&LList,&RList);
 		}
 	}
-	else if (ret==39) // DlgUNDERCURSOR
+	else if (ret==41) // DlgUNDERCURSOR
 	{
 		class AdvCmpProcCur AdvCmpCur;
 		AdvCmpCur.CompareCurFile(&LList,&RList);

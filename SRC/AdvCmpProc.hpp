@@ -38,7 +38,8 @@ struct File
 	wchar_t *FileName;
 	wchar_t *LDir;
 	wchar_t *RDir;
-	DWORD dwAttributes;
+	DWORD dwLAttributes;
+	DWORD dwRAttributes;
 	unsigned __int64 nLFileSize;
 	unsigned __int64 nRFileSize;
 	FILETIME ftLLastWriteTime;
@@ -50,7 +51,8 @@ struct File
 		FileName=NULL;
 		LDir=NULL;
 		RDir=NULL;
-		dwAttributes=0;
+		dwLAttributes=0;
+		dwRAttributes=0;
 		nLFileSize=0;
 		nRFileSize=0;
 		ftLLastWriteTime.dwLowDateTime=0;
@@ -70,21 +72,21 @@ struct FileList {
 	int Select;
 	int Identical;
 	int Different;
-	int LUnique;
-	int RUnique;
+	int LNew;
+	int RNew;
 	bool bShowSelect;
 	bool bShowIdentical;
 	bool bShowDifferent;
-	bool bShowLUnique;
-	bool bShowRUnique;
+	bool bShowLNew;
+	bool bShowRNew;
 	bool bClearUserFlags;
 };
+
 
 // сама сравнивалка :)
 class AdvCmpProc
 {
 		HANDLE hScreen;
-		HANDLE hConInp;    // хэндл консол. ввода
 		bool bStartMsg;    // старт сообщения? для нужд ShowMessage()
 
 		bool TitleSaved;
@@ -98,13 +100,17 @@ class AdvCmpProc
 
 		// массив элементов, для диалога с результатами сравнения
 		struct FileList FList;
+		// для синхронизации
+		bool bAskLOverwrite;
+		bool bAskROverwrite;
+		bool bAskLReadOnly;
+		bool bAskRReadOnly;
+		bool bSkipLReadOnly;
+		bool bSkipRReadOnly;
 
 	private:
-		bool CheckForEsc(void);
 		bool GetFarTitle(string &strTitle);
-		void TrunCopy(wchar_t *Dest, const wchar_t *Src, bool bDir, const wchar_t *Msg);
-		void ProgressLine(wchar_t *Dest, unsigned __int64 nCurrent, unsigned __int64 nTotal);
-		void ShowMessage(const wchar_t *Dir1, const wchar_t *Name1, const wchar_t *Dir2, const wchar_t *Name2, bool bRedraw);
+		void ShowCmpMsg(const wchar_t *Dir1, const wchar_t *Name1, const wchar_t *Dir2, const wchar_t *Name2, bool bRedraw);
 
 		void WFD2PPI(WIN32_FIND_DATA &wfd, PluginPanelItem &ppi);
 		int GetDirList(const wchar_t *Dir, int ScanDepth, bool OnlyInfo, struct DirList *pList=0);
@@ -124,6 +130,12 @@ class AdvCmpProc
 		bool BuildItemsIndex(bool bLeftPanel,const struct DirList *pList,struct ItemsIndex *pIndex,int ScanDepth);
 		void FreeItemsIndex(struct ItemsIndex *pIndex);
 		bool BuildFileList(const wchar_t *LDir,const PluginPanelItem *pLPPI,const wchar_t *RDir,const PluginPanelItem *pRPPI,DWORD dwFlag);
+
+		int QueryOverwriteFile(const wchar_t *FileName, FILETIME *srcTime, FILETIME *destTime, __int64 srcSize, __int64 destSize, int direction, bool bReadOnlyType);
+		int FileExists(const wchar_t *FileName, __int64 *pSize, FILETIME *pTime, DWORD *pAttrib);
+		int SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName, int direction);
+		int SyncDir(const wchar_t *srcDirName, const wchar_t *destDirName, int direction);
+		int Synchronize(FileList *pFileList);
 
 	public:
 		AdvCmpProc();

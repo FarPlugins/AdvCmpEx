@@ -17,7 +17,9 @@ enum {
 
 	/**** основной диалог ****/
 
-	MCompareBox,
+	MMode,
+	MCompare,
+	MSynchronize,
 	MCompareCase,
 	MCompareSize,
 	MCompareTime,
@@ -66,25 +68,10 @@ enum {
 	MComparingN,
 	MWait,
 
-	/**** панель ****/
-
-	MPanelTitle,
-	MName,
-	MSize,
-	MTime,
-
 	/**** сообщения ****/
 
 	MNoDiffTitle,
 	MNoDiffBody,
-
-	MUnderCursor,
-	MNoDiff,
-	MDiff,
-	MRunDiffProgram,
-
-	MCmpPathTitle,
-	MCmpPathBody,
 
 	MFirstDiffTitle,
 	MFirstDiffBody,
@@ -106,5 +93,34 @@ enum {
 
 	MFolder,
 
-	MListBottom
+	MListBottom,
+
+	MSyncTitle,
+	MNoSyncBody,
+
+	MSyncLPanel,
+	MSyncRPanel,
+	MSyncEdit,
+
+	MWarning,
+	MFileIsReadOnly,
+	MFileAlreadyExists,
+	MNewToL,
+	MNewToR,
+	MExisting,
+	MOverwrite,
+	MOverwriteAll,
+	MSkip,
+	MSkipAll,
+	MRetry,
+
+	MCopying,
+	MCopyingTo,
+
+	MFailedCopySrcFile,
+	MFailedOpenSrcFile,
+	MFailedCreateDstFile,
+	MFailedOpenDstFile,
+	MFailedCopyDstFile,
 };
+

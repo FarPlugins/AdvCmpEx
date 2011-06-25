@@ -5,13 +5,15 @@
 "Ok"
 "Cancel"
 
-"Compare:"
-"case-sensiti&ve names"
+"Mode:"
+"&1 - compare file"
+"&2 - synchronize folders"
+"compare case-sensiti&ve names"
 "&size"
 "&time"
 "sec&onds:"
 "ignore"
-"&2 seconds precision"
+"t&wo seconds precision"
 "ignore time &zone differences"
 "&contents"
 "only if the time is &different"
@@ -36,7 +38,7 @@
 "&Process only selected items"
 "Skip in filename&:"
 "Compare till the first differe&nce"
-"Select ne&w files"
+"Select new files"
 "Ignore missing items"
 "Display &messages"
 "Sound notification"
@@ -52,21 +54,8 @@
 " Total: %s (%s) "
 "Data processing. Please wait several seconds..."
 
-"Active panel | Passive panel"
-"Name"
-"Size"
-"Time"
-
 "No differences"
 "The compared files seem to be identical"
-
-"Files under cursor"
-"Identical"
-"Differ"
-"Differ, run external program of the comparison?"
-
-"Paths being compared are equal"
-"The panels contain the same folder. Cancel the comparison?"
 
 "Found a difference"
 "Do you really want to cancel comparison?"
@@ -88,4 +77,33 @@
 
 "<Folder>"
 
-"Items %u (%u)%c identical %u%c different %u%c unique %u%c - %u%c"
+"Items %u (%u)%c identical %u%c different %u%c new %u%c - %u%c"
+
+"Synchronize folders"
+"Элементов для синхронизации не обнаружено"
+
+"Copy to &left panel %u items"
+"Copy to &right panel %u items"
+"Edit"
+
+"Warning"
+"The file is read only"
+"File already exists"
+"New, copying: ◄──"
+"New, copying: ──►"
+"Existing"
+"&Overwrite"
+"&All"
+"&Skip"
+"S&kip all"
+"&Retry"
+
+"Copying file"
+"to"
+
+"Copying source file failed"
+"Failed to open source file while copying"
+"Failed to create target file while copying"
+"Failed to open target file while copying"
+"to file"
+
