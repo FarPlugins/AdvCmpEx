@@ -261,7 +261,6 @@ void TruncCopy(wchar_t *Dest, const wchar_t *Src, int TruncLen, const wchar_t *F
 }
 
 
-
 AdvCmpProc::AdvCmpProc()
 {
 	hScreen=Info.SaveScreen(0,0,-1,-1);
@@ -1853,6 +1852,46 @@ int __cdecl SortList(const void *el1, const void *el2)
 	return cmp;
 }
 
+void MakeListItem(wchar_t *buf, File *cur, wchar_t Mark)
+{
+	wchar_t LTime[20]={0}, RTime[20]={0};
+
+	if (!(cur->dwFlags&RCIF_RUNIQ))  // есть элемент слева
+		GetStrFileTime(&cur->ftLLastWriteTime,LTime,false);
+	if (!(cur->dwFlags&RCIF_LUNIQ))  // есть элемент справа
+		GetStrFileTime(&cur->ftRLastWriteTime,RTime,false);
+
+	wchar_t LSize[65]={0}, RSize[65]={0};
+	const int nSIZE=32; // размер €чейки дл€ FSF.sprintf(%*.*)
+
+	if (!(cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY) && !(cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY))
+	{
+		if (LTime[0]) cur->nLFileSize>99999999999?FSF.itoa64(cur->nLFileSize,LSize,10):itoaa(cur->nLFileSize,LSize);
+		if (RTime[0]) cur->nRFileSize>99999999999?FSF.itoa64(cur->nRFileSize,RSize,10):itoaa(cur->nRFileSize,RSize);
+	}
+	else
+	{
+		if (LTime[0]) strcentr(LSize,GetMsg(MFolder),nSIZE,L' ');
+		if (RTime[0]) strcentr(RSize,GetMsg(MFolder),nSIZE,L' ');
+	}
+
+	if (cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY || cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY)
+	{
+		string strDir;
+			if (LTime[0])
+		strDir=GetPosToName(cur->LDir)+wcslen(LPanel.Dir);
+			if (RTime[0])
+		strDir=GetPosToName(cur->RDir)+wcslen(RPanel.Dir);
+		strDir+=L"\\";
+		strDir+=cur->FileName;
+		if (strDir.length()>0 && strDir[(size_t)(strDir.length()-1)]!=L'\\') strDir+=L"\\";
+
+		FSF.sprintf(buf, L"%*.*s%c%*.*s%c%c%c%s",nSIZE,nSIZE,LSize,0x2551,nSIZE,nSIZE,RSize,0x2551,Mark,0x2502,strDir.get());
+	}
+	else
+		FSF.sprintf(buf, L"%*.*s%c%*.*s%c%*.*s%c%*.*s%c%c%c%s",14,14,LSize,0x2502,17,17,LTime,0x2551,17,17,RTime,0x2502,14,14,RSize,0x2551,Mark,0x2502,cur->FileName);
+}
+
 /***************************************************************************
  * »зменение/обновление листа файлов в диалоге
  ***************************************************************************/
@@ -1879,22 +1918,9 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 	if (bSort)
 		FSF.qsort(pFileList->F,pFileList->iCount,sizeof(pFileList->F[0]),SortList);
 
-	// каталог на панели
-	string strLPanelDir, strRPanelDir;
-	{
-		int size=Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIR,0,0);
-		strLPanelDir.get(size);
-		Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIR,size,strLPanelDir.get());
-		strLPanelDir.updsize();
-
-		size=Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIR,0,0);
-		strRPanelDir.get(size);
-		Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIR,size,strRPanelDir.get());
-		strRPanelDir.updsize();
-	}
-
 	int Index=0;
 	wchar_t buf[65536];
+	const int nSIZE=32; // размер €чейки дл€ FSF.sprintf(%*.*)
 
 	for (int i=0; i<pFileList->iCount; i++)
 	{
@@ -1919,40 +1945,25 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 		{
 			if (!pFileList->bShowDifferent)
 				continue;
-			Mark=0x2260; pFileList->Different++;
+			if (!(cur->dwFlags&RCIF_USERNONE))
+				Mark=0x2260;
+			pFileList->Different++;
 		}
 		if (cur->dwFlags&RCIF_LNEW)
 		{
 			if (!pFileList->bShowLNew)
 				continue;
-			Mark=0x2192; pFileList->LNew++;
+			if (!(cur->dwFlags&RCIF_USERNONE))
+				Mark=0x2192;
+			pFileList->LNew++;
 		}
 		if (cur->dwFlags&RCIF_RNEW)
 		{
 			if (!pFileList->bShowRNew)
 				continue;
-			Mark=0x2190; pFileList->RNew++;
-		}
-
-		wchar_t LTime[20]={0}, RTime[20]={0};
-
-		if (!(cur->dwFlags&RCIF_RUNIQ))  // есть элемент слева
-			GetStrFileTime(&cur->ftLLastWriteTime,LTime,false);
-		if (!(cur->dwFlags&RCIF_LUNIQ))  // есть элемент справа
-			GetStrFileTime(&cur->ftRLastWriteTime,RTime,false);
-
-		wchar_t LSize[65]={0}, RSize[65]={0};
-		const int nSIZE=32; // размер €чейки дл€ FSF.sprintf(%*.*)
-
-		if (!(cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY) && !(cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY))
-		{
-			if (LTime[0]) cur->nLFileSize>99999999999?FSF.itoa64(cur->nLFileSize,LSize,10):itoaa(cur->nLFileSize,LSize);
-			if (RTime[0]) cur->nRFileSize>99999999999?FSF.itoa64(cur->nRFileSize,RSize,10):itoaa(cur->nRFileSize,RSize);
-		}
-		else
-		{
-			if (LTime[0]) strcentr(LSize,GetMsg(MFolder),nSIZE,L' ');
-			if (RTime[0]) strcentr(RSize,GetMsg(MFolder),nSIZE,L' ');
+			if (!(cur->dwFlags&RCIF_USERNONE))
+				Mark=0x2190;
+			pFileList->RNew++;
 		}
 
 		// виртуальна€ папка
@@ -1960,9 +1971,9 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 		string strVirtDir;
 
 		// если попали сразу в подкаталог... добавим виртуальную папку в начало
-		if (!Index && FSF.LStricmp(GetPosToName(cur->LDir),strLPanelDir.get()))
+		if (!Index && FSF.LStricmp(GetPosToName(cur->LDir),LPanel.Dir))
 		{
-			strVirtDir=GetPosToName(cur->LDir)+strLPanelDir.length();
+			strVirtDir=GetPosToName(cur->LDir)+wcslen(LPanel.Dir);
 			if (strVirtDir.length()>0 && strVirtDir[(size_t)(strVirtDir.length()-1)]!=L'\\') strVirtDir+=L"\\";
 			struct FarListItem Item;
 			Item.Flags=LIF_DISABLE;
@@ -2002,28 +2013,14 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 				if (FSF.LStricmp(cur->LDir,next->LDir))
 				{
 					bAddVirtDir=true;
-					strVirtDir=GetPosToName(next->LDir)+strLPanelDir.length();
+					strVirtDir=GetPosToName(next->LDir)+wcslen(LPanel.Dir);
 					if (strVirtDir.length()>0 && strVirtDir[(size_t)(strVirtDir.length()-1)]!=L'\\') strVirtDir+=L"\\";
 				}
 				break;
 			}
 		}
 
-		if (cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY || cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY)
-		{
-			string strDir;
-			if (LTime[0])
-				strDir=GetPosToName(cur->LDir)+strLPanelDir.length();
-			if (RTime[0])
-				strDir=GetPosToName(cur->RDir)+strRPanelDir.length();
-			strDir+=L"\\";
-			strDir+=cur->FileName;
-			if (strDir.length()>0 && strDir[(size_t)(strDir.length()-1)]!=L'\\') strDir+=L"\\";
-
-			FSF.sprintf(buf, L"%*.*s%c%*.*s%c%c%c%s",nSIZE,nSIZE,LSize,0x2551,nSIZE,nSIZE,RSize,0x2551,Mark,0x2502,strDir.get());
-		}
-		else
-			FSF.sprintf(buf, L"%*.*s%c%*.*s%c%*.*s%c%*.*s%c%c%c%s",14,14,LSize,0x2502,17,17,LTime,0x2551,17,17,RTime,0x2502,14,14,RSize,0x2551,Mark,0x2502,cur->FileName);
+		MakeListItem(buf,cur,Mark);
 
 		struct FarListItem Item;
 		Item.Flags=0;
@@ -2047,15 +2044,16 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 			// ... то ассоциируем данные с элементом листа
 			struct FarListItemData Data;
 			Data.Index=Index++;
-			Data.DataSize=sizeof(*cur);
-			Data.Data=cur;
+			Data.DataSize=sizeof(cur);
+			Data.Data=&cur;
 			Info.SendDlgMessage(hDlg,DM_LISTSETDATA,0,&Data);
 		}
 
 		if (bAddVirtDir)
 		{
-			strcentr(LSize,GetMsg(MFolder),nSIZE,L' ');
-			FSF.sprintf(buf, L"%*.*s%c%*.*s%c%c%c%s",nSIZE,nSIZE,LSize,0x2551,nSIZE,nSIZE,LSize,0x2551,L' ',0x2502,strVirtDir.get());
+			wchar_t Size[65];
+			strcentr(Size,GetMsg(MFolder),nSIZE,L' ');
+			FSF.sprintf(buf, L"%*.*s%c%*.*s%c%c%c%s",nSIZE,nSIZE,Size,0x2551,nSIZE,nSIZE,Size,0x2551,L' ',0x2502,strVirtDir.get());
 			Item.Flags=LIF_DISABLE;
 			Item.Text=buf;
 			List.Items=&Item;
@@ -2265,7 +2263,8 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 				{
 GOTOCMPFILE:
 					int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
-					File *cur=(File *)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
+					File **tmp=(File **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
+					File *cur=(tmp && *tmp)?*tmp:NULL;
 					if (cur)
 					{
 						if ((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN) ||
@@ -2315,62 +2314,83 @@ GOTOCMPFILE:
 				{
 					struct FarListPos FLP;
 					Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,&FLP);
-					File *cur=(File *)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)FLP.SelectPos);
+					File **tmp=(File **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)FLP.SelectPos);
+					File *cur=(tmp && *tmp)?*tmp:NULL;
 					if (cur && pFileList->bShowSelect)
 					{
-						int i=0;
-						for (i=0; i<pFileList->iCount; i++)
+						struct FarListGetItem FLGI;
+						FLGI.ItemIndex=FLP.SelectPos;
+						if (Info.SendDlgMessage(hDlg,DM_LISTGETITEM,0,&FLGI))
 						{
-							if (!FSF.LStricmp(pFileList->F[i].LDir,cur->LDir))
-								if (!FSF.LStricmp(pFileList->F[i].FileName,cur->FileName))
-								{
-									if (pFileList->F[i].dwFlags&RCIF_USERSELECT)
-									{
-										pFileList->F[i].dwFlags&= ~RCIF_USERSELECT;
-										pFileList->Select--;
-									}
-									else
-									{
-										pFileList->F[i].dwFlags|=RCIF_USERSELECT;
-										pFileList->Select++;
-									}
-									break;
-								}
-						}
-						if (i<pFileList->iCount)
-						{
-							struct FarListGetItem FLGI;
-							FLGI.ItemIndex=FLP.SelectPos;
-							if (Info.SendDlgMessage(hDlg,DM_LISTGETITEM,0,&FLGI))
+							(FLGI.Item.Flags&LIF_CHECKED)?(FLGI.Item.Flags&= ~LIF_CHECKED):(FLGI.Item.Flags|=LIF_CHECKED);
+							struct FarListUpdate FLU;
+							FLU.Index=FLGI.ItemIndex;
+							FLU.Item=FLGI.Item;
+							if (Info.SendDlgMessage(hDlg,DM_LISTUPDATE,0,&FLU))
 							{
-								(FLGI.Item.Flags&LIF_CHECKED)?(FLGI.Item.Flags&= ~LIF_CHECKED):(FLGI.Item.Flags|=LIF_CHECKED);
-								struct FarListUpdate FLU;
-								FLU.Index=FLGI.ItemIndex;
-								FLU.Item=FLGI.Item;
-								if (Info.SendDlgMessage(hDlg,DM_LISTUPDATE,0,&FLU))
+								if (cur->dwFlags&RCIF_USERSELECT)
 								{
-									(cur->dwFlags&RCIF_USERSELECT)?(cur->dwFlags&=~RCIF_USERSELECT):(cur->dwFlags|=RCIF_USERSELECT);
-									FLP.SelectPos++;
-									Info.SendDlgMessage(hDlg,DM_LISTSETCURPOS,0,&FLP);
-
-									static wchar_t Title[MAX_PATH];
-									static wchar_t Bottom[MAX_PATH];
-									FarListTitles ListTitle;
-									ListTitle.Title=Title;
-									ListTitle.TitleLen=sizeof(Title);
-									ListTitle.Bottom=Bottom;
-									ListTitle.BottomLen=sizeof(Bottom);;
-									Info.SendDlgMessage(hDlg,DM_LISTGETTITLES,0,&ListTitle);
-									FSF.sprintf(Bottom,GetMsg(MListBottom),pFileList->Items,pFileList->Select,pFileList->bShowSelect?L' ':L'*',
-															pFileList->Identical,pFileList->bShowIdentical?L' ':L'*',
-															pFileList->Different,pFileList->bShowDifferent?L' ':L'*',
-															pFileList->LNew,pFileList->bShowLNew?L' ':L'*',pFileList->RNew,pFileList->bShowRNew?L' ':L'*');
-									ListTitle.Bottom=Bottom;
-									Info.SendDlgMessage(hDlg,DM_LISTSETTITLES,0,&ListTitle);
-
-									return true;
+									cur->dwFlags&=~RCIF_USERSELECT;
+									pFileList->Select--;
 								}
+								else
+								{
+									cur->dwFlags|=RCIF_USERSELECT;
+									pFileList->Select++;
+								}
+								FLP.SelectPos++;
+								Info.SendDlgMessage(hDlg,DM_LISTSETCURPOS,0,&FLP);
+
+								static wchar_t Title[MAX_PATH];
+								static wchar_t Bottom[MAX_PATH];
+								FarListTitles ListTitle;
+								ListTitle.Title=Title;
+								ListTitle.TitleLen=sizeof(Title);
+								ListTitle.Bottom=Bottom;
+								ListTitle.BottomLen=sizeof(Bottom);;
+								Info.SendDlgMessage(hDlg,DM_LISTGETTITLES,0,&ListTitle);
+								FSF.sprintf(Bottom,GetMsg(MListBottom),pFileList->Items,pFileList->Select,pFileList->bShowSelect?L' ':L'*',
+														pFileList->Identical,pFileList->bShowIdentical?L' ':L'*',
+														pFileList->Different,pFileList->bShowDifferent?L' ':L'*',
+														pFileList->LNew,pFileList->bShowLNew?L' ':L'*',pFileList->RNew,pFileList->bShowRNew?L' ':L'*');
+								ListTitle.Bottom=Bottom;
+								Info.SendDlgMessage(hDlg,DM_LISTSETTITLES,0,&ListTitle);
+
+								return true;
 							}
+						}
+					}
+					MessageBeep(MB_OK);
+					return true;
+				}
+				else if (Key==KEY_SPACE)
+				{
+					int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
+					File **tmp=(File **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
+					File *cur=(tmp && *tmp)?*tmp:NULL;
+					if (cur && !(cur->dwFlags&RCIF_EQUAL) && Opt.Sync)
+					{
+						struct FarListGetItem FLGI;
+						FLGI.ItemIndex=Pos;
+						if (Info.SendDlgMessage(hDlg,DM_LISTGETITEM,0,&FLGI))
+						{
+							(cur->dwFlags&RCIF_USERNONE)?(cur->dwFlags&= ~RCIF_USERNONE):(cur->dwFlags|=RCIF_USERNONE);
+
+							wchar_t buf[65536];
+							wchar_t Mark=L' ';
+							if ((cur->dwFlags&RCIF_DIFFER) && !(cur->dwFlags&RCIF_USERNONE))
+								Mark=0x2260;
+							else if ((cur->dwFlags&RCIF_LNEW) && !(cur->dwFlags&RCIF_USERNONE))
+								Mark=0x2192;
+							else if ((cur->dwFlags&RCIF_RNEW) && !(cur->dwFlags&RCIF_USERNONE))
+								Mark=0x2190;
+							MakeListItem(buf,cur,Mark);
+							struct FarListUpdate FLU;
+							FLU.Index=FLGI.ItemIndex;
+							FLU.Item=FLGI.Item;
+							FLU.Item.Text=buf;
+							if (Info.SendDlgMessage(hDlg,DM_LISTUPDATE,0,&FLU))
+								return true;
 						}
 					}
 					MessageBeep(MB_OK);
@@ -2421,7 +2441,8 @@ GOTOCMPFILE:
 				else if (Key==(KEY_CTRL|KEY_PGUP) || Key==(KEY_RCTRL|KEY_PGUP))
 				{
 					int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
-					File *cur=(File *)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
+					File **tmp=(File **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
+					File *cur=(tmp && *tmp)?*tmp:NULL;
 					if (cur)
 					{
 
@@ -2432,20 +2453,6 @@ GOTOCMPFILE:
 						}
 
 						Opt.Sync=0; //скидываем!!!
-
-						// каталог на панели
-						string strLPanelDir, strRPanelDir;
-						{
-							int size=Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIR,0,0);
-							strLPanelDir.get(size);
-							Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIR,size,strLPanelDir.get());
-							strLPanelDir.updsize();
-
-							size=Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIR,0,0);
-							strRPanelDir.get(size);
-							Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIR,size,strRPanelDir.get());
-							strRPanelDir.updsize();
-						}
 
 						PanelRedrawInfo LRInfo={0,0}, RRInfo={0,0};
 						bool bSetLDir=false, bSetLFile=false;
@@ -2460,7 +2467,7 @@ DebugMsg(cur->LDir,L"cur->LDir");
 DebugMsg(strLPanelDir.get(),L"strLPanelDir.get()");
 						}
 */
-						if (FSF.LStricmp(strLPanelDir.get(),GetPosToName(cur->LDir)))
+						if (FSF.LStricmp(LPanel.Dir,GetPosToName(cur->LDir)))
 						{
 							bSetLDir=Info.PanelControl(LPanel.hPanel,FCTL_SETPANELDIR,0,/*(LPanel.PInfo.Flags&PFLAGS_PLUGIN)?strLPanelDir.get():*/GetPosToName(cur->LDir));
 							Info.PanelControl(LPanel.hPanel,FCTL_BEGINSELECTION,0,0);
@@ -2503,7 +2510,7 @@ DebugMsg(strLPanelDir.get(),L"strLPanelDir.get()");
 								Info.PanelControl(LPanel.hPanel,FCTL_ENDSELECTION,0,0);
 						}
 
-						if (FSF.LStricmp(strRPanelDir.get(),GetPosToName(cur->RDir)))
+						if (FSF.LStricmp(RPanel.Dir,GetPosToName(cur->RDir)))
 						{
 							bSetRDir=Info.PanelControl(RPanel.hPanel,FCTL_SETPANELDIR,0,GetPosToName(cur->RDir));
 							Info.PanelControl(RPanel.hPanel,FCTL_BEGINSELECTION,0,0);

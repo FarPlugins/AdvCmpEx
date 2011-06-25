@@ -140,6 +140,7 @@ extern struct FarPanelInfo {
 	bool bARC;              // панель-архив? обрабатывается особо!
 	bool bCurFile;          // под курсором файл?
 	bool bDir;              // на панели есть каталоги?
+	wchar_t Dir[32768];
 } LPanel, RPanel;
 
 // информация об окне Фара

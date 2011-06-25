@@ -54,6 +54,7 @@ bool bGflLoaded=false;
 HMODULE GflHandle=NULL;
 HANDLE hConInp=INVALID_HANDLE_VALUE;
 
+
 /****************************************************************************
  * Обёртка сервисной функции FAR: получение строки из .lng-файла
  ****************************************************************************/
@@ -396,6 +397,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		{
 			wchar_t *buf=(wchar_t*)malloc(size*sizeof(wchar_t));
 			if (buf) Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIR,size,buf);
+			wcscpy(LPanel.Dir,buf);
 			size=FSF.ConvertPath(CPM_NATIVE,buf,0,0);
 			LList.Dir=(wchar_t*)malloc(size*sizeof(wchar_t));
 			if (LList.Dir) FSF.ConvertPath(CPM_NATIVE,buf,LList.Dir,size);
@@ -405,6 +407,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		{
 			LList.Dir=(wchar_t*)malloc(size*sizeof(wchar_t));
 			if (LList.Dir) Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIR,size,LList.Dir);
+			wcscpy(LPanel.Dir,LList.Dir);
 		}
 	}
 
@@ -453,6 +456,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		{
 			wchar_t *buf=(wchar_t*)malloc(size*sizeof(wchar_t));
 			if (buf) Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIR,size,buf);
+			wcscpy(RPanel.Dir,buf);
 			size=FSF.ConvertPath(CPM_NATIVE,buf,0,0);
 			RList.Dir=(wchar_t*)malloc(size*sizeof(wchar_t));
 			if (RList.Dir) FSF.ConvertPath(CPM_NATIVE,buf,RList.Dir,size);
@@ -462,6 +466,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		{
 			RList.Dir=(wchar_t*)malloc(size*sizeof(wchar_t));
 			if (RList.Dir) Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIR,size,RList.Dir);
+			wcscpy(RPanel.Dir,RList.Dir);
 		}
 	}
 

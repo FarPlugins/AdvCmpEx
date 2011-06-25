@@ -82,7 +82,6 @@ struct FileList {
 	bool bClearUserFlags;
 };
 
-
 // сама сравнивалка :)
 class AdvCmpProc
 {
