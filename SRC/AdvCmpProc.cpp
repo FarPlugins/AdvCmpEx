@@ -3107,6 +3107,12 @@ int AdvCmpProc::Synchronize(FileList *pFileList)
 			if (Opt.Sound && (GetTickCount()-dwTicks > 30000)) MessageBeep(MB_ICONASTERISK);
 			Info.AdvControl(&MainGuid,ACTL_PROGRESSNOTIFY,0,0);
 		}
+
+		// Кеш стал неактуальным, освободим
+		if (Cache.RCI)
+			free(Cache.RCI);
+		Cache.RCI=0;
+		Cache.ItemsNumber=0;
 	}
 
 	Info.PanelControl(LPanel.hPanel,FCTL_UPDATEPANEL,0,0);
