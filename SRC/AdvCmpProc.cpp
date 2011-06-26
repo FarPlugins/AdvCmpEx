@@ -184,7 +184,7 @@ wchar_t *GetPosToName(const wchar_t *FileName)
 void GetFullFileName(string &strFullFileName, const wchar_t *Dir, const wchar_t *FileName, bool bNative)
 {
 	if (Dir) strFullFileName=bNative?Dir:GetPosToName(Dir);
-	if ((strFullFileName.length()>0 && strFullFileName[(size_t)(strFullFileName.length()-1)]!=L'\\') || !strFullFileName.length()) strFullFileName+=L"\\";
+	if ((strFullFileName.length()>0 && strFullFileName[(size_t)(strFullFileName.length()-1)]!=L'\\') || ((LPanel.bTMP||RPanel.bTMP)? false: !strFullFileName.length())) strFullFileName+=L"\\";
 	strFullFileName+=FileName;
 }
 
@@ -749,16 +749,15 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 		if (!Opt.CmpContents)  // содержимое - особый случай...
 			CmpInfo.ProcSize+=CmpInfo.CurCountSize;
 
-		string strLFileName(LPanel.bTMP?FSF.PointToName(pLPPI->FileName):pLPPI->FileName);
-		string strRFileName(RPanel.bTMP?FSF.PointToName(pRPPI->FileName):pRPPI->FileName);
-
 		// регистр имен
-		if (Opt.CmpCase &&
-				Strncmp(Opt.SkipSubstr?CutSubstr(strLFileName,Opt.Substr):strLFileName.get(),
-								Opt.SkipSubstr?CutSubstr(strRFileName,Opt.Substr):strRFileName.get())
-			 )
+		if (Opt.CmpCase)
 		{
-			return false;
+			string strLFileName(LPanel.bTMP?FSF.PointToName(pLPPI->FileName):pLPPI->FileName);
+			string strRFileName(RPanel.bTMP?FSF.PointToName(pRPPI->FileName):pRPPI->FileName);
+
+			if (Strncmp(Opt.SkipSubstr?CutSubstr(strLFileName,Opt.Substr):strLFileName.get(),
+									Opt.SkipSubstr?CutSubstr(strRFileName,Opt.Substr):strRFileName.get()))
+				return false;
 		}
 		//===========================================================================
 		// размер
@@ -891,6 +890,19 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 			string strLFullFileName, strRFullFileName;
 			GetFullFileName(strLFullFileName,LDir,pLPPI->FileName);
 			GetFullFileName(strRFullFileName,RDir,pRPPI->FileName);
+
+			// получим NativeDir - "\\?\dir\"
+			if (LPanel.bTMP || RPanel.bTMP)
+			{
+				size_t size=FSF.ConvertPath(CPM_NATIVE,LPanel.bTMP?strLFullFileName.get():strRFullFileName.get(),0,0);
+				wchar_t *buf=(wchar_t*)malloc(size*sizeof(wchar_t));
+				if (buf)
+				{
+					FSF.ConvertPath(CPM_NATIVE,LPanel.bTMP?strLFullFileName.get():strRFullFileName.get(),buf,size);
+					(LPanel.bTMP?strLFullFileName:strRFullFileName)=buf;
+					free(buf);
+				}
+			}
 
 			// работа с кешем
 			DWORD dwLFileName, dwRFileName;
@@ -1632,15 +1644,15 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 							goto FoundDiffL;
 						}
 					}
+					// добавим элемент в диалог результатов
+					if (Opt.Dialog)
+						BuildFileList(pLList->Dir,LII.pPPI[i-1],pRList->Dir,NULL,dwFlag);
 				}
 				else
 				{
 					i++;
 				}
 				CmpInfo.Proc++;
-				// добавим элемент в диалог результатов
-				if (Opt.Dialog)
-					BuildFileList(pLList->Dir,LII.pPPI[i-1],pRList->Dir,NULL,dwFlag);
 				break;
 			}
 
@@ -1701,15 +1713,15 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 							goto FoundDiffR;
 						}
 					}
+					// добавим элемент в диалог результатов
+					if (Opt.Dialog)
+						BuildFileList(pLList->Dir,NULL,pRList->Dir,RII.pPPI[j-1],dwFlag);
 				}
 				else
 				{
 					j++;
 				}
 				CmpInfo.Proc++;
-				// добавим элемент в диалог результатов
-				if (Opt.Dialog)
-					BuildFileList(pLList->Dir,NULL,pRList->Dir,RII.pPPI[j-1],dwFlag);
 				break;
 			}
 		}
@@ -1852,7 +1864,7 @@ int __cdecl SortList(const void *el1, const void *el2)
 	return cmp;
 }
 
-void MakeListItem(wchar_t *buf, File *cur, wchar_t Mark)
+void MakeListItemText(wchar_t *buf, File *cur, wchar_t Mark)
 {
 	wchar_t LTime[20]={0}, RTime[20]={0};
 
@@ -2021,7 +2033,7 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 			}
 		}
 
-		MakeListItem(buf,cur,Mark);
+		MakeListItemText(buf,cur,Mark);
 
 		struct FarListItem Item;
 		Item.Flags=0;
@@ -2133,7 +2145,7 @@ int GetSyncOpt(FileList *pFileList)
 
 	struct FarDialogItem DialogItems[] = {
 		//			Type	X1	Y1	X2	Y2				Selected	History	Mask	Flags	Data	MaxLen	UserParam
-		/* 0*/{DI_DOUBLEBOX,  3, 1,50, 6,         0, 0, 0,             0, GetMsg(MSyncTitle),0,0},
+		/* 0*/{DI_DOUBLEBOX,  3, 1,60, 6,         0, 0, 0,             0, GetMsg(MSyncTitle),0,0},
 		/* 1*/{DI_CHECKBOX,   5, 2, 0, 0, Opt.SyncRPanel, 0, 0,Opt.SyncRPanel?0:DIF_DISABLE,buf2,0,0},
 		/* 2*/{DI_CHECKBOX,   5, 3, 0, 0, Opt.SyncLPanel, 0, 0,Opt.SyncLPanel?0:DIF_DISABLE,buf1,0,0},
 		/* 3*/{DI_TEXT,      -1, 4, 0, 0,         0, 0, 0, DIF_SEPARATOR, L"",0,0},
@@ -2142,7 +2154,7 @@ int GetSyncOpt(FileList *pFileList)
 		/* 6*/{DI_BUTTON,     0, 5, 0, 0,         0, 0, 0, DIF_CENTERGROUP, GetMsg(MCancel),0,0}
 	};
 
-	HANDLE hDlg=Info.DialogInit(&MainGuid, &OptSyncDlgGuid,-1,-1,54,8,L"DlgCmp",DialogItems,sizeof(DialogItems)/sizeof(DialogItems[0]),0,0,0,0);
+	HANDLE hDlg=Info.DialogInit(&MainGuid, &OptSyncDlgGuid,-1,-1,64,8,L"DlgCmp",DialogItems,sizeof(DialogItems)/sizeof(DialogItems[0]),0,0,0,0);
 
 	if (hDlg != INVALID_HANDLE_VALUE)
 	{
@@ -2272,11 +2284,9 @@ GOTOCMPFILE:
 								(cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY) || (cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY) ||
 								(cur->dwFlags&RCIF_LUNIQ) || (cur->dwFlags&RCIF_RUNIQ))
 						{
-//DebugMsg(cur->FileName,L"return");
 							MessageBeep(MB_OK);
 							return true;
 						}
-//DebugMsg(cur->FileName,L"continue");
 						string strLFullFileName, strRFullFileName;
 						GetFullFileName(strLFullFileName,cur->LDir,cur->FileName);
 						GetFullFileName(strRFullFileName,cur->RDir,cur->FileName);
@@ -2443,7 +2453,7 @@ GOTOCMPFILE:
 								if (cur->dwFlags&RCIF_USERLNEW) Mark=0x25ba;
 								else if (!(cur->dwFlags&RCIF_USERNONE)) Mark=0x2190;
 							}
-							MakeListItem(buf,cur,Mark);
+							MakeListItemText(buf,cur,Mark);
 							struct FarListUpdate FLU;
 							FLU.Index=FLGI.ItemIndex;
 							FLU.Item=FLGI.Item;
