@@ -1945,24 +1945,25 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 		{
 			if (!pFileList->bShowDifferent)
 				continue;
-			if (!(cur->dwFlags&RCIF_USERNONE))
-				Mark=0x2260;
+			if (cur->dwFlags&RCIF_USERLNEW) Mark=0x25ba;
+			else if (cur->dwFlags&RCIF_USERRNEW) Mark=0x25c4;
+			else Mark=0x2260;
 			pFileList->Different++;
 		}
 		if (cur->dwFlags&RCIF_LNEW)
 		{
 			if (!pFileList->bShowLNew)
 				continue;
-			if (!(cur->dwFlags&RCIF_USERNONE))
-				Mark=0x2192;
+			if (cur->dwFlags&RCIF_USERRNEW) Mark=0x25c4;
+			else if (!(cur->dwFlags&RCIF_USERNONE)) Mark=0x2192;
 			pFileList->LNew++;
 		}
 		if (cur->dwFlags&RCIF_RNEW)
 		{
 			if (!pFileList->bShowRNew)
 				continue;
-			if (!(cur->dwFlags&RCIF_USERNONE))
-				Mark=0x2190;
+			if (cur->dwFlags&RCIF_USERLNEW) Mark=0x25ba;
+			else if (!(cur->dwFlags&RCIF_USERNONE)) Mark=0x2190;
 			pFileList->RNew++;
 		}
 
@@ -2374,16 +2375,74 @@ GOTOCMPFILE:
 						FLGI.ItemIndex=Pos;
 						if (Info.SendDlgMessage(hDlg,DM_LISTGETITEM,0,&FLGI))
 						{
-							(cur->dwFlags&RCIF_USERNONE)?(cur->dwFlags&= ~RCIF_USERNONE):(cur->dwFlags|=RCIF_USERNONE);
+							__int64 Delta=0;
+							if (!(cur->dwFlags&RCIF_LUNIQ) && !(cur->dwFlags&RCIF_RUNIQ))
+								Delta=(((__int64)cur->ftLLastWriteTime.dwHighDateTime << 32) | cur->ftLLastWriteTime.dwLowDateTime) -
+											(((__int64)cur->ftRLastWriteTime.dwHighDateTime << 32) | cur->ftRLastWriteTime.dwLowDateTime);
+
+							if (cur->dwFlags&RCIF_DIFFER)
+							{
+								if (!(cur->dwFlags&RCIF_USERLNEW) && !(cur->dwFlags&RCIF_USERRNEW))
+									if (Delta>=0) cur->dwFlags|=RCIF_USERLNEW;
+									else cur->dwFlags|=RCIF_USERRNEW;
+								else if (Delta>=0 && cur->dwFlags&RCIF_USERLNEW)
+								{
+									cur->dwFlags&=~RCIF_USERLNEW;
+									cur->dwFlags|=RCIF_USERRNEW;
+								}
+								else if (Delta<0 && cur->dwFlags&RCIF_USERRNEW)
+								{
+									cur->dwFlags|=RCIF_USERLNEW;
+									cur->dwFlags&=~RCIF_USERRNEW;
+								}
+								else
+								{
+									cur->dwFlags&=~RCIF_USERLNEW;
+									cur->dwFlags&=~RCIF_USERRNEW;
+								}
+							}
+							else if (!(cur->dwFlags&RCIF_LUNIQ) && !(cur->dwFlags&RCIF_RUNIQ))
+							{
+								if (!(cur->dwFlags&RCIF_USERNONE) && !(cur->dwFlags&RCIF_USERLNEW) && !(cur->dwFlags&RCIF_USERRNEW))
+								{
+									cur->dwFlags|=RCIF_USERNONE;
+									cur->dwFlags&=~RCIF_USERLNEW;
+									cur->dwFlags&=~RCIF_USERRNEW;
+								}
+								else if (cur->dwFlags&RCIF_USERNONE)
+								{
+									cur->dwFlags&=~RCIF_USERNONE;
+									if (cur->dwFlags&RCIF_LNEW) cur->dwFlags|=RCIF_USERRNEW;
+									else cur->dwFlags|=RCIF_USERLNEW;
+								}
+								else
+								{
+									cur->dwFlags&=~RCIF_USERNONE;
+									cur->dwFlags&=~RCIF_USERLNEW;
+									cur->dwFlags&=~RCIF_USERRNEW;
+								}
+							}
+							else
+								(cur->dwFlags&RCIF_USERNONE)?(cur->dwFlags&= ~RCIF_USERNONE):(cur->dwFlags|=RCIF_USERNONE);
 
 							wchar_t buf[65536];
 							wchar_t Mark=L' ';
-							if ((cur->dwFlags&RCIF_DIFFER) && !(cur->dwFlags&RCIF_USERNONE))
-								Mark=0x2260;
-							else if ((cur->dwFlags&RCIF_LNEW) && !(cur->dwFlags&RCIF_USERNONE))
-								Mark=0x2192;
-							else if ((cur->dwFlags&RCIF_RNEW) && !(cur->dwFlags&RCIF_USERNONE))
-								Mark=0x2190;
+							if (cur->dwFlags&RCIF_DIFFER)
+							{
+								if (cur->dwFlags&RCIF_USERLNEW) Mark=0x25ba;
+								else if (cur->dwFlags&RCIF_USERRNEW) Mark=0x25c4;
+								else Mark=0x2260;
+							}
+							else if (cur->dwFlags&RCIF_LNEW)
+							{
+								if (cur->dwFlags&RCIF_USERRNEW) Mark=0x25c4;
+								else if (!(cur->dwFlags&RCIF_USERNONE)) Mark=0x2192;
+							}
+							else if (cur->dwFlags&RCIF_RNEW)
+							{
+								if (cur->dwFlags&RCIF_USERLNEW) Mark=0x25ba;
+								else if (!(cur->dwFlags&RCIF_USERNONE)) Mark=0x2190;
+							}
 							MakeListItem(buf,cur,Mark);
 							struct FarListUpdate FLU;
 							FLU.Index=FLGI.ItemIndex;
