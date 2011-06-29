@@ -2929,9 +2929,6 @@ int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName
 							break;
 					}
 				}
-
-				if (doCopy)
-					SetFileAttributesW(destFileName,destAttrib & ~(FILE_ATTRIBUTE_READONLY));
 			}
 		}
 
@@ -2942,10 +2939,26 @@ int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName
 			copyData.destFileName=(wchar_t *)destFileName;
 
 RetryCopy:
-			SetLastError(0);
+
+			DWORD dwErr=0;
+			SetLastError(dwErr);
+
+			SetFileAttributesW(srcFileName,srcAttrib & ~(FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM));
+			SetFileAttributesW(destFileName,destAttrib & ~(FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM));
+
 			if (!CopyFileEx(srcFileName,destFileName,SynchronizeFileCopyCallback,&copyData,NULL,0))
 			{
-				DWORD dwErr=GetLastError();
+				dwErr=GetLastError();
+				if (!dwErr) dwErr=E_UNEXPECTED;
+				SetFileAttributes(destFileName,destAttrib); // пробуем восстановить атрибуты
+			}
+			else
+				SetFileAttributes(destFileName,srcAttrib); // установим
+
+			SetFileAttributes(srcFileName,srcAttrib);  // восстановим атрибуты
+
+			if (dwErr)
+			{
 				int nErrMsg=MFailedCopySrcFile;
 				// Check, wich file failes?
 				HANDLE hFile;
@@ -3004,7 +3017,10 @@ int AdvCmpProc::SyncDir(const wchar_t *srcDirName, const wchar_t *destDirName, i
 
 	if (hFind==INVALID_HANDLE_VALUE)
 	{
-		if (!CreateDirectoryW(destDirName,NULL))
+		DWORD nAttrib=GetFileAttributesW(srcDirName);
+		if (nAttrib != -1 && CreateDirectoryW(destDirName,NULL))
+			SetFileAttributesW(destDirName,nAttrib);
+		else
 			return 0;
 	}
 	else
@@ -3057,7 +3073,7 @@ int AdvCmpProc::Synchronize(FileList *pFileList)
 		bStartSyncMsg=true;
 		bAskLOverwrite=bAskROverwrite=Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0,0) & FCS_COPYOVERWRITE;
 		bAskLReadOnly=bAskRReadOnly=Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0,0) & FCS_OVERWRITEDELETEROFILES;
-		bSkipLReadOnly=bSkipLReadOnly=false;
+		bSkipLReadOnly=bSkipRReadOnly=false;
 
 		hConInp=CreateFileW(L"CONIN$", GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
 		DWORD dwTicks=GetTickCount();
