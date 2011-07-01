@@ -2113,14 +2113,17 @@ int GetSyncOpt(FileList *pFileList)
 
 		if ((cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY) && (cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY))
 			continue;
-		if ((cur->dwFlags&RCIF_EQUAL) || ((cur->dwFlags&RCIF_DIFFER) && !(cur->dwFlags&RCIF_USER)) || (cur->dwFlags&RCIF_USERNONE))
+		if ( ((cur->dwFlags&RCIF_USERSELECT) && !pFileList->bShowSelect) || ((cur->dwFlags&RCIF_DIFFER) && !pFileList->bShowDifferent) ||
+				 ((cur->dwFlags&RCIF_LNEW) && !pFileList->bShowLNew) || ((cur->dwFlags&RCIF_RNEW) && !pFileList->bShowRNew) )
 			continue;
-		if ((cur->dwFlags&RCIF_USERLNEW) || ((cur->dwFlags&RCIF_LNEW) && !(cur->dwFlags&RCIF_USER)))
+		if ((cur->dwFlags&RCIF_EQUAL) || ((cur->dwFlags&RCIF_DIFFER) && !(cur->dwFlags&(RCIF_USERLNEW|RCIF_USERRNEW))) || (cur->dwFlags&RCIF_USERNONE))
+			continue;
+		if ((cur->dwFlags&RCIF_USERLNEW) || (cur->dwFlags&RCIF_LNEW))
 		{
 			ItemsLNew++;
 			continue;
 		}
-		if ((cur->dwFlags&RCIF_USERRNEW) || ((cur->dwFlags&RCIF_RNEW) && !(cur->dwFlags&RCIF_USER)))
+		if ((cur->dwFlags&RCIF_USERRNEW) || (cur->dwFlags&RCIF_RNEW))
 		{
 			ItemsRNew++;
 		}
@@ -2188,6 +2191,7 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 	{
 		case DN_INITDIALOG:
 			MakeFarList(hDlg,pFileList,true,true);
+			Info.SendDlgMessage(hDlg, DM_SETMOUSEEVENTNOTIFY, 1, 0);
 			break;
 
 	/************************************************************************/
@@ -2260,6 +2264,45 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 			}
 			break;
 
+
+		case DN_INPUT:
+		{
+			const INPUT_RECORD* record=(const INPUT_RECORD *)Param2;
+			if (record->EventType==MOUSE_EVENT)
+				// отработаем щелчок мыши в поле Mark
+				if (Opt.Sync && Param1==0 && (record->Event.MouseEvent.dwButtonState&FROM_LEFT_1ST_BUTTON_PRESSED))
+				{
+					SMALL_RECT dlgRect;
+					Info.SendDlgMessage(hDlg, DM_GETDLGRECT, 0, &dlgRect);
+					// щелкнули в LISTе
+					if (record->Event.MouseEvent.dwMousePosition.X>dlgRect.Left && record->Event.MouseEvent.dwMousePosition.X<dlgRect.Right
+					&& record->Event.MouseEvent.dwMousePosition.Y>dlgRect.Top && record->Event.MouseEvent.dwMousePosition.Y<dlgRect.Bottom)
+					{
+						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
+						FarListPos ListPos;
+						Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, &ListPos);
+						int OldPos=ListPos.SelectPos;
+						ListPos.SelectPos=ListPos.TopPos+(record->Event.MouseEvent.dwMousePosition.Y-1-dlgRect.Top);
+
+						if (Info.SendDlgMessage(hDlg, DM_LISTSETCURPOS, 0, &ListPos)!=ListPos.SelectPos)
+						{
+							ListPos.SelectPos=OldPos;
+							Info.SendDlgMessage(hDlg, DM_LISTSETCURPOS, 0, &ListPos);
+							Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
+							MessageBeep(MB_OK);
+						}
+						// вот оно, поле Mark
+						else if (record->Event.MouseEvent.dwMousePosition.X>=dlgRect.Left+68 && record->Event.MouseEvent.dwMousePosition.X<=dlgRect.Left+70)
+						{
+							Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
+							goto GOTOCHANGEMARK;
+						}
+						return true;
+					}
+					return false;
+				}
+		}
+
 	/************************************************************************/
 
 		case DN_CONTROLINPUT:
@@ -2267,7 +2310,16 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 			const INPUT_RECORD* record=(const INPUT_RECORD *)Param2;
 			if (record->EventType==MOUSE_EVENT)
 				if (Param1==0 && record->Event.MouseEvent.dwButtonState==FROM_LEFT_1ST_BUTTON_PRESSED && record->Event.MouseEvent.dwEventFlags==DOUBLE_CLICK)
-					goto GOTOCMPFILE;
+				{
+					SMALL_RECT dlgRect;
+					Info.SendDlgMessage(hDlg, DM_GETDLGRECT, 0, &dlgRect);
+
+					if (record->Event.MouseEvent.dwMousePosition.X<dlgRect.Left+68 || record->Event.MouseEvent.dwMousePosition.X>dlgRect.Left+70)
+					{
+						goto GOTOCMPFILE;
+						return true;
+					}
+				}
 			if (record->EventType==KEY_EVENT)
 			{
 				long Key=FSF.FarInputRecordToKey(record);
@@ -2376,6 +2428,7 @@ GOTOCMPFILE:
 				}
 				else if (Key==KEY_SPACE)
 				{
+GOTOCHANGEMARK:
 					int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
 					File **tmp=(File **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
 					File *cur=(tmp && *tmp)?*tmp:NULL;
@@ -2393,8 +2446,10 @@ GOTOCMPFILE:
 							if (cur->dwFlags&RCIF_DIFFER)
 							{
 								if (!(cur->dwFlags&RCIF_USERLNEW) && !(cur->dwFlags&RCIF_USERRNEW))
+								{
 									if (Delta>=0) cur->dwFlags|=RCIF_USERLNEW;
 									else cur->dwFlags|=RCIF_USERRNEW;
+								}
 								else if (Delta>=0 && cur->dwFlags&RCIF_USERLNEW)
 								{
 									cur->dwFlags&=~RCIF_USERLNEW;
@@ -2467,6 +2522,7 @@ GOTOCMPFILE:
 				}
 				else if (Key==KEY_CTRLR)
 				{
+					Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
 					pFileList->bShowSelect=true;
 					pFileList->bShowIdentical=true;
 					pFileList->bShowDifferent=true;
@@ -2475,36 +2531,47 @@ GOTOCMPFILE:
 					pFileList->bClearUserFlags=true;
 					MakeFarList(hDlg,pFileList);
 					pFileList->bClearUserFlags=false; // восстановим!
+					Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
 					return true;
 				}
 				else if (Key==(KEY_CTRL+L'\\') && !(pFileList->bShowSelect && pFileList->Select==0))
 				{
+					Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
 					pFileList->bShowSelect=(pFileList->bShowSelect?false:true);
 					MakeFarList(hDlg,pFileList);
+					Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
 					return true;
 				}
 				else if (Key==(KEY_CTRL+L'=') && !(pFileList->bShowIdentical && pFileList->Identical==0))
 				{
+					Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
 					pFileList->bShowIdentical=(pFileList->bShowIdentical?false:true);
 					MakeFarList(hDlg,pFileList);
+					Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
 					return true;
 				}
 				else if (Key==(KEY_CTRL+L'-') && !(pFileList->bShowDifferent && pFileList->Different==0))
 				{
+					Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
 					pFileList->bShowDifferent=(pFileList->bShowDifferent?false:true);
 					MakeFarList(hDlg,pFileList);
+					Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
 					return true;
 				}
 				else if (Key==(KEY_CTRL+L'[') && !(pFileList->bShowLNew && pFileList->LNew==0))
 				{
+					Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
 					pFileList->bShowLNew=(pFileList->bShowLNew?false:true);
 					MakeFarList(hDlg,pFileList);
+					Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
 					return true;
 				}
 				else if (Key==(KEY_CTRL+L']') && !(pFileList->bShowRNew && pFileList->RNew==0))
 				{
+					Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
 					pFileList->bShowRNew=(pFileList->bShowRNew?false:true);
 					MakeFarList(hDlg,pFileList);
+					Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
 					return true;
 				}
 				else if (Key==(KEY_CTRL|KEY_PGUP) || Key==(KEY_RCTRL|KEY_PGUP))
@@ -2946,16 +3013,16 @@ RetryCopy:
 			SetFileAttributesW(srcFileName,srcAttrib & ~(FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM));
 			SetFileAttributesW(destFileName,destAttrib & ~(FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM));
 
-			if (!CopyFileEx(srcFileName,destFileName,SynchronizeFileCopyCallback,&copyData,NULL,0))
+			if (!CopyFileExW(srcFileName,destFileName,SynchronizeFileCopyCallback,&copyData,NULL,0))
 			{
 				dwErr=GetLastError();
 				if (!dwErr) dwErr=E_UNEXPECTED;
-				SetFileAttributes(destFileName,destAttrib); // пробуем восстановить атрибуты
+				SetFileAttributesW(destFileName,destAttrib); // пробуем восстановить атрибуты
 			}
 			else
-				SetFileAttributes(destFileName,srcAttrib); // установим
+				SetFileAttributesW(destFileName,srcAttrib); // установим
 
-			SetFileAttributes(srcFileName,srcAttrib);  // восстановим атрибуты
+			SetFileAttributesW(srcFileName,srcAttrib);  // восстановим атрибуты
 
 			if (dwErr)
 			{
@@ -3084,9 +3151,12 @@ int AdvCmpProc::Synchronize(FileList *pFileList)
 			int direction;
 			if ((cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY) && (cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY))
 				continue;
-			if ((cur->dwFlags&RCIF_EQUAL) || ((cur->dwFlags&RCIF_DIFFER) && !(cur->dwFlags&RCIF_USER)) || (cur->dwFlags&RCIF_USERNONE))
+			if ( ((cur->dwFlags&RCIF_USERSELECT) && !pFileList->bShowSelect) || ((cur->dwFlags&RCIF_DIFFER) && !pFileList->bShowDifferent) ||
+					 ((cur->dwFlags&RCIF_LNEW) && !pFileList->bShowLNew) || ((cur->dwFlags&RCIF_RNEW) && !pFileList->bShowRNew) )
 				continue;
-			if ((cur->dwFlags&RCIF_USERLNEW) || ((cur->dwFlags&RCIF_LNEW) && !(cur->dwFlags&RCIF_USER)))
+			if ((cur->dwFlags&RCIF_EQUAL) || ((cur->dwFlags&RCIF_DIFFER) && !(cur->dwFlags&(RCIF_USERLNEW|RCIF_USERRNEW))) || (cur->dwFlags&RCIF_USERNONE))
+				continue;
+			if ((cur->dwFlags&RCIF_USERLNEW) || (cur->dwFlags&RCIF_LNEW))
 			{
 				direction=1; // слева новый, значит копируем направо
 				string strSrcName, strDestName;
@@ -3105,7 +3175,7 @@ int AdvCmpProc::Synchronize(FileList *pFileList)
 				}
 				continue;
 			}
-			if ((cur->dwFlags&RCIF_USERRNEW) || ((cur->dwFlags&RCIF_RNEW) && !(cur->dwFlags&RCIF_USER)))
+			if ((cur->dwFlags&RCIF_USERRNEW) || (cur->dwFlags&RCIF_RNEW))
 			{
 				direction=-1; // справа новый, значит копируем налево
 				string strSrcName, strDestName;
