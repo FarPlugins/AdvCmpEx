@@ -2270,52 +2270,49 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 		{
 			const INPUT_RECORD* record=(const INPUT_RECORD *)Param2;
 			if (record->EventType==MOUSE_EVENT)
-				if (Param1==0 && record->Event.MouseEvent.dwButtonState==FROM_LEFT_1ST_BUTTON_PRESSED)
+				// отработаем щелчок мыши в поле Mark
+				if (Opt.Sync && Param1==0 && record->Event.MouseEvent.dwButtonState==FROM_LEFT_1ST_BUTTON_PRESSED && record->Event.MouseEvent.dwEventFlags!=DOUBLE_CLICK)
 				{
-					if (record->Event.MouseEvent.dwEventFlags==DOUBLE_CLICK)
+					SMALL_RECT dlgRect;
+					Info.SendDlgMessage(hDlg, DM_GETDLGRECT, 0, &dlgRect);
+					// щелкнули в LISTе
+					if (record->Event.MouseEvent.dwMousePosition.X>dlgRect.Left && record->Event.MouseEvent.dwMousePosition.X<dlgRect.Right
+					&& record->Event.MouseEvent.dwMousePosition.Y>dlgRect.Top && record->Event.MouseEvent.dwMousePosition.Y<dlgRect.Bottom)
 					{
-						SMALL_RECT dlgRect;
-						Info.SendDlgMessage(hDlg, DM_GETDLGRECT, 0, &dlgRect);
-						// не нужно поле Mark
-						if (record->Event.MouseEvent.dwMousePosition.X<dlgRect.Left+68 || record->Event.MouseEvent.dwMousePosition.X>dlgRect.Left+70)
+						FarListPos ListPos;
+						Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, &ListPos);
+						int OldPos=ListPos.SelectPos;
+						ListPos.SelectPos=ListPos.TopPos+(record->Event.MouseEvent.dwMousePosition.Y-1-dlgRect.Top);
+						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
+						int NewPos=Info.SendDlgMessage(hDlg, DM_LISTSETCURPOS, 0, &ListPos);
+						if (NewPos!=ListPos.SelectPos)
 						{
-							goto GOTOCMPFILE;
-//							return false;
+							ListPos.SelectPos=OldPos;
+							Info.SendDlgMessage(hDlg, DM_LISTSETCURPOS, 0, &ListPos);
+							MessageBeep(MB_OK);
+						}
+						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
+						// вот оно, поле Mark
+						if (NewPos==ListPos.SelectPos && record->Event.MouseEvent.dwMousePosition.X>=dlgRect.Left+68 && record->Event.MouseEvent.dwMousePosition.X<=dlgRect.Left+70)
+						{
+							goto GOTOCHANGEMARK;
+							return false;
 						}
 					}
-					// отработаем щелчок мыши в поле Mark
-					if (Opt.Sync)
-					{
-						SMALL_RECT dlgRect;
-						Info.SendDlgMessage(hDlg, DM_GETDLGRECT, 0, &dlgRect);
-						// щелкнули в LISTе
-						if (record->Event.MouseEvent.dwMousePosition.X>dlgRect.Left && record->Event.MouseEvent.dwMousePosition.X<dlgRect.Right
-						&& record->Event.MouseEvent.dwMousePosition.Y>dlgRect.Top && record->Event.MouseEvent.dwMousePosition.Y<dlgRect.Bottom)
-						{
-							Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
-							FarListPos ListPos;
-							Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, &ListPos);
-							int OldPos=ListPos.SelectPos;
-							ListPos.SelectPos=ListPos.TopPos+(record->Event.MouseEvent.dwMousePosition.Y-1-dlgRect.Top);
-
-							if (Info.SendDlgMessage(hDlg, DM_LISTSETCURPOS, 0, &ListPos)!=ListPos.SelectPos)
-							{
-								ListPos.SelectPos=OldPos;
-								Info.SendDlgMessage(hDlg, DM_LISTSETCURPOS, 0, &ListPos);
-								Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
-								MessageBeep(MB_OK);
-							}
-							// вот оно, поле Mark
-							else if (record->Event.MouseEvent.dwMousePosition.X>=dlgRect.Left+68 && record->Event.MouseEvent.dwMousePosition.X<=dlgRect.Left+70)
-							{
-								Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
-								goto GOTOCHANGEMARK;
-							}
-//							return false;
-						}
-					}
-					return true;
 				}
+				else if (Param1==0 && record->Event.MouseEvent.dwButtonState==FROM_LEFT_1ST_BUTTON_PRESSED && record->Event.MouseEvent.dwEventFlags==DOUBLE_CLICK)
+				{
+					SMALL_RECT dlgRect;
+					Info.SendDlgMessage(hDlg, DM_GETDLGRECT, 0, &dlgRect);
+					// не нужно поле Mark
+					if (!Opt.Sync || record->Event.MouseEvent.dwMousePosition.X<dlgRect.Left+68 || record->Event.MouseEvent.dwMousePosition.X>dlgRect.Left+70)
+					{
+						goto GOTOCMPFILE;
+						return false;
+					}
+				}
+
+				return true;
 		}
 
 	/************************************************************************/
