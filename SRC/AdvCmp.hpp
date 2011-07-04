@@ -119,6 +119,7 @@ extern struct Options {
 			SyncOnlyRight,
 			SyncLPanel,
 			SyncRPanel,
+			SyncRDel,
 			ProcessHidden,
 			BufSize;
 	char *Buf[2];

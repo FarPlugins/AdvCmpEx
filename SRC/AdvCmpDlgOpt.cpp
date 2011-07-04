@@ -70,21 +70,22 @@ enum {
 	DlgEMAXDEPTH,   //26
 	DlgFILTER,      //27
 	DlgFILTERBOTTON,//28
-	DlgSELECTED,    //29
+	DlgFIRSTDIFF,   //29
 	DlgLCMPSKIP,    //30
 	DlgECMPSKIP,    //31
-	DlgFIRSTDIFF,   //32
+	DlgSELECTED,    //32
 	DlgSELECTEDNEW, //33
-	DlgIGNORMISSING,//34
-	DlgSHOWMSG,     //35
-	DlgSOUND,       //36
-	DlgDIALOG,      //37
-	DlgTOTALPROCESS,//38
+	DlgONLYRIGHT,   //34
+	DlgIGNORMISSING,//35
+	DlgSHOWMSG,     //36
+	DlgSOUND,       //37
+	DlgDIALOG,      //38
+	DlgTOTALPROCESS,//39
 
-	DlgSEP2,        //39
-	DlgOK,          //40
-	DlgUNDERCURSOR, //41
-	DlgCANCEL,      //42
+	DlgSEP2,        //40
+	DlgOK,          //41
+	DlgUNDERCURSOR, //42
+	DlgCANCEL,      //43
 };
 
 struct ParamStore
@@ -124,11 +125,12 @@ struct ParamStore
 	{DlgEMAXDEPTH,   L"MaxScanDepth",        &Opt.MaxScanDepth},
 	{DlgFILTER,      L"Filter",              &Opt.Filter},
 	{DlgFILTERBOTTON,0,                      0},
-	{DlgSELECTED,    L"ProcessSelected",     &Opt.ProcessSelected},
+	{DlgFIRSTDIFF,   L"ProcessTillFirstDiff",&Opt.ProcessTillFirstDiff},
 	{DlgLCMPSKIP,    L"SkipSubstr",          &Opt.SkipSubstr},
 	{DlgECMPSKIP,    0,                      0},
-	{DlgFIRSTDIFF,   L"ProcessTillFirstDiff",&Opt.ProcessTillFirstDiff},
+	{DlgSELECTED,    L"ProcessSelected",     &Opt.ProcessSelected},
 	{DlgSELECTEDNEW, L"SelectedNew",         &Opt.SelectedNew},
+	{DlgONLYRIGHT,   L"SyncOnlyRight",       &Opt.SyncOnlyRight},
 	{DlgIGNORMISSING,L"IgnoreMissing",       &Opt.IgnoreMissing},
 	{DlgSHOWMSG,     L"ShowMsg",             &Opt.ShowMsg},
 	{DlgSOUND,       L"Sound",               &Opt.Sound},
@@ -355,6 +357,8 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDIALOG,(void*)true);
 					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgDIALOG,(void*)(Opt.Dialog?BSTATE_CHECKED:BSTATE_UNCHECKED));
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgUNDERCURSOR,(void*)(!LPanel.bCurFile || !RPanel.bCurFile?false:true));
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgONLYRIGHT,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgONLYRIGHT,(void*)BSTATE_UNCHECKED);
 				}
 			}
 			//-------------
@@ -372,6 +376,8 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDIALOG,(void*)false);
 					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgDIALOG,(void*)BSTATE_CHECKED);
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgUNDERCURSOR,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgONLYRIGHT,(void*)true);
+					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgONLYRIGHT,(void*)(Opt.SyncOnlyRight?BSTATE_CHECKED:BSTATE_UNCHECKED));
 				}
 			}
 			//-------------
@@ -731,21 +737,22 @@ int AdvCmpDlgOpt::ShowOptDialog()
 		/*26*/{DI_FIXEDIT,    0,13,   2,   0, 0, 0,              L"999",                     DIF_MASKEDIT, L"1",0,0},
 		/*27*/{DI_CHECKBOX,   2,14,   0,   0, 0, 0,                   0,                                0, GetMsg(MFilter),0,0},
 		/*28*/{DI_BUTTON,     0,14,dW-3,   0, 0, 0,                   0,                                0, GetMsg(MFilterBotton),0,0},
-		/*29*/{DI_CHECKBOX,   2,15,   0,   0, 0, 0,                   0,                                0, GetMsg(MProcessSelected),0,0},
+		/*29*/{DI_CHECKBOX,   2,15,   0,   0, 1, 0,                   0,                                0, GetMsg(MProcessTillFirstDiff),0,0},
 		/*30*/{DI_CHECKBOX,   2,16,   0,   0, 0, 0,                   0,                                0, GetMsg(MCompareSkipSubstr),0,0},
 		/*31*/{DI_EDIT,       0,16,dW-3,   0, 0, L"AdvCmpSkipSubstr", 0,   DIF_USELASTHISTORY|DIF_HISTORY, L"",0,0},
-		/*32*/{DI_CHECKBOX,   2,17,   0,   0, 1, 0,                   0,                                0, GetMsg(MProcessTillFirstDiff),0,0},
-		/*33*/{DI_CHECKBOX,   2,18,   0,   0, 0, 0,                   0,                                0, GetMsg(MSelectedNew),0,0},
-		/*34*/{DI_CHECKBOX,  35,18,   0,   0, 0, 0,                   0,                                0, GetMsg(MIgnoreMissing),0,0},
-		/*35*/{DI_CHECKBOX,   2,19,   0,   0, 1, 0,                   0,                                0, GetMsg(MShowMsg),0,0},
-		/*36*/{DI_CHECKBOX,  35,19,   0,   0, 0, 0,                   0,                                0, GetMsg(MSound),0,0},
-		/*37*/{DI_CHECKBOX,   2,20,   0,   0, 0, 0,                   0,                                0, GetMsg(MDialog),0,0},
-		/*38*/{DI_CHECKBOX,  35,20,   0,   0, 0, 0,                   0,                                0, GetMsg(MTotalProcess),0,0},
+		/*32*/{DI_CHECKBOX,   2,17,  33,   0, 0, 0,                   0,                                0, GetMsg(MProcessSelected),0,0},
+		/*33*/{DI_CHECKBOX,  35,17,   0,   0, 0, 0,                   0,                                0, GetMsg(MSelectedNew),0,0},
+		/*34*/{DI_CHECKBOX,   2,18,  33,   0, 0, 0,                   0,                                0, GetMsg(MSyncOnlyRight),0,0},
+		/*35*/{DI_CHECKBOX,  35,18,   0,   0, 0, 0,                   0,                                0, GetMsg(MIgnoreMissing),0,0},
+		/*36*/{DI_CHECKBOX,   2,19,   0,   0, 1, 0,                   0,                                0, GetMsg(MShowMsg),0,0},
+		/*37*/{DI_CHECKBOX,  35,19,   0,   0, 0, 0,                   0,                                0, GetMsg(MSound),0,0},
+		/*38*/{DI_CHECKBOX,   2,20,   0,   0, 0, 0,                   0,                                0, GetMsg(MDialog),0,0},
+		/*39*/{DI_CHECKBOX,  35,20,   0,   0, 0, 0,                   0,                                0, GetMsg(MTotalProcess),0,0},
 
-		/*39*/{DI_TEXT,      -1,21,   0,   0, 0, 0,                   0,                    DIF_SEPARATOR, L"",0,0},
-		/*40*/{DI_BUTTON,     0,22,   0,   0, 0, 0,                   0,DIF_CENTERGROUP|DIF_DEFAULTBUTTON, GetMsg(MOK),0,0},
-		/*41*/{DI_BUTTON,     0,22,   0,   0, 0, 0,                   0,                  DIF_CENTERGROUP, GetMsg(MUnderCursorBotton),0,0},
-		/*42*/{DI_BUTTON,     0,22,   0,   0, 0, 0,                   0,                  DIF_CENTERGROUP, GetMsg(MCancel),0,0}
+		/*40*/{DI_TEXT,      -1,21,   0,   0, 0, 0,                   0,                    DIF_SEPARATOR, L"",0,0},
+		/*41*/{DI_BUTTON,     0,22,   0,   0, 0, 0,                   0,DIF_CENTERGROUP|DIF_DEFAULTBUTTON, GetMsg(MOK),0,0},
+		/*42*/{DI_BUTTON,     0,22,   0,   0, 0, 0,                   0,                  DIF_CENTERGROUP, GetMsg(MUnderCursorBotton),0,0},
+		/*43*/{DI_BUTTON,     0,22,   0,   0, 0, 0,                   0,                  DIF_CENTERGROUP, GetMsg(MCancel),0,0}
 	};
 
 	// динамические координаты для строк

@@ -1958,7 +1958,7 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 			if (!pFileList->bShowDifferent)
 				continue;
 			if (cur->dwFlags&RCIF_USERLNEW) Mark=0x25ba;
-			else if (cur->dwFlags&RCIF_USERRNEW) Mark=0x25c4;
+			else if (!Opt.SyncOnlyRight && (cur->dwFlags&RCIF_USERRNEW)) Mark=0x25c4;
 			else Mark=0x2260;
 			pFileList->Different++;
 		}
@@ -1966,7 +1966,7 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 		{
 			if (!pFileList->bShowLNew)
 				continue;
-			if (cur->dwFlags&RCIF_USERRNEW) Mark=0x25c4;
+			if (!Opt.SyncOnlyRight && (cur->dwFlags&RCIF_USERRNEW)) Mark=0x25c4;
 			else if (!(cur->dwFlags&RCIF_USERNONE)) Mark=0x2192;
 			pFileList->LNew++;
 		}
@@ -1975,8 +1975,13 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 			if (!pFileList->bShowRNew)
 				continue;
 			if (cur->dwFlags&RCIF_USERLNEW) Mark=0x25ba;
-			else if (!(cur->dwFlags&RCIF_USERNONE)) Mark=0x2190;
-			pFileList->RNew++;
+			else if (!Opt.SyncOnlyRight && !(cur->dwFlags&RCIF_USERNONE)) Mark=0x2190;
+			else if (Opt.SyncOnlyRight)
+			{
+				if (cur->dwFlags&RCIF_RUNIQ) { cur->dwFlags|=RCIF_USERDEL; Mark=L'x'; }
+				else cur->dwFlags|=RCIF_USERNONE;
+			}
+			if (!Opt.SyncOnlyRight || (Opt.SyncOnlyRight && (cur->dwFlags&RCIF_RUNIQ))) pFileList->RNew++;
 		}
 
 		// виртуальная папка
@@ -2008,7 +2013,7 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 				File *next=&pFileList->F[j];
 
 				if (pFileList->bClearUserFlags)
-					next->dwFlags&= ~RCIF_USER; // всеравно же скидывать
+					next->dwFlags&= ~RCIF_USER; // все равно же скидывать
 
 				if ((next->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY) && (next->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY))
 					continue;
@@ -2105,7 +2110,7 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 int GetSyncOpt(FileList *pFileList)
 {
 	int ret=-1; // продолжаем редактировать список
-	int ItemsLNew=0, ItemsRNew=0;
+	int ItemsLNew=0, ItemsRNew=0, ItemsRDel=0;
 
 	for (int i=0; i<pFileList->iCount; i++)
 	{
@@ -2123,14 +2128,19 @@ int GetSyncOpt(FileList *pFileList)
 			ItemsLNew++;
 			continue;
 		}
-		if ((cur->dwFlags&RCIF_USERRNEW) || (cur->dwFlags&RCIF_RNEW))
+		if (cur->dwFlags&RCIF_USERDEL)
+		{
+			ItemsRDel++;
+			continue;
+		}
+		if (!Opt.SyncOnlyRight && ((cur->dwFlags&RCIF_USERRNEW) || (cur->dwFlags&RCIF_RNEW)))
 		{
 			ItemsRNew++;
 		}
 	}
 
 	// нет элементов для синхронизации, выходим
-	if (!ItemsLNew && !ItemsRNew)
+	if (!ItemsLNew && !ItemsRNew && !ItemsRDel)
 	{
 		if (Opt.ShowMsg)
 		{
@@ -2140,35 +2150,37 @@ int GetSyncOpt(FileList *pFileList)
 		return ret=1; //нет элементов
 	}
 
-	Opt.SyncLPanel=ItemsRNew, Opt.SyncRPanel=ItemsLNew;
+	Opt.SyncLPanel=ItemsRNew, Opt.SyncRPanel=ItemsLNew, Opt.SyncRDel=ItemsRDel;
 
-	wchar_t buf1[80], buf2[80];
+	wchar_t buf1[80], buf2[80], buf3[80];
 	FSF.sprintf(buf1,GetMsg(MSyncLPanel),ItemsRNew);
 	FSF.sprintf(buf2,GetMsg(MSyncRPanel),ItemsLNew);
+	FSF.sprintf(buf3,GetMsg(MSyncRDel),ItemsRDel);
 
 	struct FarDialogItem DialogItems[] = {
 		//			Type	X1	Y1	X2	Y2				Selected	History	Mask	Flags	Data	MaxLen	UserParam
-		/* 0*/{DI_DOUBLEBOX,  3, 1,60, 6,         0, 0, 0,             0, GetMsg(MSyncTitle),0,0},
+		/* 0*/{DI_DOUBLEBOX,  3, 1,60, 7,         0, 0, 0,             0, GetMsg(MSyncTitle),0,0},
 		/* 1*/{DI_CHECKBOX,   5, 2, 0, 0, Opt.SyncRPanel, 0, 0,Opt.SyncRPanel?0:DIF_DISABLE,buf2,0,0},
 		/* 2*/{DI_CHECKBOX,   5, 3, 0, 0, Opt.SyncLPanel, 0, 0,Opt.SyncLPanel?0:DIF_DISABLE,buf1,0,0},
-		/* 3*/{DI_TEXT,      -1, 4, 0, 0,         0, 0, 0, DIF_SEPARATOR, L"",0,0},
-		/* 4*/{DI_BUTTON,     0, 5, 0, 0,         0, 0, 0, DIF_DEFAULTBUTTON|DIF_CENTERGROUP, GetMsg(MOK),0,0},
-		/* 5*/{DI_BUTTON,     0, 5, 0, 0,         0, 0, 0, DIF_CENTERGROUP, GetMsg(MSyncEdit),0,0},
-		/* 6*/{DI_BUTTON,     0, 5, 0, 0,         0, 0, 0, DIF_CENTERGROUP, GetMsg(MCancel),0,0}
+		/* 3*/{DI_CHECKBOX,   5, 4, 0, 0, Opt.SyncRDel, 0, 0, Opt.SyncRDel?0:DIF_DISABLE,buf3,0,0},
+		/* 4*/{DI_TEXT,      -1, 5, 0, 0,         0, 0, 0, DIF_SEPARATOR, L"",0,0},
+		/* 5*/{DI_BUTTON,     0, 6, 0, 0,         0, 0, 0, DIF_DEFAULTBUTTON|DIF_CENTERGROUP, GetMsg(MOK),0,0},
+		/* 6*/{DI_BUTTON,     0, 6, 0, 0,         0, 0, 0, DIF_CENTERGROUP, GetMsg(MSyncEdit),0,0},
+		/* 7*/{DI_BUTTON,     0, 6, 0, 0,         0, 0, 0, DIF_CENTERGROUP, GetMsg(MCancel),0,0}
 	};
 
-	HANDLE hDlg=Info.DialogInit(&MainGuid, &OptSyncDlgGuid,-1,-1,64,8,L"DlgCmp",DialogItems,sizeof(DialogItems)/sizeof(DialogItems[0]),0,0,0,0);
+	HANDLE hDlg=Info.DialogInit(&MainGuid, &OptSyncDlgGuid,-1,-1,64,9,L"DlgCmp",DialogItems,sizeof(DialogItems)/sizeof(DialogItems[0]),0,0,0,0);
 
 	if (hDlg != INVALID_HANDLE_VALUE)
 	{
 		ret=Info.DialogRun(hDlg);
-		if (ret==4)
+		if (ret==5)
 		{
 			Opt.SyncRPanel=Info.SendDlgMessage(hDlg,DM_GETCHECK,1,0);
 			Opt.SyncLPanel=Info.SendDlgMessage(hDlg,DM_GETCHECK,2,0);
-			ret=(Opt.SyncLPanel || Opt.SyncRPanel)?2:1;   // синхронизируем, иначе - пропустим
+			ret=(Opt.SyncLPanel || Opt.SyncRPanel || Opt.SyncRDel)?2:1;   // синхронизируем, иначе - пропустим
 		}
-		else if (ret==5)
+		else if (ret==6)
 			ret=-1;
 		else
 		{
@@ -2320,7 +2332,6 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 		case DN_CONTROLINPUT:
 		{
 			const INPUT_RECORD* record=(const INPUT_RECORD *)Param2;
-//			if (record->EventType==MOUSE_EVENT)
 			if (record->EventType==KEY_EVENT)
 			{
 				long Key=FSF.FarInputRecordToKey(record);
@@ -2448,15 +2459,15 @@ GOTOCHANGEMARK:
 							{
 								if (!(cur->dwFlags&RCIF_USERLNEW) && !(cur->dwFlags&RCIF_USERRNEW))
 								{
-									if (Delta>=0) cur->dwFlags|=RCIF_USERLNEW;
-									else cur->dwFlags|=RCIF_USERRNEW;
+									if (Delta>=0 || Opt.SyncOnlyRight) cur->dwFlags|=RCIF_USERLNEW;
+									else if (!Opt.SyncOnlyRight) cur->dwFlags|=RCIF_USERRNEW;
 								}
-								else if (Delta>=0 && cur->dwFlags&RCIF_USERLNEW)
+								else if ((Delta>=0 || Opt.SyncOnlyRight) && (cur->dwFlags&RCIF_USERLNEW))
 								{
 									cur->dwFlags&=~RCIF_USERLNEW;
-									cur->dwFlags|=RCIF_USERRNEW;
+									if (!Opt.SyncOnlyRight) cur->dwFlags|=RCIF_USERRNEW;
 								}
-								else if (Delta<0 && cur->dwFlags&RCIF_USERRNEW)
+								else if (Delta<0 && (cur->dwFlags&RCIF_USERRNEW))
 								{
 									cur->dwFlags|=RCIF_USERLNEW;
 									cur->dwFlags&=~RCIF_USERRNEW;
@@ -2478,36 +2489,62 @@ GOTOCHANGEMARK:
 								else if (cur->dwFlags&RCIF_USERNONE)
 								{
 									cur->dwFlags&=~RCIF_USERNONE;
-									if (cur->dwFlags&RCIF_LNEW) cur->dwFlags|=RCIF_USERRNEW;
-									else cur->dwFlags|=RCIF_USERLNEW;
+									if (cur->dwFlags&RCIF_LNEW)
+									{
+										if (!Opt.SyncOnlyRight) cur->dwFlags|=RCIF_USERRNEW;
+									}
+									else
+									{
+										cur->dwFlags|=RCIF_USERLNEW;
+									}
 								}
 								else
 								{
-									cur->dwFlags&=~RCIF_USERNONE;
-									cur->dwFlags&=~RCIF_USERLNEW;
-									cur->dwFlags&=~RCIF_USERRNEW;
+									if (Opt.SyncOnlyRight)
+									{
+										cur->dwFlags|=RCIF_USERNONE;
+										cur->dwFlags&=~RCIF_USERLNEW;
+									}
+									else
+									{
+										cur->dwFlags&=~RCIF_USERNONE;
+										cur->dwFlags&=~RCIF_USERLNEW;
+										cur->dwFlags&=~RCIF_USERRNEW;
+									}
 								}
 							}
 							else
-								(cur->dwFlags&RCIF_USERNONE)?(cur->dwFlags&= ~RCIF_USERNONE):(cur->dwFlags|=RCIF_USERNONE);
+							{
+								if (cur->dwFlags&RCIF_USERNONE)
+								{
+									cur->dwFlags&= ~RCIF_USERNONE;
+									if (Opt.SyncOnlyRight && (cur->dwFlags&RCIF_RNEW)) cur->dwFlags|=RCIF_USERDEL;
+								}
+								else
+								{
+									cur->dwFlags|=RCIF_USERNONE;
+									cur->dwFlags&=~RCIF_USERDEL;
+								}
+							}
 
 							wchar_t buf[65536];
 							wchar_t Mark=L' ';
 							if (cur->dwFlags&RCIF_DIFFER)
 							{
 								if (cur->dwFlags&RCIF_USERLNEW) Mark=0x25ba;
-								else if (cur->dwFlags&RCIF_USERRNEW) Mark=0x25c4;
+								else if (!Opt.SyncOnlyRight && (cur->dwFlags&RCIF_USERRNEW)) Mark=0x25c4;
 								else Mark=0x2260;
 							}
 							else if (cur->dwFlags&RCIF_LNEW)
 							{
-								if (cur->dwFlags&RCIF_USERRNEW) Mark=0x25c4;
+								if (!Opt.SyncOnlyRight && (cur->dwFlags&RCIF_USERRNEW)) Mark=0x25c4;
 								else if (!(cur->dwFlags&RCIF_USERNONE)) Mark=0x2192;
 							}
 							else if (cur->dwFlags&RCIF_RNEW)
 							{
 								if (cur->dwFlags&RCIF_USERLNEW) Mark=0x25ba;
-								else if (!(cur->dwFlags&RCIF_USERNONE)) Mark=0x2190;
+								else if (!Opt.SyncOnlyRight && !(cur->dwFlags&RCIF_USERNONE)) Mark=0x2190;
+								else if (cur->dwFlags&RCIF_USERDEL) Mark=L'x';
 							}
 							MakeListItemText(buf,cur,Mark);
 							struct FarListUpdate FLU;
@@ -2779,13 +2816,14 @@ int AdvCmpProc::ShowCmpDialog(const struct DirList *pLList,const struct DirList 
  *
  ***************************************************************************/
 
-enum QueryOverwriteFileResult
+enum QueryResult
 {
-	QOF_ABORT=-1,
-	QOF_OVERWRITE,
-	QOF_OVERWRITEALL,
-	QOF_SKIP,
-	QOF_SKIPALL
+	QR_ABORT=-1,
+	QR_OVERWRITE=0,
+	QR_DELETE=0,
+	QR_ALL=1,
+	QR_SKIP=2,
+	QR_SKIPALL=3
 };
 
 int AdvCmpProc::QueryOverwriteFile(const wchar_t *FileName, FILETIME *srcTime, FILETIME *destTime, __int64 srcSize, __int64 destSize, int direction, bool bReadOnlyType)
@@ -2808,13 +2846,28 @@ int AdvCmpProc::QueryOverwriteFile(const wchar_t *FileName, FILETIME *srcTime, F
 		L"\1",
 		New,
 		Existing,
-		L"\1",
-		GetMsg(MOverwrite), GetMsg(MOverwriteAll), GetMsg(MSkip), GetMsg(MSkipAll), GetMsg(MCancel)
+		GetMsg(MOverwrite), GetMsg(MAll), GetMsg(MSkip), GetMsg(MSkipAll), GetMsg(MCancel)
 	};
 
 	int ExitCode=Info.Message(&MainGuid,FMSG_WARNING|FMSG_LEFTALIGN,NULL,MsgItems,sizeof(MsgItems)/sizeof(MsgItems[0]), 5);
 
-	return (ExitCode<=QOF_SKIPALL?ExitCode:QOF_ABORT);
+	return (ExitCode<=QR_SKIPALL?ExitCode:QR_ABORT);
+}
+
+int AdvCmpProc::QueryDelete(const wchar_t *FileName, bool bIsDir, bool bReadOnlyType)
+{
+	const wchar_t *MsgItems[]=
+	{
+		GetMsg(MWarning),
+		GetMsg(bReadOnlyType?MFileIsReadOnly:(bIsDir?MDelFolder:MDelFile)),
+		GetPosToName(FileName),
+		GetMsg(MAskDel),
+		GetMsg(MDelete), GetMsg(MAll), GetMsg(MSkip), GetMsg(MSkipAll), GetMsg(MCancel)
+	};
+
+	int ExitCode=Info.Message(&MainGuid,FMSG_WARNING,NULL,MsgItems,sizeof(MsgItems)/sizeof(MsgItems[0]), 5);
+
+	return (ExitCode<=QR_SKIPALL?ExitCode:QR_ABORT);
 }
 
 bool bStartSyncMsg=true;
@@ -2890,25 +2943,15 @@ DWORD WINAPI SynchronizeFileCopyCallback(
 int AdvCmpProc::FileExists(const wchar_t *FileName, __int64 *pSize, FILETIME *pTime, DWORD *pAttrib)
 {
 	int ret=0;
-	HANDLE h=CreateFileW(FileName,0,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+	WIN32_FIND_DATA wfdFindData;
+	HANDLE hFind=FindFirstFileW(FileName,&wfdFindData);
 
-	if (h != INVALID_HANDLE_VALUE)
+	if (hFind != INVALID_HANDLE_VALUE)
 	{
-		DWORD Size;
-		*pSize = GetFileSize(h, &Size);
-		*pSize = (*pSize&0xffffffff) | ((__int64)Size << 32);
-
-		if ((*pSize&0xffffffff) == 0xffffffff && GetLastError != NO_ERROR)
-			*pSize=0;
-
-		FILETIME FileTime;
-		if (GetFileTime(h,0,0,&FileTime))
-			*pTime=FileTime;
-
-		DWORD nAttrib=GetFileAttributesW(FileName);
-		*pAttrib = (nAttrib == -1) ? 0 : nAttrib;
-
-		CloseHandle(h);
+		*pSize=((__int64)wfdFindData.nFileSizeHigh << 32) | wfdFindData.nFileSizeLow;
+		*pTime=wfdFindData.ftLastWriteTime;
+		*pAttrib=wfdFindData.dwFileAttributes;
+		FindClose(hFind);
 		ret=1;
 	}
 
@@ -2917,6 +2960,9 @@ int AdvCmpProc::FileExists(const wchar_t *FileName, __int64 *pSize, FILETIME *pT
 
 int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName, int direction)
 {
+	if (bBrokenByEsc)
+		return 0;
+
 	int ret=1;
 
 	// если сказали - "а мы не хотим туда копировать", то пропустим...
@@ -2939,18 +2985,18 @@ int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName
 			{
 				switch(QueryOverwriteFile(destFileName,&srcTime,&destTime,srcSize,destSize,direction,false))
 				{
-					case QOF_OVERWRITE:
+					case QR_OVERWRITE:
 						doCopy=1;
 						break;
-					case QOF_OVERWRITEALL:
+					case QR_ALL:
 						doCopy=1;
 						if (direction<0) bAskLOverwrite=false;
 						else bAskROverwrite=false;
 						break;
-					case QOF_SKIP:
+					case QR_SKIP:
 						doCopy=0;
 						break;
-					case QOF_SKIPALL:
+					case QR_SKIPALL:
 						doCopy=0;
 						if (direction<0) Opt.SyncLPanel=0;
 						else Opt.SyncRPanel=0;
@@ -2964,7 +3010,7 @@ int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName
 			}
 
 			// ReadOnly overwrite confirmation
-			if ((destAttrib & FILE_ATTRIBUTE_READONLY))
+			if (doCopy && (destAttrib & FILE_ATTRIBUTE_READONLY))
 			{
 				if (((direction < 0) && bSkipLReadOnly) || ((direction > 0) && bSkipRReadOnly))
 				{
@@ -2974,18 +3020,18 @@ int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName
 				{
 					switch(QueryOverwriteFile(destFileName,&srcTime,&destTime,srcSize,destSize,direction,true))
 					{
-						case QOF_OVERWRITE:
+						case QR_OVERWRITE:
 							doCopy=1;
 							break;
-						case QOF_OVERWRITEALL:
+						case QR_ALL:
 							doCopy=1;
 							if (direction < 0) bAskLReadOnly=false;
 							else bAskRReadOnly=false;
 							break;
-						case QOF_SKIP:
+						case QR_SKIP:
 							doCopy=0;
 							break;
-						case QOF_SKIPALL:
+						case QR_SKIPALL:
 							doCopy=0;
 							if (direction < 0) bSkipLReadOnly=true;
 							else bSkipRReadOnly=true;
@@ -3072,14 +3118,129 @@ RetryCopy:
 	return ret;
 }
 
+int AdvCmpProc::SyncDelFile(const wchar_t *FileName)
+{
+	if (bBrokenByEsc)
+		return 0;
+
+	int ret=1;
+
+	if (!Opt.SyncRDel)
+		return ret;
+
+	__int64 Size=0;
+	DWORD Attrib=0;
+	FILETIME Time;
+
+	if (FileName && FileExists(FileName,&Size,&Time,&Attrib))
+	{
+		int doDel=1;
+
+		// Delete confirmation
+		if (bAskDel)
+		{
+			switch(QueryDelete(FileName,false,false))
+			{
+				case QR_DELETE:
+					doDel=1;
+					break;
+				case QR_ALL:
+					doDel=1;
+					bAskDel=false;
+					break;
+				case QR_SKIP:
+					doDel=0;
+					break;
+				case QR_SKIPALL:
+					doDel=0;
+					Opt.SyncRDel=0;
+					break;
+				default:
+					doDel=0;
+					ret=0;
+					bBrokenByEsc=true;
+					break;
+			}
+		}
+
+		// ReadOnly delete confirmation
+		if (doDel && (Attrib & FILE_ATTRIBUTE_READONLY))
+		{
+			if (bSkipRReadOnly)
+			{
+				doDel=0;
+			}
+			else if (bAskRReadOnly)
+			{
+				switch(QueryDelete(FileName,false,true))
+				{
+					case QR_DELETE:
+						doDel=1;
+						break;
+					case QR_ALL:
+						doDel=1;
+						bAskRReadOnly=false;
+						break;
+					case QR_SKIP:
+						doDel=0;
+						break;
+					case QR_SKIPALL:
+						doDel=0;
+						bSkipRReadOnly=true;
+						break;
+					default:
+						doDel=0;
+						ret=0;
+						bBrokenByEsc=true;
+						break;
+				}
+			}
+		}
+
+		if (doDel)
+		{
+RetryDelFile:
+
+			SetLastError(0);
+			SetFileAttributesW(FileName,Attrib & ~(FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM));
+
+			if (!DeleteFileW(FileName))
+			{
+				const wchar_t *MsgItems[]=
+				{
+					GetMsg(MWarning),
+					GetMsg(MFailedDelFile),
+					GetPosToName(FileName),
+					GetMsg(MRetry), GetMsg(MSkip), GetMsg(MCancel)
+				};
+
+				int ExitCode=bBrokenByEsc ? 2/*MCancel*/ : Info.Message(&MainGuid,FMSG_WARNING|FMSG_ERRORTYPE,0,MsgItems,sizeof(MsgItems)/sizeof(MsgItems[0]),3);
+
+				if (!ExitCode)
+					goto RetryDelFile;
+				else if (ExitCode != 1)
+					ret=0;
+			}
+		}
+	}
+	return ret;
+}
+
+
 int AdvCmpProc::SyncDir(const wchar_t *srcDirName, const wchar_t *destDirName, int direction)
 {
+	if (bBrokenByEsc)
+		return 0;
+
 	if (!srcDirName || !*srcDirName || !destDirName || !*destDirName)
 	{
 		SetLastError(E_INVALIDARG);
 		return 0;
 	}
 
+RetryMkDir:
+
+	int ret=1;
 	WIN32_FIND_DATA wfdFindData;
 	HANDLE hFind=FindFirstFileW(destDirName,&wfdFindData);
 
@@ -3089,16 +3250,34 @@ int AdvCmpProc::SyncDir(const wchar_t *srcDirName, const wchar_t *destDirName, i
 		if (nAttrib != -1 && CreateDirectoryW(destDirName,NULL))
 			SetFileAttributesW(destDirName,nAttrib);
 		else
-			return 0;
+			ret=0;
 	}
 	else
 	{
 		FindClose(hFind);
 		if (!(wfdFindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-			return 0;
+			ret=0;
 	}
 
-	int ret=1;
+	if (!ret)
+	{
+		const wchar_t *MsgItems[]=
+		{
+			GetMsg(MWarning),
+			GetMsg(MCantCreateFolder),
+			GetPosToName(destDirName),
+			GetMsg(MRetry), GetMsg(MSkip), GetMsg(MCancel)
+		};
+
+		int ExitCode=Info.Message(&MainGuid,FMSG_WARNING|FMSG_ERRORTYPE,0,MsgItems,sizeof(MsgItems)/sizeof(MsgItems[0]),3);
+
+		if (!ExitCode)
+			goto RetryMkDir;
+		else if (ExitCode == 1)
+			return 1; // значит продолжим, но не будем копировать эту папку и ее содержимое!
+		return 0;
+	}
+
 	string strSrcDirMask(srcDirName);
 	strSrcDirMask+=L"\\*";
 
@@ -3130,6 +3309,162 @@ int AdvCmpProc::SyncDir(const wchar_t *srcDirName, const wchar_t *destDirName, i
 	return ret;
 }
 
+int AdvCmpProc::SyncDelDir(const wchar_t *DirName)
+{
+	if (bBrokenByEsc)
+		return 0;
+
+	int ret=1;
+
+	if (!Opt.SyncRDel)
+		return ret;
+
+	if (!DirName || !*DirName)
+	{
+		SetLastError(E_INVALIDARG);
+		return 0;
+	}
+
+RetryDelDir:
+
+	WIN32_FIND_DATA wfdFindData;
+	HANDLE hFind=FindFirstFileW(DirName,&wfdFindData);
+
+	if (hFind==INVALID_HANDLE_VALUE)
+	{
+		return 1;  // не найден, считаем, что удалили
+	}
+	else
+	{
+		FindClose(hFind);
+		if (!(wfdFindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+			ret=0;
+	}
+
+	if (ret)
+	{
+		int doDel=1;
+
+		// Delete confirmation
+		if (bAskDel)
+		{
+			switch(QueryDelete(DirName,true,false))
+			{
+				case QR_DELETE:
+					doDel=1;
+					break;
+				case QR_ALL:
+					doDel=1;
+					bAskDel=false;
+					break;
+				case QR_SKIP:
+					doDel=0;
+					break;
+				case QR_SKIPALL:
+					doDel=0;
+					Opt.SyncRDel=0;
+					break;
+				default:
+					doDel=0;
+					ret=0;
+					bBrokenByEsc=true;
+					break;
+			}
+		}
+
+		// ReadOnly delete confirmation
+		if (doDel && (wfdFindData.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
+		{
+			if (bSkipRReadOnly)
+			{
+				doDel=0;
+			}
+			else if (bAskRReadOnly)
+			{
+				switch(QueryDelete(DirName,true,true))
+				{
+					case QR_DELETE:
+						doDel=1;
+						break;
+					case QR_ALL:
+						doDel=1;
+						bAskRReadOnly=false;
+						break;
+					case QR_SKIP:
+						doDel=0;
+						break;
+					case QR_SKIPALL:
+						doDel=0;
+						bSkipRReadOnly=true;
+						break;
+					default:
+						doDel=0;
+						ret=0;
+						bBrokenByEsc=true;
+						break;
+				}
+			}
+		}
+
+		if (doDel)
+		{
+			string strDirMask(DirName);
+			strDirMask+=L"\\*";
+
+			if ((hFind=FindFirstFileW(strDirMask,&wfdFindData)) != INVALID_HANDLE_VALUE)
+			{
+				do
+				{
+					string strNew;
+					GetFullFileName(strNew,DirName,wfdFindData.cFileName);
+
+					if (wfdFindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+					{
+						if (!(wfdFindData.cFileName[0]==L'.' && !wfdFindData.cFileName[1]) && !(wfdFindData.cFileName[0]==L'.' && wfdFindData.cFileName[1]==L'.' && !wfdFindData.cFileName[2]))
+						{
+							if (!SyncDelDir(strNew))
+								ret=0;
+						}
+					}
+					else
+					{
+						if (!SyncDelFile(strNew))
+							ret=0;
+					}
+				}
+				while (ret && FindNextFile(hFind,&wfdFindData));
+				FindClose(hFind);
+			}
+		}
+
+		if (ret && doDel && Opt.SyncRDel)
+		{
+			SetFileAttributesW(DirName,FILE_ATTRIBUTE_DIRECTORY);
+			if (!RemoveDirectoryW(DirName))
+				ret=0;
+		}
+	}
+
+	if (!ret)
+	{
+		const wchar_t *MsgItems[]=
+		{
+			GetMsg(MWarning),
+			GetMsg(MFailedDeleteFolder),
+			GetPosToName(DirName),
+			GetMsg(MRetry), GetMsg(MSkip), GetMsg(MCancel)
+		};
+
+		int ExitCode=bBrokenByEsc ? 2/*MCancel*/ : Info.Message(&MainGuid,FMSG_WARNING|FMSG_ERRORTYPE,0,MsgItems,sizeof(MsgItems)/sizeof(MsgItems[0]),3);
+
+		if (!ExitCode)
+			goto RetryDelDir;
+		else if (ExitCode == 1)
+			ret=1;
+	}
+
+	return ret;
+}
 
 int AdvCmpProc::Synchronize(FileList *pFileList)
 {
@@ -3141,6 +3476,7 @@ int AdvCmpProc::Synchronize(FileList *pFileList)
 		bStartSyncMsg=true;
 		bAskLOverwrite=bAskROverwrite=Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0,0) & FCS_COPYOVERWRITE;
 		bAskLReadOnly=bAskRReadOnly=Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0,0) & FCS_OVERWRITEDELETEROFILES;
+		bAskDel=Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0,0) & FCS_DELETE;
 		bSkipLReadOnly=bSkipRReadOnly=false;
 
 		hConInp=CreateFileW(L"CONIN$", GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
@@ -3174,9 +3510,24 @@ int AdvCmpProc::Synchronize(FileList *pFileList)
 					if (!(ret=SyncFile(strSrcName,strDestName,direction)))
 						break;
 				}
-				continue;
 			}
-			if ((cur->dwFlags&RCIF_USERRNEW) || (cur->dwFlags&RCIF_RNEW))
+			else if (cur->dwFlags&RCIF_USERDEL)
+			{
+				string strName;
+				GetFullFileName(strName,cur->RDir,cur->FileName);
+
+				if (cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY)
+				{
+					if (!(ret=SyncDelDir(strName)))
+						break;
+				}
+				else
+				{
+					if (!(ret=SyncDelFile(strName)))
+						break;
+				}
+			}
+			else if ((cur->dwFlags&RCIF_USERRNEW) || (cur->dwFlags&RCIF_RNEW))
 			{
 				direction=-1; // справа новый, значит копируем налево
 				string strSrcName, strDestName;
@@ -3193,7 +3544,6 @@ int AdvCmpProc::Synchronize(FileList *pFileList)
 					if (!(ret=SyncFile(strSrcName,strDestName,direction)))
 						break;
 				}
-				continue;
 			}
 		}
 

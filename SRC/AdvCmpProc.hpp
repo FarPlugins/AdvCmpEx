@@ -104,6 +104,7 @@ class AdvCmpProc
 		bool bAskROverwrite;
 		bool bAskLReadOnly;
 		bool bAskRReadOnly;
+		bool bAskDel;
 		bool bSkipLReadOnly;
 		bool bSkipRReadOnly;
 
@@ -131,9 +132,12 @@ class AdvCmpProc
 		bool BuildFileList(const wchar_t *LDir,const PluginPanelItem *pLPPI,const wchar_t *RDir,const PluginPanelItem *pRPPI,DWORD dwFlag);
 
 		int QueryOverwriteFile(const wchar_t *FileName, FILETIME *srcTime, FILETIME *destTime, __int64 srcSize, __int64 destSize, int direction, bool bReadOnlyType);
+		int QueryDelete(const wchar_t *FileName, bool bIsDir, bool bReadOnlyType);
 		int FileExists(const wchar_t *FileName, __int64 *pSize, FILETIME *pTime, DWORD *pAttrib);
 		int SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName, int direction);
+		int SyncDelFile(const wchar_t *FileName);
 		int SyncDir(const wchar_t *srcDirName, const wchar_t *destDirName, int direction);
+		int SyncDelDir(const wchar_t *DirName);
 		int Synchronize(FileList *pFileList);
 
 	public:

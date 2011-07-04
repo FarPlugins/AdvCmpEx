@@ -47,10 +47,11 @@ enum {
 	MMaxScanDepth,
 	MFilter,
 	MFilterBotton,
-	MProcessSelected,
-	MCompareSkipSubstr,
 	MProcessTillFirstDiff,
+	MCompareSkipSubstr,
+	MProcessSelected,
 	MSelectedNew,
+	MSyncOnlyRight,
 	MIgnoreMissing,
 	MShowMsg,
 	MSound,
@@ -100,6 +101,7 @@ enum {
 
 	MSyncLPanel,
 	MSyncRPanel,
+	MSyncRDel,
 	MSyncEdit,
 
 	MWarning,
@@ -109,7 +111,7 @@ enum {
 	MNewToR,
 	MExisting,
 	MOverwrite,
-	MOverwriteAll,
+	MAll,
 	MSkip,
 	MSkipAll,
 	MRetry,
@@ -117,10 +119,20 @@ enum {
 	MCopying,
 	MCopyingTo,
 
+	MCantCreateFolder,
+
 	MFailedCopySrcFile,
 	MFailedOpenSrcFile,
 	MFailedCreateDstFile,
 	MFailedOpenDstFile,
 	MFailedCopyDstFile,
+
+	MFailedDelFile,
+	MFailedDeleteFolder,
+
+	MDelFolder,
+	MDelFile,
+	MAskDel,
+	MDelete,
 };
 

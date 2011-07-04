@@ -6,7 +6,7 @@
 "Cancel"
 
 "Mode:"
-"&1 - compare file"
+"&1 - compare files"
 "&2 - synchronize folders"
 "compare case-sensiti&ve names"
 "&size"
@@ -35,10 +35,11 @@
 "ma&ximum folder depth"
 "&Use file filter"
 "F4-Filter"
-"&Process only selected items"
-"Skip in filename&:"
 "Compare till the first differe&nce"
+"Skip in filename&:"
+"&Process only selected items"
 "Select new files"
+"Only in right panel"
 "Ignore missing items"
 "Display &messages"
 "Sound notification"
@@ -84,6 +85,7 @@
 
 "Copy to &left panel %u items"
 "Copy to &right panel %u items"
+"&Delete in right panel %u items"
 "&Edit"
 
 "Warning"
@@ -101,9 +103,18 @@
 "Copying file"
 "to"
 
+"Can't create folder"
+
 "Copying source file failed"
 "Failed to open source file while copying"
 "Failed to create target file while copying"
 "Failed to open target file while copying"
 "to file"
 
+"File deletion failed"
+"Folder deletion failed"
+
+"Delete folder"
+"Delete file"
+"Do you wish to delete it?"
+"&Delete"
