@@ -3517,7 +3517,7 @@ int AdvCmpProc::Synchronize(FileList *pFileList)
 						break;
 				}
 			}
-			else if (cur->dwFlags&RCIF_USERDEL)
+			else if (cur->dwFlags&RCIF_USERDEL) // справа удаляем
 			{
 				string strName;
 				GetFullFileName(strName,cur->RDir,cur->FileName);
