@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2097
+  Plugin API for Far Manager 3.0 build 2105
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2097
+#define FARMANAGERVERSION_BUILD 2105
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -99,6 +99,7 @@ static const FARMESSAGEFLAGS
 
 typedef int (WINAPI *FARAPIMESSAGE)(
     const GUID* PluginId,
+    const GUID* Id,
     FARMESSAGEFLAGS Flags,
     const wchar_t *HelpTopic,
     const wchar_t * const *Items,
@@ -389,7 +390,7 @@ static const FARLISTINFOFLAGS
 struct FarListInfo
 {
 	FARLISTINFOFLAGS Flags;
-	int ItemsNumber;
+	size_t ItemsNumber;
 	int SelectPos;
 	int TopPos;
 	int MaxHeight;
@@ -558,7 +559,7 @@ typedef HANDLE(WINAPI *FARAPIDIALOGINIT)(
     int                   Y2,
     const wchar_t        *HelpTopic,
     const struct FarDialogItem *Item,
-    unsigned int          ItemsNumber,
+    size_t                ItemsNumber,
     DWORD                 Reserved,
     FARDIALOGFLAGS        Flags,
     FARWINDOWPROC         DlgProc,
@@ -609,6 +610,7 @@ static const FARMENUFLAGS
 
 typedef int (WINAPI *FARAPIMENU)(
 	const GUID*         PluginId,
+    const GUID*         Id,
     int                 X,
     int                 Y,
     int                 MaxHeight,
@@ -712,8 +714,8 @@ struct PanelInfo
 	HANDLE PluginHandle;
 	enum PANELINFOTYPE PanelType;
 	RECT PanelRect;
-	int ItemsNumber;
-	int SelectedItemsNumber;
+	size_t ItemsNumber;
+	size_t SelectedItemsNumber;
 	int CurrentItem;
 	int TopPanelItem;
 	int ViewMode;
@@ -792,7 +794,7 @@ typedef void (WINAPI *FARAPIRESTORESCREEN)(HANDLE hScreen);
 typedef int (WINAPI *FARAPIGETDIRLIST)(
     const wchar_t *Dir,
     struct PluginPanelItem **pPanelItem,
-    int *pItemsNumber
+    size_t *pItemsNumber
 );
 
 typedef int (WINAPI *FARAPIGETPLUGINDIRLIST)(
@@ -800,11 +802,11 @@ typedef int (WINAPI *FARAPIGETPLUGINDIRLIST)(
     HANDLE hPanel,
     const wchar_t *Dir,
     struct PluginPanelItem **pPanelItem,
-    int *pItemsNumber
+    size_t *pItemsNumber
 );
 
-typedef void (WINAPI *FARAPIFREEDIRLIST)(struct PluginPanelItem *PanelItem, int nItemsNumber);
-typedef void (WINAPI *FARAPIFREEPLUGINDIRLIST)(struct PluginPanelItem *PanelItem, int nItemsNumber);
+typedef void (WINAPI *FARAPIFREEDIRLIST)(struct PluginPanelItem *PanelItem, size_t nItemsNumber);
+typedef void (WINAPI *FARAPIFREEPLUGINDIRLIST)(struct PluginPanelItem *PanelItem, size_t nItemsNumber);
 
 typedef unsigned __int64 VIEWER_FLAGS;
 static const VIEWER_FLAGS
@@ -1774,8 +1776,6 @@ typedef const wchar_t*(WINAPI *FARSTDPOINTTONAME)(const wchar_t *Path);
 typedef BOOL (WINAPI *FARSTDADDENDSLASH)(wchar_t *Path);
 typedef int (WINAPI *FARSTDCOPYTOCLIPBOARD)(const wchar_t *Data);
 typedef wchar_t *(WINAPI *FARSTDPASTEFROMCLIPBOARD)(void);
-typedef int (WINAPI *FARSTDINPUTRECORDTOKEY)(const INPUT_RECORD *r);
-typedef int (WINAPI *FARSTDKEYTOINPUTRECORD)(int Key,INPUT_RECORD *r);
 typedef int (WINAPI *FARSTDLOCALISLOWER)(wchar_t Ch);
 typedef int (WINAPI *FARSTDLOCALISUPPER)(wchar_t Ch);
 typedef int (WINAPI *FARSTDLOCALISALPHA)(wchar_t Ch);
@@ -1808,11 +1808,11 @@ static const XLAT_FLAGS
 	XLAT_CONVERTALLCMDLINE = 0x0000000000010000ULL;
 
 
-typedef size_t (WINAPI *FARSTDKEYTOKEYNAME)(int Key, wchar_t *KeyText, size_t Size);
+typedef size_t (WINAPI *FARSTDINPUTRECORDTOKEYNAME)(const INPUT_RECORD* Key, wchar_t *KeyText, size_t Size);
 
 typedef wchar_t*(WINAPI *FARSTDXLAT)(wchar_t *Line,int StartPos,int EndPos,XLAT_FLAGS Flags);
 
-typedef int (WINAPI *FARSTDKEYNAMETOKEY)(const wchar_t *Name);
+typedef BOOL (WINAPI *FARSTDKEYNAMETOINPUTRECORD)(const wchar_t *Name,INPUT_RECORD* Key);
 
 typedef int (WINAPI *FRSUSERFUNC)(
     const struct PluginPanelItem *FData,
@@ -1907,10 +1907,8 @@ typedef struct FarStandardFunctions
 	FARSTDADDENDSLASH          AddEndSlash;
 	FARSTDCOPYTOCLIPBOARD      CopyToClipboard;
 	FARSTDPASTEFROMCLIPBOARD   PasteFromClipboard;
-	FARSTDKEYTOKEYNAME         FarKeyToName;
-	FARSTDKEYNAMETOKEY         FarNameToKey;
-	FARSTDINPUTRECORDTOKEY     FarInputRecordToKey;
-	FARSTDKEYTOINPUTRECORD     FarKeyToInputRecord;
+	FARSTDINPUTRECORDTOKEYNAME FarInputRecordToName;
+	FARSTDKEYNAMETOINPUTRECORD FarNameToInputRecord;
 	FARSTDXLAT                 XLat;
 	FARSTDGETFILEOWNER         GetFileOwner;
 	FARSTDGETNUMBEROFLINKS     GetNumberOfLinks;
@@ -2205,7 +2203,7 @@ struct PutFilesInfo
 	HANDLE hPanel;
 	struct PluginPanelItem *PanelItem;
 	size_t ItemsNumber;
-	int Move;
+	BOOL Move;
 	const wchar_t *SrcPath;
 	OPERATION_MODES OpMode;
 };
@@ -2241,7 +2239,7 @@ struct GetFindDataInfo
 	size_t StructSize;
 	HANDLE hPanel;
 	struct PluginPanelItem *PanelItem;
-	int ItemsNumber;
+	size_t ItemsNumber;
 	OPERATION_MODES OpMode;
 };
 
@@ -2250,7 +2248,7 @@ struct GetVirtualFindDataInfo
 	size_t StructSize;
 	HANDLE hPanel;
 	struct PluginPanelItem *PanelItem;
-	int ItemsNumber;
+	size_t ItemsNumber;
 	const wchar_t *Path;
 };
 
@@ -2259,7 +2257,7 @@ struct FreeFindDataInfo
 	size_t StructSize;
 	HANDLE hPanel;
 	struct PluginPanelItem *PanelItem;
-	int ItemsNumber;
+	size_t ItemsNumber;
 };
 
 struct GetFilesInfo
@@ -2267,8 +2265,8 @@ struct GetFilesInfo
 	size_t StructSize;
 	HANDLE hPanel;
 	struct PluginPanelItem *PanelItem;
-	int ItemsNumber;
-	int Move;
+	size_t ItemsNumber;
+	BOOL Move;
 	const wchar_t *DestPath;
 	OPERATION_MODES OpMode;
 };
@@ -2278,7 +2276,7 @@ struct DeleteFilesInfo
 	size_t StructSize;
 	HANDLE hPanel;
 	struct PluginPanelItem *PanelItem;
-	int ItemsNumber;
+	size_t ItemsNumber;
 	OPERATION_MODES OpMode;
 };
 
@@ -2320,7 +2318,7 @@ struct ProcessDialogEventInfo
 {
 	size_t StructSize;
 	int Event;
-	FarDialogEvent* Param;
+	struct FarDialogEvent* Param;
 };
 
 struct ProcessSynchroEventInfo

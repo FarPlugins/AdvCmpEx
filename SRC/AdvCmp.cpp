@@ -69,7 +69,7 @@ const wchar_t *GetMsg(int MsgId)
 void ErrorMsg(DWORD Title, DWORD Body)
 {
 	const wchar_t *MsgItems[]={ GetMsg(Title), GetMsg(Body), GetMsg(MOK) };
-	Info.Message(&MainGuid, FMSG_WARNING, 0, MsgItems, 3, 1);
+	Info.Message(&MainGuid,&ErrorMsgGuid,FMSG_WARNING,0,MsgItems,3,1);
 }
 
 /****************************************************************************
@@ -78,7 +78,7 @@ void ErrorMsg(DWORD Title, DWORD Body)
 bool YesNoMsg(DWORD Title, DWORD Body)
 {
 	const wchar_t *MsgItems[]={ GetMsg(Title), GetMsg(Body) };
-	return (!Info.Message(&MainGuid, FMSG_WARNING|FMSG_MB_YESNO, 0, MsgItems, 2, 0));
+	return (!Info.Message(&MainGuid,&YesNoMsgGuid,FMSG_WARNING|FMSG_MB_YESNO,0,MsgItems,2,0));
 }
 
 // Сообщение для отладки
@@ -89,7 +89,7 @@ int DebugMsg(wchar_t *msg, wchar_t *msg2, unsigned int i)
   MsgItems[1] = msg2;
   MsgItems[2] = msg;
   MsgItems[3] = buf;
-  return (!Info.Message(&MainGuid, FMSG_WARNING|FMSG_MB_OKCANCEL, 0, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]),2));
+  return (!Info.Message(&MainGuid,&DebugMsgGuid,FMSG_WARNING|FMSG_MB_OKCANCEL,0,MsgItems,sizeof(MsgItems)/sizeof(MsgItems[0]),2));
 }
 
 
@@ -528,7 +528,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 			if (bDifferenceNotFound && Opt.ShowMsg)
 			{
 				const wchar_t *MsgItems[] = { GetMsg(MNoDiffTitle), GetMsg(MNoDiffBody), GetMsg(MOK) };
-				Info.Message(&MainGuid,0,0,MsgItems,sizeof(MsgItems) / sizeof(MsgItems[0]),1);
+				Info.Message(&MainGuid,&NoDiffMsgGuid,0,0,MsgItems,sizeof(MsgItems) / sizeof(MsgItems[0]),1);
 			}
 			else if (!bDifferenceNotFound && Opt.Dialog)
 				AdvCmp.ShowCmpDialog(&LList,&RList);

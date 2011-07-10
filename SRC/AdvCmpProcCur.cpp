@@ -536,7 +536,7 @@ bool AdvCmpProcCur::CompareCurFile(const struct DirList *pLList,const struct Dir
 	MenuItems[1].Text=L"Texts (WinMerge)";
 	MenuItems[2].Text=L"Pictures";
 	MenuItems[0].Flags|=MIF_SELECTED;
-	int MenuCode=Info.Menu(&MainGuid,-1,-1,0,FMENU_AUTOHIGHLIGHT|FMENU_WRAPMODE,L"Method",NULL,L"Contents",NULL,NULL,MenuItems,sizeof(MenuItems)/sizeof(MenuItems[0]));
+	int MenuCode=Info.Menu(&MainGuid,&CmpMethodMenuGuid,-1,-1,0,FMENU_AUTOHIGHLIGHT|FMENU_WRAPMODE,L"Method",NULL,L"Contents",NULL,NULL,MenuItems,sizeof(MenuItems)/sizeof(MenuItems[0]));
 
 	WIN32_FIND_DATA wfdFindData;
 	HANDLE hFind;

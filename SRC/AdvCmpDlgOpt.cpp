@@ -566,37 +566,19 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 		case DN_CONTROLINPUT:
 		{
 			const INPUT_RECORD* record=(const INPUT_RECORD *)Param2;
-/*
-			if (record->EventType==MOUSE_EVENT)
-			{
-				if (Param1==DlgSEP2_DIALOG && record->Event.MouseEvent.dwButtonState==FROM_LEFT_1ST_BUTTON_PRESSED)
-				{
-					if (Opt.Dialog) Opt.Dialog=0;
-					else Opt.Dialog=1;
-					Info.SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
-					return true;
-				}
-			}
-*/
-			if (record->EventType==KEY_EVENT)
-			{
-				long Key=FSF.FarInputRecordToKey(record);
 
-				if (Key == KEY_F4 && Info.SendDlgMessage(hDlg,DM_GETCHECK,DlgFILTER,0))
-					Info.SendDlgMessage(hDlg,DM_CLOSE,DlgFILTERBOTTON,0);
-				else if (Key == KEY_F8 && Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHECLEAR,(void*)-1))
-					Info.SendDlgMessage(hDlg,DM_CLOSE,DlgCACHECLEAR,0);
-				else if (Key == KEY_F2 && Info.SendDlgMessage(hDlg,DM_ENABLE,DlgUNDERCURSOR,(void*)-1))
-					Info.SendDlgMessage(hDlg,DM_CLOSE,DlgUNDERCURSOR,0);
-/*
-				else if (Key == KEY_F3)
+			if (record->EventType==KEY_EVENT && record->Event.KeyEvent.bKeyDown)
+			{
+				WORD vk=record->Event.KeyEvent.wVirtualKeyCode;
+				if (IsNone(record))
 				{
-					if (Opt.Dialog) Opt.Dialog=0;
-					else Opt.Dialog=1;
-					Info.SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
-					return true;
+					if (vk == VK_F4 && Info.SendDlgMessage(hDlg,DM_GETCHECK,DlgFILTER,0))
+						Info.SendDlgMessage(hDlg,DM_CLOSE,DlgFILTERBOTTON,0);
+					else if (vk == VK_F8 && Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHECLEAR,(void*)-1))
+						Info.SendDlgMessage(hDlg,DM_CLOSE,DlgCACHECLEAR,0);
+					else if (vk == VK_F2 && Info.SendDlgMessage(hDlg,DM_ENABLE,DlgUNDERCURSOR,(void*)-1))
+						Info.SendDlgMessage(hDlg,DM_CLOSE,DlgUNDERCURSOR,0);
 				}
-*/
 			}
 		}
 		break;
@@ -620,7 +602,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 					{
 						wchar_t buf[100]; FSF.sprintf(buf,GetMsg(MClearCacheItems),Cache.ItemsNumber);
 						const wchar_t *MsgItems[]={ GetMsg(MClearCacheTitle),buf,GetMsg(MClearCacheBody) };
-						if (!Info.Message(&MainGuid, FMSG_WARNING|FMSG_MB_YESNO, 0, MsgItems, 3, 0))
+						if (!Info.Message(&MainGuid,&ClearCacheMsgGuid,FMSG_WARNING|FMSG_MB_YESNO,0,MsgItems,3,0))
 							goto ClearCache;
 					}
 					else
