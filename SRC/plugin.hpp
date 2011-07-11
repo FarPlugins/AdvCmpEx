@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2107
+  Plugin API for Far Manager 3.0 build 2108
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2107
+#define FARMANAGERVERSION_BUILD 2108
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -1094,7 +1094,7 @@ struct MacroSendMacroText
 {
 	size_t StructSize;
 	FARKEYMACROFLAGS Flags;
-	FarKey AKey;
+	INPUT_RECORD AKey;
 	const wchar_t *SequenceText;
 };
 

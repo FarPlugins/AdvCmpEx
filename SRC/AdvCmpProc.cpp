@@ -1419,68 +1419,6 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 	// Стартуем с сообщением о сравнении
 	ShowCmpMsg(pLList->Dir,L"*",pRList->Dir,L"*",true);
 
-	// соберем информацию, сколько элементов будем сравнивать и их размер
-	if (ScanDepth==0 && Opt.TotalProcess)
-	{
-		if (!(LPanel.PInfo.Flags&PFLAGS_PLUGIN))
-		{
-			if (!Opt.ProcessSelected)
-				GetDirList(pLList->Dir,ScanDepth,true);
-			else
-			{
-				string strDir;
-				for (int i=0; !bBrokenByEsc && i<pLList->ItemsNumber; i++)
-				{
-					if (pLList->PPI[i].Flags&PPIF_SELECTED)
-					{
-						if (pLList->PPI[i].FileAttributes&FILE_ATTRIBUTE_DIRECTORY)
-						{
-							GetFullFileName(strDir,pLList->Dir,pLList->PPI[i].FileName);
-							GetDirList(strDir,ScanDepth,true);
-						}
-						else
-						{
-							CmpInfo.Count+=1;
-							CmpInfo.CountSize+=(unsigned __int64)pLList->PPI[i].FileSize;
-						}
-					}
-				}
-			}
-		}
-
-		if (bBrokenByEsc)
-			return true;
-
-		if (!(RPanel.PInfo.Flags&PFLAGS_PLUGIN))
-		{
-			if (!Opt.ProcessSelected)
-				GetDirList(pRList->Dir,ScanDepth,true);
-			else
-			{
-				string strDir;
-				for (int i=0; !bBrokenByEsc && i<pRList->ItemsNumber; i++)
-				{
-					if (pRList->PPI[i].Flags&PPIF_SELECTED)
-					{
-						if (pRList->PPI[i].FileAttributes&FILE_ATTRIBUTE_DIRECTORY)
-						{
-							GetFullFileName(strDir,pRList->Dir,pRList->PPI[i].FileName);
-							GetDirList(strDir,ScanDepth,true);
-						}
-						else
-						{
-							CmpInfo.Count+=1;
-							CmpInfo.CountSize+=(unsigned __int64)pRList->PPI[i].FileSize;
-						}
-					}
-				}
-			}
-		}
-
-		if (bBrokenByEsc)
-			return true;
-	}
-
 	// строим индексы элементов, для убыстрения сравнения
 	struct ItemsIndex LII, RII;
 	if (!BuildItemsIndex(true,pLList,&LII,ScanDepth) || !BuildItemsIndex(false,pRList,&RII,ScanDepth))
@@ -1492,11 +1430,77 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 		return true;
 	}
 
+	int i=0, j=0;
+
+	// соберем информацию, сколько элементов будем сравнивать и их размер
+	if (ScanDepth==0 && Opt.TotalProcess)
+	{
+		while (i<LII.iCount && j<RII.iCount && !bBrokenByEsc)
+		{
+			switch (PICompare(&LII.pPPI[i], &RII.pPPI[j]))
+			{
+				case 0:
+				{
+					string strDir;
+					if (LII.pPPI[i]->FileAttributes&FILE_ATTRIBUTE_DIRECTORY && !(LPanel.PInfo.Flags&PFLAGS_PLUGIN))
+					{
+						GetFullFileName(strDir,pLList->Dir,LII.pPPI[i]->FileName);
+						GetDirList(strDir,ScanDepth,true);
+					}
+					else
+					{
+						CmpInfo.Count+=1;
+						CmpInfo.CountSize+=(unsigned __int64)LII.pPPI[i]->FileSize;
+					}
+
+					if (!bBrokenByEsc)
+					{
+						if (RII.pPPI[j]->FileAttributes&FILE_ATTRIBUTE_DIRECTORY && !(RPanel.PInfo.Flags&PFLAGS_PLUGIN))
+						{
+							GetFullFileName(strDir,pRList->Dir,RII.pPPI[j]->FileName);
+							GetDirList(strDir,ScanDepth,true);
+						}
+						else
+						{
+							CmpInfo.Count+=1;
+							CmpInfo.CountSize+=(unsigned __int64)RII.pPPI[j]->FileSize;
+						}
+					}
+					i++; j++;
+					break;
+				}
+				case -1:
+				{
+					CmpInfo.Count+=1;
+					CmpInfo.CountSize+=(unsigned __int64)LII.pPPI[i]->FileSize;
+					i++;
+					break;
+				}
+				case 1:
+				{
+					CmpInfo.Count+=1;
+					CmpInfo.CountSize+=(unsigned __int64)RII.pPPI[j]->FileSize;
+					j++;
+					break;
+				}
+			}
+		}
+	}
+
+	if (bBrokenByEsc)
+	{
+		FreeItemsIndex(&LII);
+		FreeItemsIndex(&RII);
+		return true;
+	}
+
 	// экспресс-сравнение вложенного каталога
 	if (ScanDepth && !Opt.Dialog && !Opt.IgnoreMissing && LII.iCount!=RII.iCount)
+	{
+		FreeItemsIndex(&LII);
+		FreeItemsIndex(&RII);
 		return false;
-
-	int i, j;
+	}
 
 	// вначале снимем выделение на панелях
 	if (ScanDepth==0)
