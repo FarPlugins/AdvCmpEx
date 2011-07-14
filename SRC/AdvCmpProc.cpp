@@ -1341,6 +1341,8 @@ bool AdvCmpProc::BuildItemsIndex(bool bLeftPanel,const struct DirList *pList,str
 					 (pList->PPI[i].FileName[0]==L'.' && pList->PPI[i].FileName[1]==L'.' && !pList->PPI[i].FileName[2]))
 					)
 				continue;
+			if (!Opt.ProcessHidden && (pList->PPI[i].FileAttributes&FILE_ATTRIBUTE_HIDDEN))
+				continue;
 			if ( (bLeftPanel?LPanel.hFilter:RPanel.hFilter)!=INVALID_HANDLE_VALUE &&
 					 !Info.FileFilterControl((bLeftPanel?LPanel.hFilter:RPanel.hFilter),FFCTL_ISFILEINFILTER,0,&pList->PPI[i]))
 				continue;
@@ -2950,19 +2952,39 @@ DWORD WINAPI SynchronizeFileCopyCallback(
 		return PROGRESS_CONTINUE;
 }
 
-int AdvCmpProc::FileExists(const wchar_t *FileName, __int64 *pSize, FILETIME *pTime, DWORD *pAttrib)
+int AdvCmpProc::FileExists(const wchar_t *FileName, __int64 *pSize, FILETIME *pTime, DWORD *pAttrib, int CheckForFilter)
 {
-	int ret=0;
+	int ret=0; // продолжим, но пропустим элемент
 	WIN32_FIND_DATA wfdFindData;
 	HANDLE hFind=FindFirstFileW(FileName,&wfdFindData);
 
 	if (hFind != INVALID_HANDLE_VALUE)
 	{
+		FindClose(hFind);
+		if (CheckForFilter)
+		{
+			if (!Opt.ProcessHidden && (wfdFindData.dwFileAttributes&FILE_ATTRIBUTE_HIDDEN))
+				return ret;
+
+			PluginPanelItem ppi;
+			memset(&ppi,0,sizeof(ppi));
+			ppi.FileAttributes=wfdFindData.dwFileAttributes;
+			ppi.LastAccessTime=wfdFindData.ftLastAccessTime;
+			ppi.LastWriteTime=wfdFindData.ftLastWriteTime;
+			ppi.FileSize=((__int64)wfdFindData.nFileSizeHigh << 32) | wfdFindData.nFileSizeLow;
+			ppi.FileName=FSF.PointToName(FileName);
+
+			if ( (CheckForFilter>0?LPanel.hFilter:RPanel.hFilter)!=INVALID_HANDLE_VALUE &&
+					 !Info.FileFilterControl((CheckForFilter>0?LPanel.hFilter:RPanel.hFilter),FFCTL_ISFILEINFILTER,0,&ppi))
+				return ret;
+
+			if (Opt.Filter && !Info.FileFilterControl(Opt.hCustomFilter,FFCTL_ISFILEINFILTER,0,&ppi))
+				return ret;
+		}
 		*pSize=((__int64)wfdFindData.nFileSizeHigh << 32) | wfdFindData.nFileSizeLow;
 		*pTime=wfdFindData.ftLastWriteTime;
 		*pAttrib=wfdFindData.dwFileAttributes;
-		FindClose(hFind);
-		ret=1;
+		ret=1; // ОК
 	}
 
 	return ret;
@@ -2983,12 +3005,12 @@ int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName
 	DWORD srcAttrib=0, destAttrib=0;
 	FILETIME srcTime, destTime;
 
-	if (srcFileName && destFileName && FileExists(srcFileName,&srcSize,&srcTime,&srcAttrib))
+	if (srcFileName && destFileName && FileExists(srcFileName,&srcSize,&srcTime,&srcAttrib,direction))
 	{
 		ShowSyncMsg(srcFileName,destFileName,0,srcSize,true);
 		int doCopy=1;
 
-		if (FileExists(destFileName,&destSize,&destTime,&destAttrib))
+		if (FileExists(destFileName,&destSize,&destTime,&destAttrib,0))
 		{
 			// Overwrite confirmation
 			if (((direction < 0) && bAskLOverwrite) || ((direction > 0) && bAskROverwrite))
@@ -3128,7 +3150,7 @@ RetryCopy:
 	return ret;
 }
 
-int AdvCmpProc::SyncDelFile(const wchar_t *FileName)
+int AdvCmpProc::SyncRDelFile(const wchar_t *FileName)
 {
 	if (bBrokenByEsc)
 		return 0;
@@ -3142,12 +3164,12 @@ int AdvCmpProc::SyncDelFile(const wchar_t *FileName)
 	DWORD Attrib=0;
 	FILETIME Time;
 
-	if (FileName && FileExists(FileName,&Size,&Time,&Attrib))
+	if (FileName && FileExists(FileName,&Size,&Time,&Attrib,-1)) // -1, т.е. справа
 	{
 		int doDel=1;
 
 		// Delete confirmation
-		if (bAskDel)
+		if (bAskRDel)
 		{
 			switch(QueryDelete(FileName,false,false))
 			{
@@ -3156,7 +3178,7 @@ int AdvCmpProc::SyncDelFile(const wchar_t *FileName)
 					break;
 				case QR_ALL:
 					doDel=1;
-					bAskDel=false;
+					bAskRDel=false;
 					break;
 				case QR_SKIP:
 					doDel=0;
@@ -3248,6 +3270,14 @@ int AdvCmpProc::SyncDir(const wchar_t *srcDirName, const wchar_t *destDirName, i
 		return 0;
 	}
 
+	__int64 Size=0;
+	DWORD Attrib=0;
+	FILETIME Time;
+
+	// проверим на фильтр
+	if (!FileExists(srcDirName,&Size,&Time,&Attrib,direction))
+		return 1; // пропустим
+
 RetryMkDir:
 
 	int ret=1;
@@ -3256,9 +3286,8 @@ RetryMkDir:
 
 	if (hFind==INVALID_HANDLE_VALUE)
 	{
-		DWORD nAttrib=GetFileAttributesW(srcDirName);
-		if (nAttrib != -1 && CreateDirectoryW(destDirName,NULL))
-			SetFileAttributesW(destDirName,nAttrib);
+		if (Attrib && CreateDirectoryW(destDirName,NULL))
+			SetFileAttributesW(destDirName,Attrib);
 		else
 			ret=0;
 	}
@@ -3319,7 +3348,7 @@ RetryMkDir:
 	return ret;
 }
 
-int AdvCmpProc::SyncDelDir(const wchar_t *DirName)
+int AdvCmpProc::SyncRDelDir(const wchar_t *DirName)
 {
 	if (bBrokenByEsc)
 		return 0;
@@ -3334,6 +3363,14 @@ int AdvCmpProc::SyncDelDir(const wchar_t *DirName)
 		SetLastError(E_INVALIDARG);
 		return 0;
 	}
+
+	__int64 Size=0;
+	DWORD Attrib=0;
+	FILETIME Time;
+
+	// проверим на фильтр
+	if (!FileExists(DirName,&Size,&Time,&Attrib,-1))
+		return 1; // пропустим
 
 RetryDelDir:
 
@@ -3356,7 +3393,7 @@ RetryDelDir:
 		int doDel=1;
 
 		// Delete confirmation
-		if (bAskDel)
+		if (bAskRDel)
 		{
 			switch(QueryDelete(DirName,true,false))
 			{
@@ -3365,7 +3402,7 @@ RetryDelDir:
 					break;
 				case QR_ALL:
 					doDel=1;
-					bAskDel=false;
+					bAskRDel=false;
 					break;
 				case QR_SKIP:
 					doDel=0;
@@ -3432,13 +3469,13 @@ RetryDelDir:
 					{
 						if (!(wfdFindData.cFileName[0]==L'.' && !wfdFindData.cFileName[1]) && !(wfdFindData.cFileName[0]==L'.' && wfdFindData.cFileName[1]==L'.' && !wfdFindData.cFileName[2]))
 						{
-							if (!SyncDelDir(strNew))
+							if (!SyncRDelDir(strNew))
 								ret=0;
 						}
 					}
 					else
 					{
-						if (!SyncDelFile(strNew))
+						if (!SyncRDelFile(strNew))
 							ret=0;
 					}
 				}
@@ -3486,7 +3523,7 @@ int AdvCmpProc::Synchronize(FileList *pFileList)
 		bStartSyncMsg=true;
 		bAskLOverwrite=bAskROverwrite=Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0,0) & FCS_COPYOVERWRITE;
 		bAskLReadOnly=bAskRReadOnly=Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0,0) & FCS_OVERWRITEDELETEROFILES;
-		bAskDel=Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0,0) & FCS_DELETE;
+		bAskRDel=Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0,0) & FCS_DELETE;
 		bSkipLReadOnly=bSkipRReadOnly=false;
 
 		hConInp=CreateFileW(L"CONIN$", GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
@@ -3528,12 +3565,12 @@ int AdvCmpProc::Synchronize(FileList *pFileList)
 
 				if (cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY)
 				{
-					if (!(ret=SyncDelDir(strName)))
+					if (!(ret=SyncRDelDir(strName)))
 						break;
 				}
 				else
 				{
-					if (!(ret=SyncDelFile(strName)))
+					if (!(ret=SyncRDelFile(strName)))
 						break;
 				}
 			}
