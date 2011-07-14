@@ -2165,28 +2165,31 @@ int GetSyncOpt(FileList *pFileList)
 
 	struct FarDialogItem DialogItems[] = {
 		//			Type	X1	Y1	X2	Y2				Selected	History	Mask	Flags	Data	MaxLen	UserParam
-		/* 0*/{DI_DOUBLEBOX,  3, 1,60, 7,         0, 0, 0,             0, GetMsg(MSyncTitle),0,0},
+		/* 0*/{DI_DOUBLEBOX,  3, 1,60, 8,         0, 0, 0,             0, GetMsg(MSyncTitle),0,0},
 		/* 1*/{DI_CHECKBOX,   5, 2, 0, 0, Opt.SyncRPanel, 0, 0,Opt.SyncRPanel?0:DIF_DISABLE,buf2,0,0},
 		/* 2*/{DI_CHECKBOX,   5, 3, 0, 0, Opt.SyncLPanel, 0, 0,Opt.SyncLPanel?0:DIF_DISABLE,buf1,0,0},
 		/* 3*/{DI_CHECKBOX,   5, 4, 0, 0, Opt.SyncRDel, 0, 0, Opt.SyncRDel?0:DIF_DISABLE,buf3,0,0},
-		/* 4*/{DI_TEXT,      -1, 5, 0, 0,         0, 0, 0, DIF_SEPARATOR, L"",0,0},
-		/* 5*/{DI_BUTTON,     0, 6, 0, 0,         0, 0, 0, DIF_DEFAULTBUTTON|DIF_CENTERGROUP, GetMsg(MOK),0,0},
-		/* 6*/{DI_BUTTON,     0, 6, 0, 0,         0, 0, 0, DIF_CENTERGROUP, GetMsg(MSyncEdit),0,0},
-		/* 7*/{DI_BUTTON,     0, 6, 0, 0,         0, 0, 0, DIF_CENTERGROUP, GetMsg(MCancel),0,0}
+		/* 4*/{DI_CHECKBOX,   8, 5, 0, 0,         0, 0, 0, Opt.SyncRDel?0:DIF_DISABLE,GetMsg(MSyncUseDelFilter),0,0},
+		/* 5*/{DI_TEXT,      -1, 6, 0, 0,         0, 0, 0, DIF_SEPARATOR, L"",0,0},
+		/* 6*/{DI_BUTTON,     0, 7, 0, 0,         0, 0, 0, DIF_DEFAULTBUTTON|DIF_CENTERGROUP, GetMsg(MOK),0,0},
+		/* 7*/{DI_BUTTON,     0, 7, 0, 0,         0, 0, 0, DIF_CENTERGROUP, GetMsg(MSyncEdit),0,0},
+		/* 8*/{DI_BUTTON,     0, 7, 0, 0,         0, 0, 0, DIF_CENTERGROUP, GetMsg(MCancel),0,0}
 	};
 
-	HANDLE hDlg=Info.DialogInit(&MainGuid, &OptSyncDlgGuid,-1,-1,64,9,L"DlgCmp",DialogItems,sizeof(DialogItems)/sizeof(DialogItems[0]),0,0,0,0);
+	HANDLE hDlg=Info.DialogInit(&MainGuid, &OptSyncDlgGuid,-1,-1,64,10,L"DlgCmp",DialogItems,sizeof(DialogItems)/sizeof(DialogItems[0]),0,0,0,0);
 
 	if (hDlg != INVALID_HANDLE_VALUE)
 	{
 		ret=Info.DialogRun(hDlg);
-		if (ret==5)
+		if (ret==6)
 		{
 			Opt.SyncRPanel=Info.SendDlgMessage(hDlg,DM_GETCHECK,1,0);
 			Opt.SyncLPanel=Info.SendDlgMessage(hDlg,DM_GETCHECK,2,0);
+			Opt.SyncRDel=Info.SendDlgMessage(hDlg,DM_GETCHECK,3,0);
+			Opt.SyncUseDelFilter=Info.SendDlgMessage(hDlg,DM_GETCHECK,4,0);
 			ret=(Opt.SyncLPanel || Opt.SyncRPanel || Opt.SyncRDel)?2:1;   // синхронизируем, иначе - пропустим
 		}
-		else if (ret==6)
+		else if (ret==7)
 			ret=-1;
 		else
 		{
@@ -3164,7 +3167,7 @@ int AdvCmpProc::SyncRDelFile(const wchar_t *FileName)
 	DWORD Attrib=0;
 	FILETIME Time;
 
-	if (FileName && FileExists(FileName,&Size,&Time,&Attrib,-1)) // -1, т.е. справа
+	if (FileName && FileExists(FileName,&Size,&Time,&Attrib,Opt.SyncUseDelFilter?-1:0)) // -1, т.е. справа
 	{
 		int doDel=1;
 
@@ -3369,7 +3372,7 @@ int AdvCmpProc::SyncRDelDir(const wchar_t *DirName)
 	FILETIME Time;
 
 	// проверим на фильтр
-	if (!FileExists(DirName,&Size,&Time,&Attrib,-1))
+	if (Opt.SyncUseDelFilter && !FileExists(DirName,&Size,&Time,&Attrib,-1))
 		return 1; // пропустим
 
 RetryDelDir:

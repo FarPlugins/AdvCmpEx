@@ -155,6 +155,7 @@ extern struct Options {
 			SyncLPanel,
 			SyncRPanel,
 			SyncRDel,
+			SyncUseDelFilter,
 			ProcessHidden,
 			BufSize;
 	char *Buf[2];

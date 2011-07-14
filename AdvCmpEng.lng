@@ -86,6 +86,7 @@
 "Copy to &left panel %u items"
 "Copy to &right panel %u items"
 "&Delete in right panel %u items"
+"Use &filter when deleting"
 "&Edit"
 
 "Warning"

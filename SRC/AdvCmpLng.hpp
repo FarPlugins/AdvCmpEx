@@ -102,6 +102,7 @@ enum {
 	MSyncLPanel,
 	MSyncRPanel,
 	MSyncRDel,
+	MSyncUseDelFilter,
 	MSyncEdit,
 
 	MWarning,
