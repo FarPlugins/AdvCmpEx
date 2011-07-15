@@ -3254,7 +3254,10 @@ RetryDelFile:
 				if (!ExitCode)
 					goto RetryDelFile;
 				else if (ExitCode != 1)
+				{
+					SetFileAttributesW(FileName,Attrib); // пробуем восстановить атрибуты
 					ret=0;
+				}
 			}
 		}
 	}
@@ -3372,7 +3375,7 @@ int AdvCmpProc::SyncRDelDir(const wchar_t *DirName)
 	FILETIME Time;
 
 	// проверим на фильтр
-	if (Opt.SyncUseDelFilter && !FileExists(DirName,&Size,&Time,&Attrib,-1))
+	if (!FileExists(DirName,&Size,&Time,&Attrib,Opt.SyncUseDelFilter?-1:0))
 		return 1; // пропустим
 
 RetryDelDir:
@@ -3511,6 +3514,8 @@ RetryDelDir:
 			goto RetryDelDir;
 		else if (ExitCode == 1)
 			ret=1;
+
+		if (Attrib) SetFileAttributesW(DirName,Attrib); // пробуем восстановить
 	}
 
 	return ret;
