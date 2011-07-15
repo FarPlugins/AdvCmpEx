@@ -968,6 +968,10 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 				RAccess=pRPPI->LastAccessTime;
 			}
 
+			//---------------------------------------------------------------------------
+
+			ShowCmpMsg(LDir,pLPPI->FileName,RDir,pRPPI->FileName,true);
+
 			// экспресс-сравнение: FileIndex совпали - скажем "одинаковые"
 			if ( bOkLFileInfo && bOkRFileInfo &&
 						LFileInfo.dwVolumeSerialNumber==RFileInfo.dwVolumeSerialNumber &&
@@ -978,10 +982,6 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 				CmpInfo.ProcSize+=CmpInfo.CurCountSize;
 				return true;
 			}
-
-			//---------------------------------------------------------------------------
-
-			ShowCmpMsg(LDir,pLPPI->FileName,RDir,pRPPI->FileName,true);
 
 			DWORD LReadSize=1, RReadSize=1;
 			DWORD LBufPos=1, RBufPos=1;     // позиция в Opt.Buf
