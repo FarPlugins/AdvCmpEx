@@ -937,6 +937,8 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 
 			HANDLE hLFile, hRFile;
 			FILETIME LAccess, RAccess;
+			BY_HANDLE_FILE_INFORMATION LFileInfo, RFileInfo;
+			bool bOkLFileInfo=false, bOkRFileInfo=false;
 
 			if (!LPanel.bARC)
 			{
@@ -947,6 +949,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 					bOpenFail=true;
 					return false;
 				}
+				bOkLFileInfo=GetFileInformationByHandle(hLFile,&LFileInfo);
 				// Сохраним время последнего доступа к файлу
 				LAccess=pLPPI->LastAccessTime;
 			}
@@ -961,7 +964,18 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 					bOpenFail=true;
 					return false;
 				}
+				bOkRFileInfo=GetFileInformationByHandle(hRFile,&RFileInfo);
 				RAccess=pRPPI->LastAccessTime;
+			}
+
+			// экспресс-сравнение: FileIndex совпали - скажем "одинаковые"
+			if ( bOkLFileInfo && bOkRFileInfo &&
+						LFileInfo.dwVolumeSerialNumber==RFileInfo.dwVolumeSerialNumber &&
+						LFileInfo.nFileIndexHigh==RFileInfo.nFileIndexHigh && LFileInfo.nFileIndexLow==RFileInfo.nFileIndexLow )
+			{
+				CloseHandle(hLFile);
+				CloseHandle(hRFile);
+				return true;
 			}
 
 			//---------------------------------------------------------------------------
