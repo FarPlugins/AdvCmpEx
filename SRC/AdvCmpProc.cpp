@@ -975,6 +975,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 			{
 				CloseHandle(hLFile);
 				CloseHandle(hRFile);
+				CmpInfo.ProcSize+=CmpInfo.CurCountSize;
 				return true;
 			}
 
