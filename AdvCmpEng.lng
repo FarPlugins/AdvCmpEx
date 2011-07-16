@@ -33,6 +33,7 @@
 ""
 "Sub&folders,"
 "ma&ximum folder depth"
+"Scan symbolic links"
 "&Use file filter"
 "F4-Filter"
 "Compare till the first differe&nce"

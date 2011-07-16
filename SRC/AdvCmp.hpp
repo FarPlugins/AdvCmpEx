@@ -138,6 +138,7 @@ extern struct Options {
 			IgnoreTemplates,
 			ProcessSubfolders,
 			MaxScanDepth,
+			ScanSymlink,
 			Filter,
 			ProcessSelected,
 			SkipSubstr,

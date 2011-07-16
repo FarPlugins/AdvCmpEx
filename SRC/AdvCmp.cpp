@@ -493,7 +493,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 	class AdvCmpDlgOpt AdvCmpOpt;
 	int ret=AdvCmpOpt.ShowOptDialog();
 
-	if (ret==41) // DlgOK
+	if (ret==42) // DlgOK
 	{
 		DWORD dwTicks=GetTickCount();
 		// откроем, для проверок на Esc
@@ -534,7 +534,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 				AdvCmp.ShowCmpDialog(&LList,&RList);
 		}
 	}
-	else if (ret==42) // DlgUNDERCURSOR
+	else if (ret==43) // DlgUNDERCURSOR
 	{
 		class AdvCmpProcCur AdvCmpCur;
 		AdvCmpCur.CompareCurFile(&LList,&RList);

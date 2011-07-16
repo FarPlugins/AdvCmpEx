@@ -45,6 +45,7 @@ enum {
 	MTitleOptions,
 	MProcessSubfolders,
 	MMaxScanDepth,
+	MScanSymlink,
 	MFilter,
 	MFilterBotton,
 	MProcessTillFirstDiff,

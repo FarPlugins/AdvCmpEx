@@ -451,6 +451,20 @@ int AdvCmpProc::GetDirList(const wchar_t *Dir, int ScanDepth, bool OnlyInfo, str
 		return true;
 
 	string strPathMask(Dir);
+
+	if (Opt.ScanSymlink)
+	{
+		DWORD Attrib=GetFileAttributesW(Dir);
+		if (Attrib!=INVALID_FILE_ATTRIBUTES && (Attrib&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT)))
+		{
+			// получим реальный путь
+			size_t size=FSF.ConvertPath(CPM_REAL,Dir,0,0);
+			wchar_t *buf=strPathMask.get(size); 
+			FSF.ConvertPath(CPM_REAL,Dir,buf,size);
+			strPathMask.updsize();
+		}
+	}
+
 	strPathMask+=L"\\*";
 	WIN32_FIND_DATA wfdFindData;
 	HANDLE hFind;
