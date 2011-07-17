@@ -447,28 +447,34 @@ void AdvCmpProc::WFD2PPI(WIN32_FIND_DATA &wfd, PluginPanelItem &ppi)
  ****************************************************************************/
 int AdvCmpProc::GetDirList(const wchar_t *Dir, int ScanDepth, bool OnlyInfo, struct DirList *pList)
 {
+	bool ret=true;
+
 	if (OnlyInfo && bBrokenByEsc)
-		return true;
+		return ret;
 
 	string strPathMask(Dir);
 
 	if (Opt.ScanSymlink)
 	{
 		DWORD Attrib=GetFileAttributesW(Dir);
-		if (Attrib!=INVALID_FILE_ATTRIBUTES && (Attrib&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT)))
+		if (Attrib!=INVALID_FILE_ATTRIBUTES && (Attrib&FILE_ATTRIBUTE_REPARSE_POINT))
 		{
 			// получим реальный путь
 			size_t size=FSF.ConvertPath(CPM_REAL,Dir,0,0);
 			wchar_t *buf=strPathMask.get(size); 
 			FSF.ConvertPath(CPM_REAL,Dir,buf,size);
 			strPathMask.updsize();
+
+			// проверка на рекурсию - узнаем, может мы уже отсюда пришли
+			wchar_t RealPrevDir[32768];
+			wcscpy(RealPrevDir,Dir);
+			(wchar_t)*(FSF.PointToName(RealPrevDir)) = 0;
+			FSF.ConvertPath(CPM_REAL,RealPrevDir,RealPrevDir,32768);
+
+			if (!FSF.LStricmp(strPathMask.get(),RealPrevDir)) // да, уже были тут!
+				ret=false;
 		}
 	}
-
-	strPathMask+=L"\\*";
-	WIN32_FIND_DATA wfdFindData;
-	HANDLE hFind;
-	bool ret=true;
 
 	if (!OnlyInfo) // заполянем DirList
 	{
@@ -477,6 +483,13 @@ int AdvCmpProc::GetDirList(const wchar_t *Dir, int ScanDepth, bool OnlyInfo, str
 		pList->PPI=0;
 		pList->ItemsNumber=0;
 	}
+
+	if (Opt.ScanSymlink && !ret) // выходим
+		return true;
+
+	strPathMask+=L"\\*";
+	WIN32_FIND_DATA wfdFindData;
+	HANDLE hFind;
 
 	if ((hFind=FindFirstFileW(strPathMask,&wfdFindData)) != INVALID_HANDLE_VALUE)
 	{

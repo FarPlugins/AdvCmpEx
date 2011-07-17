@@ -312,7 +312,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 				//------
 				Opt.ScanSymlink=Info.AdvControl(&MainGuid,ACTL_GETSYSTEMSETTINGS,0,0)&FSS_SCANSYMLINK;
 				Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgSCANSYMLINK,(void*)(Opt.ScanSymlink?BSTATE_CHECKED:BSTATE_UNCHECKED));
-				if (Opt.ProcessSubfolders!=2 || Opt.Sync || (LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN))
+				if (!Opt.ProcessSubfolders || Opt.Sync || (LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN))
 				{
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgSCANSYMLINK,(void*)false);
 					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgSCANSYMLINK,(void*)BSTATE_UNCHECKED);
@@ -357,8 +357,8 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 			{
 				if (Param2)
 				{
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgSCANSYMLINK,(void*)(Info.SendDlgMessage(hDlg,DM_GETCHECK,DlgSUBFOLDER,0)==2 && !((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN))) );
-					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgSCANSYMLINK,(void*)(Opt.ScanSymlink && Info.SendDlgMessage(hDlg,DM_GETCHECK,DlgSUBFOLDER,0)==2?BSTATE_CHECKED:BSTATE_UNCHECKED));
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgSCANSYMLINK,(void*)(Info.SendDlgMessage(hDlg,DM_GETCHECK,DlgSUBFOLDER,0) && !((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN))) );
+					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgSCANSYMLINK,(void*)(Opt.ScanSymlink && Info.SendDlgMessage(hDlg,DM_GETCHECK,DlgSUBFOLDER,0)?BSTATE_CHECKED:BSTATE_UNCHECKED));
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgLCMPSKIP,(void*)true);
 					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgLCMPSKIP,(void*)(Opt.SkipSubstr?BSTATE_CHECKED:BSTATE_UNCHECKED));
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgECMPSKIP,(void*)(Opt.SkipSubstr?true:false));
@@ -545,7 +545,22 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 			//------------
 			else if (Param1 == DlgSUBFOLDER)
 			{
-				if ((int)Param2 == 2)
+				if ((int)Param2 == 1)
+				{
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgLMAXDEPTH,(void*)false);
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEMAXDEPTH,(void*)false);
+					if (!((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN)) && !Info.SendDlgMessage(hDlg,DM_GETCHECK,DlgSYNC,0))
+					{
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgSCANSYMLINK,(void*)true);
+						Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgSCANSYMLINK,(void*)(Opt.ScanSymlink?BSTATE_CHECKED:BSTATE_UNCHECKED));
+					}
+					else
+					{
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgSCANSYMLINK,(void*)false);
+						Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgSCANSYMLINK,(void*)BSTATE_UNCHECKED);
+					}
+				}
+				else if ((int)Param2 == 2)
 				{
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgLMAXDEPTH,(void*)true);
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEMAXDEPTH,(void*)true);
@@ -553,6 +568,11 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 					{
 						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgSCANSYMLINK,(void*)true);
 						Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgSCANSYMLINK,(void*)(Opt.ScanSymlink?BSTATE_CHECKED:BSTATE_UNCHECKED));
+					}
+					else
+					{
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgSCANSYMLINK,(void*)false);
+						Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgSCANSYMLINK,(void*)BSTATE_UNCHECKED);
 					}
 				}
 				else
@@ -739,7 +759,7 @@ int AdvCmpDlgOpt::ShowOptDialog()
 		/*23*/{DI_TEXT,      -1,12,   0,   0, 0, 0,                   0,                    DIF_SEPARATOR, GetMsg(MTitleOptions),0,0},
 		/*24*/{DI_CHECKBOX,   2,13,   0,   0, 0, 0,                   0,                       DIF_3STATE, GetMsg(MProcessSubfolders),0,0},
 		/*25*/{DI_TEXT,       0,13,   0,   0, 0, 0,                   0,                                0, GetMsg(MMaxScanDepth),0,0},
-		/*26*/{DI_FIXEDIT,    0,13,   2,   0, 0, 0,              L"999",                     DIF_MASKEDIT, L"15",0,0},
+		/*26*/{DI_FIXEDIT,    0,13,   2,   0, 0, 0,              L"999",                     DIF_MASKEDIT, L"10",0,0},
 		/*27*/{DI_CHECKBOX,   2,14,   0,   0, 0, 0,                   0,                                0, GetMsg(MScanSymlink),0,0},
 		/*28*/{DI_CHECKBOX,   2,15,   0,   0, 0, 0,                   0,                                0, GetMsg(MFilter),0,0},
 		/*29*/{DI_BUTTON,     0,15,dW-3,   0, 0, 0,                   0,                                0, GetMsg(MFilterBotton),0,0},
