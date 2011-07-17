@@ -524,7 +524,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 
 			if (Opt.Sound && (GetTickCount()-dwTicks > 30000)) MessageBeep(MB_ICONASTERISK);
 			Info.AdvControl(&MainGuid,ACTL_PROGRESSNOTIFY,0,0);
-			if (bOpenFail) ErrorMsg(MOpenErrorTitle,MOpenErrorBody);
+			if (bOpenFail && Opt.ShowMsg) ErrorMsg(MOpenErrorTitle,MOpenErrorBody);
 			if (bDifferenceNotFound && Opt.ShowMsg)
 			{
 				const wchar_t *MsgItems[] = { GetMsg(MNoDiffTitle), GetMsg(MNoDiffBody), GetMsg(MOK) };

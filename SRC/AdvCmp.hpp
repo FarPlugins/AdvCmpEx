@@ -199,6 +199,7 @@ extern struct TotalCmpInfo {
 	unsigned __int64 CurProcSize;  // размер обработанного из сравниваемой пары
 	unsigned int LDiff;            // кол-во отличающихся на левой панели
 	unsigned int RDiff;            // кол-во отличающихся на правой панели
+	unsigned int Errors;           // кол-во, не смогли открыть
 } CmpInfo;
 
 // элементы для сравнения

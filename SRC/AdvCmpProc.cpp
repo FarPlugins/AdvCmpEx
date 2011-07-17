@@ -380,8 +380,8 @@ void AdvCmpProc::ShowCmpMsg(const wchar_t *Dir1, const wchar_t *Name1, const wch
 	TruncCopy(TruncDir2, GetPosToName(Dir2), WinInfo.TruncLen, GetMsg(MComparingWith));
 	TruncCopy(TruncName2, Name2, WinInfo.TruncLen);
 
-	wchar_t LDiff[100], RDiff[100], DiffOut[MAX_PATH];
-	FSF.sprintf(Buf,GetMsg(MComparingDiffN),itoaa(CmpInfo.LDiff,LDiff),itoaa(CmpInfo.RDiff,RDiff));
+	wchar_t LDiff[100], RDiff[100], Errors[100], DiffOut[MAX_PATH];
+	FSF.sprintf(Buf,GetMsg(MComparingDiffN),itoaa(CmpInfo.LDiff,LDiff),itoaa(CmpInfo.RDiff,RDiff),itoaa(CmpInfo.Errors,Errors));
 	strcentr(DiffOut,Buf,WinInfo.TruncLen,0x00002500);
 
 	wchar_t ProgressLineCur[MAX_PATH], ProgressLineTotal[MAX_PATH];
@@ -540,6 +540,9 @@ int AdvCmpProc::GetDirList(const wchar_t *Dir, int ScanDepth, bool OnlyInfo, str
 		} while (FindNextFile(hFind,&wfdFindData));
 		FindClose(hFind);
 	}
+	else
+		CmpInfo.Errors++;
+
 	return ret;
 }
 
@@ -974,6 +977,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 				{
 					CmpInfo.ProcSize+=CmpInfo.CurCountSize;
 					bOpenFail=true;
+					CmpInfo.Errors++;
 					return false;
 				}
 				bOkLFileInfo=GetFileInformationByHandle(hLFile,&LFileInfo);
@@ -989,6 +993,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 					if (hLFile) CloseHandle(hLFile);
 					CmpInfo.ProcSize+=CmpInfo.CurCountSize;
 					bOpenFail=true;
+					CmpInfo.Errors++;
 					return false;
 				}
 				bOkRFileInfo=GetFileInformationByHandle(hRFile,&RFileInfo);

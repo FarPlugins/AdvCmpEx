@@ -52,7 +52,7 @@
 "{%d%%} Comparing files"
 " Comparing "%s": "
 " with "%s": "
-" Found differences: %s - %s "
+" Found differences: %s - %s (errors: %s) "
 " Total: %s (%s) "
 "Data processing. Please wait several seconds..."
 
