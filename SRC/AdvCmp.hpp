@@ -166,7 +166,6 @@ extern struct Options {
 
 extern HANDLE hConInp;     // хэндл консол. ввода
 extern bool bBrokenByEsc;  //прекратить/прекратили операцию сравнения?
-extern bool bOpenFail;     // невозможно открыть каталог/файл
 extern bool bGflLoaded;    // libgfl340.dll загружена?
 
 // информация о панели
@@ -199,7 +198,7 @@ extern struct TotalCmpInfo {
 	unsigned __int64 CurProcSize;  // размер обработанного из сравниваемой пары
 	unsigned int LDiff;            // кол-во отличающихся на левой панели
 	unsigned int RDiff;            // кол-во отличающихся на правой панели
-	unsigned int Errors;           // кол-во, не смогли открыть
+	unsigned int Errors;           // кол-во, не смогли открыть каталогов/файлов
 } CmpInfo;
 
 // элементы для сравнения

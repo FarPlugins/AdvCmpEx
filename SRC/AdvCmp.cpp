@@ -488,7 +488,6 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 
 	memset(&CmpInfo,0,sizeof(CmpInfo));
 	bBrokenByEsc=false;
-	bOpenFail=false;
 
 	class AdvCmpDlgOpt AdvCmpOpt;
 	int ret=AdvCmpOpt.ShowOptDialog();
@@ -524,7 +523,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 
 			if (Opt.Sound && (GetTickCount()-dwTicks > 30000)) MessageBeep(MB_ICONASTERISK);
 			Info.AdvControl(&MainGuid,ACTL_PROGRESSNOTIFY,0,0);
-			if (bOpenFail && Opt.ShowMsg) ErrorMsg(MOpenErrorTitle,MOpenErrorBody);
+			if (CmpInfo.Errors && Opt.ShowMsg) ErrorMsg(MOpenErrorTitle,MOpenErrorBody);
 			if (bDifferenceNotFound && Opt.ShowMsg)
 			{
 				const wchar_t *MsgItems[] = { GetMsg(MNoDiffTitle), GetMsg(MNoDiffBody), GetMsg(MOK) };

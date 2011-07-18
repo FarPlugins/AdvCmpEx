@@ -696,7 +696,6 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 				{
 					bBrokenByEsc=true; // То ли юзер прервал, то ли ошибка чтения
 					bEqual=false; // Остановим сравнение
-					bOpenFail=true;
 				}
 			}
 			else if (bLPanelPlug || bRPanelPlug)
@@ -714,28 +713,24 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 				{
 					bBrokenByEsc=true;
 					bEqual=false;
-					bOpenFail=true;
 				}
 
 				if (bRPanelPlug && !bBrokenByEsc && !Info.GetPluginDirList(&MainGuid,RPanel.hPanel,pRPPI->FileName,&RList.PPI,(size_t*)&RList.ItemsNumber))
 				{
 					bBrokenByEsc=true;
 					bEqual=false;
-					bOpenFail=true;
 				}
 
 				if (!bLPanelPlug && !bBrokenByEsc && !Info.GetDirList(GetPosToName(strLFullDir.get()),&LList.PPI,(size_t*)&LList.ItemsNumber))
 				{
 					bBrokenByEsc=true;
 					bEqual=false;
-					bOpenFail=true;
 				}
 
 				if (!bRPanelPlug && !bBrokenByEsc && !Info.GetDirList(GetPosToName(strRFullDir.get()),&RList.PPI,(size_t*)&RList.ItemsNumber))
 				{
 					bBrokenByEsc=true;
 					bEqual=false;
-					bOpenFail=true;
 				}
 //				for (int i=0; bEqual && !LPanel.bARC && i<LList.ItemsNumber; i++)
 //					DebugMsg(L"FAR",(wchar_t*)LList.PPI[i].FileName,i);
@@ -976,7 +971,6 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
                                  OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, 0)) == INVALID_HANDLE_VALUE)
 				{
 					CmpInfo.ProcSize+=CmpInfo.CurCountSize;
-					bOpenFail=true;
 					CmpInfo.Errors++;
 					return false;
 				}
@@ -992,7 +986,6 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 				{
 					if (hLFile) CloseHandle(hLFile);
 					CmpInfo.ProcSize+=CmpInfo.CurCountSize;
-					bOpenFail=true;
 					CmpInfo.Errors++;
 					return false;
 				}
