@@ -2148,8 +2148,6 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 		ListPos.TopPos=-1/*ListInfo.TopPos*/;
 		Info.SendDlgMessage(hDlg,DM_LISTSETCURPOS,0,&ListPos);
 	}
-
-	Info.SendDlgMessage(hDlg,DM_LISTSETMOUSEREACTION,0,(void*)LMRT_NEVER);
 	return true;
 }
 
@@ -2267,7 +2265,6 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 			Info.SendDlgMessage(hDlg,DM_SETITEMPOSITION,0,&WinInfo.Con);
 			c.X=c.Y=-1;
 			Info.SendDlgMessage(hDlg,DM_MOVEDIALOG,true,&c);
-			Info.SendDlgMessage(hDlg,DM_LISTSETMOUSEREACTION,0,(void*)LMRT_NEVER);
 			Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
 			return true;
 		}
