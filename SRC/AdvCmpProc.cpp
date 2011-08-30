@@ -476,7 +476,7 @@ int AdvCmpProc::GetDirList(const wchar_t *Dir, int ScanDepth, bool OnlyInfo, str
 		}
 	}
 
-	if (!OnlyInfo) // заполянем DirList
+	if (!OnlyInfo) // заполняем DirList
 	{
 		pList->Dir=(wchar_t*)malloc((wcslen(Dir)+1)*sizeof(wchar_t));
 		if (pList->Dir) wcscpy(pList->Dir,Dir);
