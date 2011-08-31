@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2183
+  Plugin API for Far Manager 3.0 build 2184
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2183
+#define FARMANAGERVERSION_BUILD 2184
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -1360,7 +1360,7 @@ enum EDITOR_CONTROL_COMMANDS
 	ECTL_SAVEFILE                   = 18,
 	ECTL_QUIT                       = 19,
 	ECTL_SETKEYBAR                  = 20,
-	ECTL_PROCESSKEY                 = 21,
+
 	ECTL_SETPARAM                   = 22,
 	ECTL_GETBOOKMARKS               = 23,
 	ECTL_TURNOFFMARKINGBLOCK        = 24,
