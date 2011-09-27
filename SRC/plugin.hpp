@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2194
+  Plugin API for Far Manager 3.0 build 2204
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2194
+#define FARMANAGERVERSION_BUILD 2204
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -315,6 +315,7 @@ enum FARMESSAGE
 	DN_INPUT                        = 4115,
 	DN_CONTROLINPUT                 = 4116,
 	DN_CLOSE                        = 4117,
+	DN_GETVALUE                     = 4118,
 
 	DM_USER                         = 0x4000,
 
@@ -344,6 +345,8 @@ static const LISTITEMFLAGS
 	LIF_GRAYED             = 0x0000000000100000ULL,
 	LIF_HIDDEN             = 0x0000000000200000ULL,
 	LIF_DELETEUSERDATA     = 0x0000000080000000ULL;
+
+
 
 struct FarListItem
 {
@@ -432,9 +435,9 @@ struct FarList
 
 struct FarListTitles
 {
-	size_t   TitleLen;
+	size_t TitleSize;
 	const wchar_t *Title;
-	size_t   BottomLen;
+	size_t BottomSize;
 	const wchar_t *Bottom;
 };
 
@@ -734,8 +737,8 @@ struct PanelInfo
 	size_t ItemsNumber;
 	size_t SelectedItemsNumber;
 	RECT PanelRect;
-	int CurrentItem;
-	int TopPanelItem;
+	size_t CurrentItem;
+	size_t TopPanelItem;
 	int ViewMode;
 	enum PANELINFOTYPE PanelType;
 	enum OPENPANELINFO_SORTMODES SortMode;
@@ -745,8 +748,8 @@ struct PanelInfo
 
 struct PanelRedrawInfo
 {
-	int CurrentItem;
-	int TopPanelItem;
+	size_t CurrentItem;
+	size_t TopPanelItem;
 };
 
 struct CmdLineSelect
@@ -795,6 +798,7 @@ enum FILE_CONTROL_COMMANDS
 	FCTL_GETPANELFORMAT             = 31,
 	FCTL_GETPANELHOSTFILE           = 32,
 	FCTL_SETCASESENSITIVESORT       = 33,
+	FCTL_GETPANELPREFIX             = 34,
 };
 
 typedef void (WINAPI *FARAPITEXT)(
@@ -1147,7 +1151,35 @@ struct MacroAddMacro
 	FARMACROCALLBACK Callback;
 };
 
+enum FARMACROVARTYPE
+{
+	FMVT_UNKNOWN                = -1,
+	FMVT_INTEGER                = 0,
+	FMVT_STRING                 = 1,
+	FMVT_DOUBLE                 = 2,
+};
 
+struct FarMacroValue
+{
+	enum FARMACROVARTYPE type;
+	union
+	{
+		__int64  i;
+		double   d;
+		const wchar_t *s;
+	}
+#ifndef __cplusplus
+	Value
+#endif
+	;
+};
+
+
+struct TFarGetValue
+{
+	int GetType;
+	struct FarMacroValue Val;
+};
 
 typedef unsigned __int64 FARSETCOLORFLAGS;
 static const FARSETCOLORFLAGS

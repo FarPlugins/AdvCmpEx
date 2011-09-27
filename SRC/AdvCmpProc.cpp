@@ -2130,9 +2130,9 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 	static wchar_t Bottom[MAX_PATH];
 	FarListTitles ListTitle;
 	ListTitle.Title=Title;
-	ListTitle.TitleLen=sizeof(Title);
+	ListTitle.TitleSize=MAX_PATH;
 	ListTitle.Bottom=Bottom;
-	ListTitle.BottomLen=sizeof(Bottom);;
+	ListTitle.BottomSize=MAX_PATH;
 	Info.SendDlgMessage(hDlg,DM_LISTGETTITLES,0,&ListTitle);
 	FSF.sprintf(Bottom,GetMsg(MListBottom),pFileList->Items,pFileList->Select,pFileList->bShowSelect?L' ':L'*',
 							pFileList->Identical,pFileList->bShowIdentical?L' ':L'*',
@@ -2468,9 +2468,9 @@ GOTOCMPFILE:
 									static wchar_t Bottom[MAX_PATH];
 									FarListTitles ListTitle;
 									ListTitle.Title=Title;
-									ListTitle.TitleLen=sizeof(Title);
+									ListTitle.TitleSize=MAX_PATH;
 									ListTitle.Bottom=Bottom;
-									ListTitle.BottomLen=sizeof(Bottom);;
+									ListTitle.BottomSize=MAX_PATH;;
 									Info.SendDlgMessage(hDlg,DM_LISTGETTITLES,0,&ListTitle);
 									FSF.sprintf(Bottom,GetMsg(MListBottom),pFileList->Items,pFileList->Select,pFileList->bShowSelect?L' ':L'*',
 															pFileList->Identical,pFileList->bShowIdentical?L' ':L'*',

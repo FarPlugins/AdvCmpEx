@@ -3,7 +3,7 @@
 
 rem ===================== Use Microsoft Visual Studio ==========================
 
- @call "%VS90COMNTOOLS%vsvars32.bat"
+ @call "%VS100COMNTOOLS%vsvars32.bat"
 
 rem  ======================== Set name and version ... =========================
 
