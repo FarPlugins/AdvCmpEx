@@ -2674,11 +2674,10 @@ GOTOCHANGEMARK:
 						File *cur=(tmp && *tmp)?*tmp:NULL;
 						if (cur)
 						{
-							string strVirtDir=GetPosToName(cur->LDir)+wcslen(LPanel.Dir)+1;
-							if (strVirtDir.length()>0 && strVirtDir[(size_t)(strVirtDir.length()-1)]!=L'\\') strVirtDir+=L"\\";
+							string strVirtDir=GetPosToName(cur->LDir)+wcslen(LPanel.Dir);
+							if (strVirtDir.length()>0) FSF.TruncStr(strVirtDir.get(),WinInfo.TruncLen-wcslen(GetMsg(MListBottomCurDir)));
 							else return true;
 
-							FSF.TruncStr(strVirtDir.get(),WinInfo.TruncLen-wcslen(GetMsg(MListBottomCurDir)));
 							strVirtDir.updsize();
 							SetBottom(hDlg,pFileList,strVirtDir.get());
 							bSetBottom=true;
