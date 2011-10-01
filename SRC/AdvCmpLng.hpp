@@ -96,6 +96,11 @@ enum {
 	MFolder,
 
 	MListBottom,
+	MListBottomCurDir,
+
+	MCurDirName,
+	MLName,
+	MRName,
 
 	MSyncTitle,
 	MNoSyncBody,

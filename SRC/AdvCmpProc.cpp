@@ -1950,6 +1950,25 @@ void MakeListItemText(wchar_t *buf, File *cur, wchar_t Mark)
 		FSF.sprintf(buf, L"%*.*s%c%*.*s%c%*.*s%c%*.*s%c%c%c%s",14,14,LSize,0x2502,17,17,LTime,0x2551,17,17,RTime,0x2502,14,14,RSize,0x2551,Mark,0x2502,cur->FileName);
 }
 
+void SetBottom(HANDLE hDlg, FileList *pFileList, wchar_t *CurDir=NULL)
+{
+	static wchar_t Title[MAX_PATH];
+	static wchar_t Bottom[MAX_PATH];
+	FarListTitles ListTitle;
+	ListTitle.Title=Title;
+	ListTitle.TitleSize=MAX_PATH;
+	ListTitle.Bottom=Bottom;
+	ListTitle.BottomSize=MAX_PATH;
+	Info.SendDlgMessage(hDlg,DM_LISTGETTITLES,0,&ListTitle);
+	if (CurDir) FSF.sprintf(Bottom,GetMsg(MListBottomCurDir),CurDir);
+	else FSF.sprintf(Bottom,GetMsg(MListBottom),pFileList->Items,pFileList->Select,pFileList->bShowSelect?L' ':L'*',
+								pFileList->Identical,pFileList->bShowIdentical?L' ':L'*',
+								pFileList->Different,pFileList->bShowDifferent?L' ':L'*',
+								pFileList->LNew,pFileList->bShowLNew?L' ':L'*',pFileList->RNew,pFileList->bShowRNew?L' ':L'*');
+	ListTitle.Bottom=Bottom;
+	Info.SendDlgMessage(hDlg,DM_LISTSETTITLES,0,&ListTitle);
+}
+
 /***************************************************************************
  * Изменение/обновление листа файлов в диалоге
  ***************************************************************************/
@@ -2052,7 +2071,7 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 			Info.SendDlgMessage(hDlg,DM_LISTADD,0,&List);
 			Index++;
 		}
-		else
+
 		{
 			for (int j=i+1; j<pFileList->iCount; j++)
 			{
@@ -2126,20 +2145,7 @@ bool MakeFarList(HANDLE hDlg, FileList *pFileList, bool bSetCurPos=true, bool bS
 		}
 	}
 
-	static wchar_t Title[MAX_PATH];
-	static wchar_t Bottom[MAX_PATH];
-	FarListTitles ListTitle;
-	ListTitle.Title=Title;
-	ListTitle.TitleSize=MAX_PATH;
-	ListTitle.Bottom=Bottom;
-	ListTitle.BottomSize=MAX_PATH;
-	Info.SendDlgMessage(hDlg,DM_LISTGETTITLES,0,&ListTitle);
-	FSF.sprintf(Bottom,GetMsg(MListBottom),pFileList->Items,pFileList->Select,pFileList->bShowSelect?L' ':L'*',
-							pFileList->Identical,pFileList->bShowIdentical?L' ':L'*',
-							pFileList->Different,pFileList->bShowDifferent?L' ':L'*',
-							pFileList->LNew,pFileList->bShowLNew?L' ':L'*',pFileList->RNew,pFileList->bShowRNew?L' ':L'*');
-	ListTitle.Bottom=Bottom;
-	Info.SendDlgMessage(hDlg,DM_LISTSETTITLES,0,&ListTitle);
+	SetBottom(hDlg,pFileList);
 
 	if (bSetCurPos)
 	{
@@ -2242,6 +2248,7 @@ int GetSyncOpt(FileList *pFileList)
 	return ret;
 }
 
+bool bSetBottom=false;
 
 INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 {
@@ -2327,6 +2334,7 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 		case DN_INPUT:
 		{
 			const INPUT_RECORD* record=(const INPUT_RECORD *)Param2;
+
 			if (record->EventType==MOUSE_EVENT)
 				// отработаем щелчок мыши в поле Mark
 				if (Opt.Sync && Param1==0 && record->Event.MouseEvent.dwButtonState==FROM_LEFT_1ST_BUTTON_PRESSED && record->Event.MouseEvent.dwEventFlags!=DOUBLE_CLICK)
@@ -2378,12 +2386,76 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 		case DN_CONTROLINPUT:
 		{
 			const INPUT_RECORD* record=(const INPUT_RECORD *)Param2;
+
+			if (bSetBottom)
+			{
+				SetBottom(hDlg,pFileList);
+				bSetBottom=false;
+			}
+
 			if (record->EventType==KEY_EVENT && record->Event.KeyEvent.bKeyDown)
 			{
 				WORD vk=record->Event.KeyEvent.wVirtualKeyCode;
 
 				if (IsNone(record))
 				{
+#if 0
+					if (vk==VK_F3)
+					{
+						wchar_t LName[4][66], RName[4][66];
+
+						for (int i=0; i<4; i++)
+						{
+							LName[i][0]=0;
+							RName[i][0]=0;
+						}
+						int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
+						File **tmp=(File **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
+						File *cur=(tmp && *tmp)?*tmp:NULL;
+						if (cur)
+						{
+							for (int j=0;j<=1;j++)
+							{
+								wchar_t *Name=GetPosToName((j==0)?cur->LDir:cur->RDir);
+								int len=wcslen(Name);
+								for (int i=0; i<4; i++, len-=65)
+								{
+									if (len<65)
+									{
+										lstrcpyn((j==0)?LName[i]:RName[i], Name+i*65, len+1);
+										break;
+									}
+									else
+										lstrcpyn((j==0)?LName[i]:RName[i], Name+i*65, 66);
+								}
+							}
+						}
+						struct FarDialogItem DialogItems[] = {
+							//			Type	X1	Y1	X2	Y2	Selected	History	Mask	Flags	Data	MaxLen	UserParam	
+							/* 0*/{DI_DOUBLEBOX,0, 0,70,14, 0, 0, 0,                  0, GetMsg(MCurDirName), 0,0},
+							/* 1*/{DI_SINGLEBOX,2, 1,68, 6, 0, 0, 0,       DIF_LEFTTEXT, GetMsg(MLName), 0,0},
+							/* 2*/{DI_TEXT,     3, 2, 0, 0, 0, 0, 0,       DIF_LEFTTEXT, LName[0],0,0},
+							/* 3*/{DI_TEXT,     3, 3, 0, 0, 0, 0, 0,       DIF_LEFTTEXT, LName[1],0,0},
+							/* 4*/{DI_TEXT,     3, 4, 0, 0, 0, 0, 0,       DIF_LEFTTEXT, LName[2],0,0},
+							/* 5*/{DI_TEXT,     3, 5, 0, 0, 0, 0, 0,       DIF_LEFTTEXT, LName[3],0,0},
+							/* 6*/{DI_SINGLEBOX,2, 7,68,12, 0, 0, 0,       DIF_LEFTTEXT, GetMsg(MRName), 0,0},
+							/* 7*/{DI_TEXT,     3, 8, 0, 0, 0, 0, 0,       DIF_LEFTTEXT, RName[0],0,0},
+							/* 8*/{DI_TEXT,     3, 9, 0, 0, 0, 0, 0,       DIF_LEFTTEXT, RName[1],0,0},
+							/* 9*/{DI_TEXT,     3,10, 0, 0, 0, 0, 0,       DIF_LEFTTEXT, RName[2],0,0},
+							/*10*/{DI_TEXT,     3,11, 0, 0, 0, 0, 0,       DIF_LEFTTEXT, RName[3],0,0},
+							/*11*/{DI_BUTTON,   0,13, 0, 0, 0, 0, 0,DIF_CENTERGROUP|DIF_DEFAULTBUTTON, GetMsg(MOK),0,0},
+						};
+						HANDLE hDlg=Info.DialogInit(&MainGuid,&DlgNameGuid,-1,-1,71,15,L"DlgCmp", DialogItems,sizeof(DialogItems)/sizeof(DialogItems[0]),0,FDLG_SMALLDIALOG,0,0);
+						if (hDlg != INVALID_HANDLE_VALUE)
+						{
+							Info.DialogRun(hDlg);
+							Info.DialogFree(hDlg);
+						}
+						return true;
+					}
+					//-----
+					else
+#endif
 					if (vk==VK_RETURN)
 					{
 GOTOCMPFILE:
@@ -2464,21 +2536,7 @@ GOTOCMPFILE:
 									FLP.SelectPos++;
 									Info.SendDlgMessage(hDlg,DM_LISTSETCURPOS,0,&FLP);
 
-									static wchar_t Title[MAX_PATH];
-									static wchar_t Bottom[MAX_PATH];
-									FarListTitles ListTitle;
-									ListTitle.Title=Title;
-									ListTitle.TitleSize=MAX_PATH;
-									ListTitle.Bottom=Bottom;
-									ListTitle.BottomSize=MAX_PATH;;
-									Info.SendDlgMessage(hDlg,DM_LISTGETTITLES,0,&ListTitle);
-									FSF.sprintf(Bottom,GetMsg(MListBottom),pFileList->Items,pFileList->Select,pFileList->bShowSelect?L' ':L'*',
-															pFileList->Identical,pFileList->bShowIdentical?L' ':L'*',
-															pFileList->Different,pFileList->bShowDifferent?L' ':L'*',
-															pFileList->LNew,pFileList->bShowLNew?L' ':L'*',pFileList->RNew,pFileList->bShowRNew?L' ':L'*');
-									ListTitle.Bottom=Bottom;
-									Info.SendDlgMessage(hDlg,DM_LISTSETTITLES,0,&ListTitle);
-
+									SetBottom(hDlg,pFileList);
 									return true;
 								}
 							}
@@ -2609,7 +2667,25 @@ GOTOCHANGEMARK:
 				}
 				else if (IsCtrl(record))
 				{
-					if (vk==0x52) //VK_R
+					if (vk==VK_CONTROL)
+					{
+						int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
+						File **tmp=(File **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
+						File *cur=(tmp && *tmp)?*tmp:NULL;
+						if (cur)
+						{
+							string strVirtDir=GetPosToName(cur->LDir)+wcslen(LPanel.Dir)+1;
+							if (strVirtDir.length()>0 && strVirtDir[(size_t)(strVirtDir.length()-1)]!=L'\\') strVirtDir+=L"\\";
+							else return true;
+
+							FSF.TruncStr(strVirtDir.get(),WinInfo.TruncLen-wcslen(GetMsg(MListBottomCurDir)));
+							strVirtDir.updsize();
+							SetBottom(hDlg,pFileList,strVirtDir.get());
+							bSetBottom=true;
+							return true;
+						}
+					}
+					else if (vk==0x52) //VK_R
 					{
 						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
 						pFileList->bShowSelect=true;

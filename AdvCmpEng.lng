@@ -81,6 +81,12 @@
 
 "Items %u (%u)%c identical %u%c different %u%c new %u%c - %u%c"
 
+"Current folder: %s"
+
+"Current folder name"
+"Left panel"
+"Right panel"
+
 "Synchronize folders"
 "Elements for synchronization are not found"
 
