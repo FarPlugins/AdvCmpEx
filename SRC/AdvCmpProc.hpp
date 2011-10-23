@@ -82,6 +82,26 @@ struct FileList {
 	bool bClearUserFlags;
 };
 
+	// для показа рисунков
+	struct PicData {
+		wchar_t *FileName;
+		RECT DrawRect;  //символы
+		RECT GDIRect;   //точки
+		bool Redraw;
+		bool Loaded;
+		bool FirstRun;
+		BITMAPINFOHEADER *BmpHeader;
+		unsigned char *DibData;
+		GFL_FILE_INFORMATION *pic_info;
+		int Page;
+		int Rotate;
+	};
+
+	struct CmpPicData {
+		struct PicData LPicData;
+		struct PicData RPicData;
+	};
+
 // сама сравнивалка :)
 class AdvCmpProc
 {
@@ -107,6 +127,9 @@ class AdvCmpProc
 		bool bAskRDel;
 		bool bSkipLReadOnly;
 		bool bSkipRReadOnly;
+
+		// два рисунка
+		struct CmpPicData CmpPic;
 
 	private:
 		bool GetFarTitle(string &strTitle);
@@ -140,10 +163,13 @@ class AdvCmpProc
 		int SyncRDelDir(const wchar_t *DirName);
 		int Synchronize(FileList *pFileList);
 
+		int ShowCmpCurDialog(const PluginPanelItem *pLPPI,const PluginPanelItem *pRPPI);
+
 	public:
 		AdvCmpProc();
 		~AdvCmpProc();
 
 		bool CompareDirs(const struct DirList *pLList,const struct DirList *pRList,bool bCompareAll,int ScanDepth);
+		bool CompareCurFile(const struct DirList *pLList,const struct DirList *pRList);
 		int ShowCmpDialog(const struct DirList *pLList,const struct DirList *pRList);
 };

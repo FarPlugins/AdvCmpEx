@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AdvCmp.hpp"
 #include "AdvCmpDlgOpt.hpp"
 #include "AdvCmpProc.hpp"
-#include "AdvCmpProcCur.hpp"
+// #include "AdvCmpProcCur.hpp"
 
 /****************************************************************************
  * Копии стандартных структур FAR
@@ -49,7 +49,6 @@ struct FarPanelInfo LPanel,RPanel;
 struct TotalCmpInfo CmpInfo;
 struct FarWindowsInfo WinInfo;
 bool bBrokenByEsc;
-bool bOpenFail;
 bool bGflLoaded=false;
 HMODULE GflHandle=NULL;
 HANDLE hConInp=INVALID_HANDLE_VALUE;
@@ -257,7 +256,7 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 {
 	Info->StructSize=sizeof(GlobalInfo);
 	Info->MinFarVersion=FARMANAGERVERSION;
-	Info->Version=MAKEFARVERSION(3,0,0,33,VS_RC);
+	Info->Version=MAKEFARVERSION(3,0,0,34,VS_RC);
 	Info->Guid=MainGuid;
 	Info->Title=L"Advanced compare 2";
 	Info->Description=L"Advanced compare 2 plugin for Far Manager v3.0";
@@ -277,8 +276,7 @@ void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info)
 		memset(&Cache,0,sizeof(Cache));
 
 		wchar_t PlugPath[MAX_PATH];
-		ExpandEnvironmentStringsW(L"%FARHOME%",PlugPath,(sizeof(PlugPath)/sizeof(PlugPath[0]))-9);
-		wcscat(PlugPath,L"\\Plugins");
+		ExpandEnvironmentStringsW(L"%FARHOME%\\Plugins",PlugPath,(sizeof(PlugPath)/sizeof(PlugPath[0])));
 //		LoadVisComp(PlugPath);
 		LoadGfl(PlugPath);
 	}
@@ -492,51 +490,55 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 	class AdvCmpDlgOpt AdvCmpOpt;
 	int ret=AdvCmpOpt.ShowOptDialog();
 
-	if (ret==42) // DlgOK
+	if (ret==42 || ret==43) // DlgOK || DlgUNDERCURSOR
 	{
 		DWORD dwTicks=GetTickCount();
 		// откроем, для проверок на Esc
 		hConInp=CreateFileW(L"CONIN$", GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
 
 		class AdvCmpProc AdvCmp;
-		bool bDifferenceNotFound=AdvCmp.CompareDirs(&LList,&RList,true,0);
 
-		if (hConInp!=INVALID_HANDLE_VALUE) CloseHandle(hConInp);
-
-		// Отмечаем файлы и перерисовываем панели. Если нужно показываем сообщение...
-		if (!bBrokenByEsc)
+		if (ret==42)
 		{
+			bool bDifferenceNotFound=AdvCmp.CompareDirs(&LList,&RList,true,0);
+
+			if (hConInp!=INVALID_HANDLE_VALUE) CloseHandle(hConInp);
+
+			// Отмечаем файлы и перерисовываем панели. Если нужно показываем сообщение...
+			if (!bBrokenByEsc)
 			{
-				Info.PanelControl(LPanel.hPanel,FCTL_BEGINSELECTION,0,0);
-				Info.PanelControl(RPanel.hPanel,FCTL_BEGINSELECTION,0,0);
+				{
+					Info.PanelControl(LPanel.hPanel,FCTL_BEGINSELECTION,0,0);
+					Info.PanelControl(RPanel.hPanel,FCTL_BEGINSELECTION,0,0);
 
-				for (int i=0; i<LList.ItemsNumber; i++)
-					Info.PanelControl(LPanel.hPanel,FCTL_SETSELECTION,i,(void*)(LList.PPI[i].Flags&PPIF_SELECTED));
-				for (int i=0; i<RList.ItemsNumber; i++)
-					Info.PanelControl(RPanel.hPanel,FCTL_SETSELECTION,i,(void*)(RList.PPI[i].Flags&PPIF_SELECTED));
+					for (int i=0; i<LList.ItemsNumber; i++)
+						Info.PanelControl(LPanel.hPanel,FCTL_SETSELECTION,i,(void*)(LList.PPI[i].Flags&PPIF_SELECTED));
+					for (int i=0; i<RList.ItemsNumber; i++)
+						Info.PanelControl(RPanel.hPanel,FCTL_SETSELECTION,i,(void*)(RList.PPI[i].Flags&PPIF_SELECTED));
 
-				Info.PanelControl(LPanel.hPanel,FCTL_ENDSELECTION,0,0);
-				Info.PanelControl(LPanel.hPanel,FCTL_REDRAWPANEL,0,0);
-				Info.PanelControl(RPanel.hPanel,FCTL_ENDSELECTION,0,0);
-				Info.PanelControl(RPanel.hPanel,FCTL_REDRAWPANEL,0,0);
+					Info.PanelControl(LPanel.hPanel,FCTL_ENDSELECTION,0,0);
+					Info.PanelControl(LPanel.hPanel,FCTL_REDRAWPANEL,0,0);
+					Info.PanelControl(RPanel.hPanel,FCTL_ENDSELECTION,0,0);
+					Info.PanelControl(RPanel.hPanel,FCTL_REDRAWPANEL,0,0);
+				}
+
+				if (Opt.Sound && (GetTickCount()-dwTicks > 30000)) MessageBeep(MB_ICONASTERISK);
+				Info.AdvControl(&MainGuid,ACTL_PROGRESSNOTIFY,0,0);
+				if (CmpInfo.Errors && Opt.ShowMsg) ErrorMsg(MOpenErrorTitle,MOpenErrorBody);
+				if (bDifferenceNotFound && Opt.ShowMsg)
+				{
+					const wchar_t *MsgItems[] = { GetMsg(MNoDiffTitle), GetMsg(MNoDiffBody), GetMsg(MOK) };
+					Info.Message(&MainGuid,&NoDiffMsgGuid,0,0,MsgItems,sizeof(MsgItems) / sizeof(MsgItems[0]),1);
+				}
+				else if (!bDifferenceNotFound && Opt.Dialog)
+					AdvCmp.ShowCmpDialog(&LList,&RList);
 			}
-
-			if (Opt.Sound && (GetTickCount()-dwTicks > 30000)) MessageBeep(MB_ICONASTERISK);
-			Info.AdvControl(&MainGuid,ACTL_PROGRESSNOTIFY,0,0);
-			if (CmpInfo.Errors && Opt.ShowMsg) ErrorMsg(MOpenErrorTitle,MOpenErrorBody);
-			if (bDifferenceNotFound && Opt.ShowMsg)
-			{
-				const wchar_t *MsgItems[] = { GetMsg(MNoDiffTitle), GetMsg(MNoDiffBody), GetMsg(MOK) };
-				Info.Message(&MainGuid,&NoDiffMsgGuid,0,0,MsgItems,sizeof(MsgItems) / sizeof(MsgItems[0]),1);
-			}
-			else if (!bDifferenceNotFound && Opt.Dialog)
-				AdvCmp.ShowCmpDialog(&LList,&RList);
 		}
-	}
-	else if (ret==43) // DlgUNDERCURSOR
-	{
-		class AdvCmpProcCur AdvCmpCur;
-		AdvCmpCur.CompareCurFile(&LList,&RList);
+		else
+		{
+			if (hConInp!=INVALID_HANDLE_VALUE) CloseHandle(hConInp);
+			AdvCmp.CompareCurFile(&LList,&RList);
+		}
 	}
 
 	FreeDirList(&LList);

@@ -78,7 +78,7 @@ rem  ==================== Compile %PlugName%.dll file...========================
 
 @cd %MyDir%
 @rc /l 0x4E4 %PlugName%.rc
-@cl /Zp8 /O1i /GF /Gr /GS- /GR- /EHs-c- /LD %PlugName%.cpp string.cpp AdvCmpDlgOpt.cpp AdvCmpProc.cpp AdvCmpProcCur.cpp /D "UNICODE" /D "_UNICODE" /link /subsystem:console /machine:AMD64 /def:%PlugName%.def kernel32.lib advapi32.lib user32.lib shell32.lib gdi32.lib %PlugName%.res /map:"..\%PlugName%.map" /out:"..\%PlugName%.dll" /merge:.rdata=.text
+@cl /Zp8 /O1i /GF /Gr /GS- /GR- /EHs-c- /LD %PlugName%.cpp string.cpp AdvCmpDlgOpt.cpp AdvCmpProc.cpp /D "UNICODE" /D "_UNICODE" /link /subsystem:console /machine:AMD64 /def:%PlugName%.def kernel32.lib advapi32.lib user32.lib shell32.lib gdi32.lib %PlugName%.res /map:"..\%PlugName%.map" /out:"..\%PlugName%.dll" /merge:.rdata=.text
 
 @if exist *.exp del *.exp>nul
 @if exist *.obj del *.obj>nul
