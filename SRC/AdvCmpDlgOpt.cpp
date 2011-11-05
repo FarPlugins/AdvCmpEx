@@ -671,6 +671,21 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 							*StoreOpt[i].Option=Info.SendDlgMessage(hDlg,DM_GETCHECK,i,0);
 					}
 				}
+				FarSettingsCreate settings={sizeof(FarSettingsCreate),MainGuid,INVALID_HANDLE_VALUE};
+				if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings))
+				{
+					int Root=0; // корень ключа
+					for (int i=DlgCMPCASE; i<DlgSEP1; i++)
+					{
+						if (StoreOpt[i].RegName && Info.SendDlgMessage(hDlg,DM_ENABLE,i,(void*)-1))
+						{
+							FarSettingsItem item={Root,StoreOpt[i].RegName,FST_QWORD};
+							item.Number=*StoreOpt[i].Option;
+							Info.SettingsControl(settings.Handle,SCTL_SET,0,&item);
+						}
+					}
+					Info.SettingsControl(settings.Handle,SCTL_FREE,0,0);
+				}
 				return true;
 			}
 			else if (Param1 == DlgOK)
