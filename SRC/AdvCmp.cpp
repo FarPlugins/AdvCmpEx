@@ -32,7 +32,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AdvCmp.hpp"
 #include "AdvCmpDlgOpt.hpp"
 #include "AdvCmpProc.hpp"
-// #include "AdvCmpProcCur.hpp"
 
 /****************************************************************************
  * Копии стандартных структур FAR

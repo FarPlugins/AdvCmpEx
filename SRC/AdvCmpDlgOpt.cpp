@@ -659,6 +659,18 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 			}
 			else if (Param1 == DlgUNDERCURSOR)
 			{
+				for (int i=DlgCMPCASE; i<DlgSEP1; i++)
+				{
+					if (StoreOpt[i].RegName)
+					{
+						if (i==DlgEPARTLYKB)
+							*StoreOpt[i].Option=FSF.atoi((const wchar_t *)Info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0));
+						else if (i==DlgIGNORETEMPL)
+							*StoreOpt[i].Option=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,i,0);
+						else
+							*StoreOpt[i].Option=Info.SendDlgMessage(hDlg,DM_GETCHECK,i,0);
+					}
+				}
 				return true;
 			}
 			else if (Param1 == DlgOK)

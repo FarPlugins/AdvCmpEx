@@ -4184,19 +4184,36 @@ bool AdvCmpProc::CompareCurFile(const struct DirList *pLList,const struct DirLis
 	ExpandEnvironmentStringsW(L"%ProgramFiles%\\WinMerge\\WinMergeU.exe",DiffProgram,(sizeof(DiffProgram)/sizeof(DiffProgram[0])));
 	bool bDiffProg=((hFind=FindFirstFileW(DiffProgram,&wfdFindData)) != INVALID_HANDLE_VALUE);
 
-	struct FarMenuItem MenuItems[3];
+	struct FarMenuItem MenuItems[4];
 	memset(MenuItems,0,sizeof(MenuItems));
-	MenuItems[0].Text=L"Texts (VisualCompare)";
+	MenuItems[0].Text=L"Default";
 	MenuItems[1].Text=L"Texts (WinMerge)";
 	MenuItems[2].Text=L"Pictures";
-	MenuItems[0].Flags|=MIF_GRAYED;
+	MenuItems[3].Text=L"Texts (VisualCompare)";
+	MenuItems[3].Flags|=MIF_GRAYED;
 	if (!bDiffProg) MenuItems[1].Flags|=MIF_GRAYED;
 	if (!bImage) MenuItems[2].Flags|=MIF_GRAYED;
-	MenuItems[1].Flags|=MIF_SELECTED;
+	if (bImage) MenuItems[2].Flags|=MIF_SELECTED;
+	else if (bDiffProg) MenuItems[1].Flags|=MIF_SELECTED;
 	int MenuCode=Info.Menu(&MainGuid,&CmpMethodMenuGuid,-1,-1,0,FMENU_AUTOHIGHLIGHT|FMENU_WRAPMODE,L"Method",NULL,L"Contents",NULL,NULL,MenuItems,sizeof(MenuItems)/sizeof(MenuItems[0]));
 
-	if (MenuCode==0 && pCompareFiles)
-		pCompareFiles(strLFullFileName.get(),strRFullFileName.get(),0);
+	if (MenuCode==0)
+	{
+		bool bDifferenceNotFound;
+		Opt.TotalProcess=0;
+		if (Opt.CmpCase || Opt.CmpSize || Opt.CmpTime || Opt.CmpContents)
+			bDifferenceNotFound=CompareFiles(pLList->Dir,&pLList->PPI[LPanel.PInfo.CurrentItem],pRList->Dir,&pRList->PPI[RPanel.PInfo.CurrentItem],0);
+		else
+			bDifferenceNotFound=!FSF.LStricmp(pLList->PPI[LPanel.PInfo.CurrentItem].FileName,pRList->PPI[RPanel.PInfo.CurrentItem].FileName);
+		const wchar_t *MsgItems[]=
+		{
+			GetMsg(bDifferenceNotFound?MNoDiffTitle:MFirstDiffTitle),
+			GetPosToName(strLFullFileName.get()),
+			GetPosToName(strRFullFileName.get()),
+			GetMsg(MOK)
+		};
+		Info.Message(&MainGuid,&CompareCurFileMsgGuid,bDifferenceNotFound?0:FMSG_WARNING,0,MsgItems,sizeof(MsgItems)/sizeof(MsgItems[0]),1);
+	}
 	else if (MenuCode==1 && bDiffProg)
 	{
 		FindClose(hFind);
@@ -4205,11 +4222,13 @@ bool AdvCmpProc::CompareCurFile(const struct DirList *pLList,const struct DirLis
 		memset(&si, 0, sizeof(si));
 		si.cb = sizeof(si);
 		wchar_t Command[32768];
-		FSF.sprintf(Command, L"\"%s\" -e \"%s\" \"%s\"", DiffProgram,strLFullFileName.get()+4,strRFullFileName.get()+4);
+		FSF.sprintf(Command, L"\"%s\" -e \"%s\" \"%s\"", DiffProgram,GetPosToName(strLFullFileName.get()),GetPosToName(strRFullFileName.get()));
 		CreateProcess(0,Command,0,0,false,0,0,0,&si,&pi);
 	}
 	else if (MenuCode==2 && bImage)
 		ShowCmpCurDialog(&pLList->PPI[LPanel.PInfo.CurrentItem],&pRList->PPI[RPanel.PInfo.CurrentItem]);
+	else if (MenuCode==3 && pCompareFiles)
+		pCompareFiles(strLFullFileName.get(),strRFullFileName.get(),0);
 
 	FreeImage(&CmpPic.LPicData);
 	FreeImage(&CmpPic.RPicData);
