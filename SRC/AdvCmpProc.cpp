@@ -4183,6 +4183,7 @@ bool AdvCmpProc::CompareCurFile(const struct DirList *pLList,const struct DirLis
 	wchar_t DiffProgram[MAX_PATH];
 	ExpandEnvironmentStringsW(L"%ProgramFiles%\\WinMerge\\WinMergeU.exe",DiffProgram,(sizeof(DiffProgram)/sizeof(DiffProgram[0])));
 	bool bDiffProg=((hFind=FindFirstFileW(DiffProgram,&wfdFindData)) != INVALID_HANDLE_VALUE);
+	if (bDiffProg) FindClose(hFind);
 
 	struct FarMenuItem MenuItems[4];
 	memset(MenuItems,0,sizeof(MenuItems));
@@ -4216,7 +4217,6 @@ bool AdvCmpProc::CompareCurFile(const struct DirList *pLList,const struct DirLis
 	}
 	else if (MenuCode==1 && bDiffProg)
 	{
-		FindClose(hFind);
 		STARTUPINFO si;
 		PROCESS_INFORMATION pi;
 		memset(&si, 0, sizeof(si));
