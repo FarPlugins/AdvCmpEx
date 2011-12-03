@@ -2377,6 +2377,17 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 						return false;
 					}
 				}
+				// закроем диалог по клику в правом верхнем угу
+				else if (Param1==0 && record->Event.MouseEvent.dwButtonState==FROM_LEFT_1ST_BUTTON_PRESSED)
+				{
+					SMALL_RECT dlgRect;
+					Info.SendDlgMessage(hDlg, DM_GETDLGRECT, 0, &dlgRect);
+					if (record->Event.MouseEvent.dwMousePosition.X==dlgRect.Right && record->Event.MouseEvent.dwMousePosition.Y==dlgRect.Top)
+					{
+						Info.SendDlgMessage(hDlg,DM_CLOSE,0,0);
+						return false;
+					}
+				}
 
 				return true;
 		}
