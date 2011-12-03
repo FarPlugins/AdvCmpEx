@@ -4198,10 +4198,10 @@ bool AdvCmpProc::CompareCurFile(const struct DirList *pLList,const struct DirLis
 
 	struct FarMenuItem MenuItems[4];
 	memset(MenuItems,0,sizeof(MenuItems));
-	MenuItems[0].Text=L"Default";
-	MenuItems[1].Text=L"Texts (WinMerge)";
-	MenuItems[2].Text=L"Pictures";
-	MenuItems[3].Text=L"Texts (VisualCompare)";
+	MenuItems[0].Text=GetMsg(MDefault);
+	MenuItems[1].Text=GetMsg(MWinMerge);
+	MenuItems[2].Text=GetMsg(MPictures);
+	MenuItems[3].Text=GetMsg(MVisCmp);
 	MenuItems[3].Flags|=MIF_GRAYED;
 	if (!bDiffProg) MenuItems[1].Flags|=MIF_GRAYED;
 	if (!bImage) MenuItems[2].Flags|=MIF_GRAYED;

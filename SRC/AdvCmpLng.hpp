@@ -141,5 +141,10 @@ enum {
 	MDelFile,
 	MAskDel,
 	MDelete,
+
+	MDefault,
+	MWinMerge,
+	MVisCmp,
+	MPictures,
 };
 
