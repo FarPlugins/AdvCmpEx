@@ -389,22 +389,27 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		LList.PPI=NULL;
 	}
 	{
-		int size=Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIR,0,0);
-		if (!(LPanel.PInfo.Flags&PFLAGS_PLUGIN))
+		int size=Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIRECTORY,0,0);
+		if (size)
 		{
-			wchar_t *buf=(wchar_t*)malloc(size*sizeof(wchar_t));
-			if (buf) Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIR,size,buf);
-			wcscpy(LPanel.Dir,buf);
-			size=FSF.ConvertPath(CPM_NATIVE,buf,0,0);
-			LList.Dir=(wchar_t*)malloc(size*sizeof(wchar_t));
-			if (LList.Dir) FSF.ConvertPath(CPM_NATIVE,buf,LList.Dir,size);
-			free(buf);
-		}
-		else
-		{
-			LList.Dir=(wchar_t*)malloc(size*sizeof(wchar_t));
-			if (LList.Dir) Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIR,size,LList.Dir);
-			wcscpy(LPanel.Dir,LList.Dir);
+			FarPanelDirectory *buf=(FarPanelDirectory*)malloc(size);
+			if (buf)
+			{
+				Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIRECTORY,size,buf);
+				wcscpy(LPanel.Dir,buf->Name);
+				if (!(LPanel.PInfo.Flags&PFLAGS_PLUGIN))
+				{
+					size=FSF.ConvertPath(CPM_NATIVE,buf->Name,0,0);
+					LList.Dir=(wchar_t*)malloc(size*sizeof(wchar_t));
+					if (LList.Dir) FSF.ConvertPath(CPM_NATIVE,buf->Name,LList.Dir,size);
+				}
+				else
+				{
+					LList.Dir=(wchar_t*)malloc((wcslen(buf->Name)+1)*sizeof(wchar_t));
+					if (LList.Dir) wcscpy(LList.Dir,buf->Name);
+				}
+				free(buf);
+			}
 		}
 	}
 
@@ -448,22 +453,27 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		RList.PPI=NULL;
 	}
 	{
-		int size=Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIR,0,0);
-		if (!(RPanel.PInfo.Flags&PFLAGS_PLUGIN))
+		int size=Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIRECTORY,0,0);
+		if (size)
 		{
-			wchar_t *buf=(wchar_t*)malloc(size*sizeof(wchar_t));
-			if (buf) Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIR,size,buf);
-			wcscpy(RPanel.Dir,buf);
-			size=FSF.ConvertPath(CPM_NATIVE,buf,0,0);
-			RList.Dir=(wchar_t*)malloc(size*sizeof(wchar_t));
-			if (RList.Dir) FSF.ConvertPath(CPM_NATIVE,buf,RList.Dir,size);
-			free(buf);
-		}
-		else
-		{
-			RList.Dir=(wchar_t*)malloc(size*sizeof(wchar_t));
-			if (RList.Dir) Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIR,size,RList.Dir);
-			wcscpy(RPanel.Dir,RList.Dir);
+			FarPanelDirectory *buf=(FarPanelDirectory*)malloc(size);
+			if (buf)
+			{
+				Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIRECTORY,size,buf);
+				wcscpy(RPanel.Dir,buf->Name);
+				if (!(RPanel.PInfo.Flags&PFLAGS_PLUGIN))
+				{
+					size=FSF.ConvertPath(CPM_NATIVE,buf->Name,0,0);
+					RList.Dir=(wchar_t*)malloc(size*sizeof(wchar_t));
+					if (RList.Dir) FSF.ConvertPath(CPM_NATIVE,buf->Name,RList.Dir,size);
+				}
+				else
+				{
+					RList.Dir=(wchar_t*)malloc((wcslen(buf->Name)+1)*sizeof(wchar_t));
+					if (RList.Dir) wcscpy(RList.Dir,buf->Name);
+				}
+				free(buf);
+			}
 		}
 	}
 

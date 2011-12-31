@@ -2782,7 +2782,8 @@ DebugMsg(strLPanelDir.get(),L"strLPanelDir.get()");
 */
 							if (FSF.LStricmp(LPanel.Dir,GetPosToName(cur->LDir)))
 							{
-								bSetLDir=Info.PanelControl(LPanel.hPanel,FCTL_SETPANELDIR,0,/*(LPanel.PInfo.Flags&PFLAGS_PLUGIN)?strLPanelDir.get():*/GetPosToName(cur->LDir));
+								FarPanelDirectory dirInfo={sizeof(FarPanelDirectory),GetPosToName(cur->LDir),NULL,{0},NULL};
+								bSetLDir=Info.PanelControl(LPanel.hPanel,FCTL_SETPANELDIRECTORY,0,&dirInfo);
 								Info.PanelControl(LPanel.hPanel,FCTL_BEGINSELECTION,0,0);
 							}
 							{
@@ -2825,7 +2826,8 @@ DebugMsg(strLPanelDir.get(),L"strLPanelDir.get()");
 
 							if (FSF.LStricmp(RPanel.Dir,GetPosToName(cur->RDir)))
 							{
-								bSetRDir=Info.PanelControl(RPanel.hPanel,FCTL_SETPANELDIR,0,GetPosToName(cur->RDir));
+								FarPanelDirectory dirInfo={sizeof(FarPanelDirectory),GetPosToName(cur->RDir),NULL,{0},NULL};
+								bSetRDir=Info.PanelControl(RPanel.hPanel,FCTL_SETPANELDIRECTORY,0,&dirInfo);
 								Info.PanelControl(RPanel.hPanel,FCTL_BEGINSELECTION,0,0);
 							}
 							{
