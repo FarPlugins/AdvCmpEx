@@ -709,7 +709,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 				int len=Info.SendDlgMessage(hDlg,DM_GETTEXTPTR,DlgECMPSKIP,0);
 				if (len)
 				{
-					Opt.Substr=(wchar_t*)realloc(Opt.Substr,(len+1)*sizeof(wchar_t));
+					Opt.Substr=(wchar_t*)malloc((len+1)*sizeof(wchar_t));
 					if (Opt.Substr)
 						Info.SendDlgMessage(hDlg,DM_GETTEXTPTR,DlgECMPSKIP,Opt.Substr);
 					else
@@ -718,7 +718,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 				else
 				{
 					Opt.SkipSubstr=0;
-					free(Opt.Substr);
+					if (Opt.Substr) free(Opt.Substr);
 				}
 
 				if (Opt.Filter && Opt.hCustomFilter == INVALID_HANDLE_VALUE)
@@ -848,6 +848,14 @@ int AdvCmpDlgOpt::ShowOptDialog()
 				else
 					DialogItems[i].Selected=(int)item.Number;
 			}
+		}
+		// узнаем пользовательский путь до WinMerge
+		Opt.WinMergePath=NULL;
+		FarSettingsItem item={Root,L"WinMergePath",FST_STRING};
+		if (Info.SettingsControl(settings.Handle,SCTL_GET,0,&item))
+		{
+			Opt.WinMergePath=(wchar_t*)malloc((wcslen(item.String)+1)*sizeof(wchar_t));
+			if (Opt.WinMergePath) wcscpy(Opt.WinMergePath,item.String);
 		}
 		Info.SettingsControl(settings.Handle,SCTL_FREE,0,0);
 	}

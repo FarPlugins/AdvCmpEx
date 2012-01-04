@@ -550,6 +550,10 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		}
 	}
 
+	if (Opt.Substr) free(Opt.Substr); // определен из диалога опций
+	if (Opt.WinMergePath) free(Opt.WinMergePath); // определен из диалога опций
+	Info.FileFilterControl(Opt.hCustomFilter,FFCTL_FREEFILEFILTER,0,0);  // определен из диалога опций
+
 	FreeDirList(&LList);
 	FreeDirList(&RList);
 

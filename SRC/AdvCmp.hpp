@@ -164,7 +164,7 @@ extern struct Options {
 			ProcessHidden,
 			BufSize;
 	char *Buf[2];
-	wchar_t *Substr;
+	wchar_t *Substr, *WinMergePath;
 	HANDLE hCustomFilter;
 } Opt;
 

@@ -19,6 +19,21 @@ Build 034 (  .12.2011)
 [+] Еще ускорение сравнения: проверяем некоторую идентичность BY_HANDLE_FILE_INFORMATION.
 [+] Работаем с символическими ссылками (только в режиме сравнения).
 [*] Немного разных переделок.
+[+] Можно задать другой путь до WinMerge, через импорт файла-настроек,
+    как-то так:
+<?xml version="1.0" encoding="UTF-8" ?>
+<farconfig>
+    <pluginsconfig>
+        <plugin guid="ED0C4BD8-D2F0-4B6E-A19F-B0B0137C9B0C">
+            <hierarchicalconfig>
+                <key name="ED0C4BD8-D2F0-4B6E-A19F-B0B0137C9B0C" description="Advanced compare 2">
+                    <value name="WinMergePath" type="text" value="%FARHOME%\Util\WinMerge\WinMergeU.exe" />
+                </key>
+            </hierarchicalconfig>
+        </plugin>
+    </pluginsconfig>
+</farconfig>
+
 
 Build 033 (07.08.2011)
 ----------------------

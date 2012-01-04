@@ -307,9 +307,7 @@ AdvCmpProc::~AdvCmpProc()
 {
 	if (Opt.Buf[0]) free(Opt.Buf[0]);
 	if (Opt.Buf[1]) free(Opt.Buf[1]);
-	if (Opt.Substr) free(Opt.Substr); // определен из диалога опций
 
-	Info.FileFilterControl(Opt.hCustomFilter,FFCTL_FREEFILEFILTER,0,0);  // определен из диалога опций
 	Info.FileFilterControl(LPanel.hFilter,FFCTL_FREEFILEFILTER,0,0);
 	Info.FileFilterControl(RPanel.hFilter,FFCTL_FREEFILEFILTER,0,0);
 
@@ -2496,7 +2494,7 @@ GOTOCMPFILE:
 								WIN32_FIND_DATA wfdFindData;
 								HANDLE hFind;
 								wchar_t DiffProgram[MAX_PATH];
-								ExpandEnvironmentStringsW(L"%ProgramFiles%\\WinMerge\\WinMergeU.exe",DiffProgram,(sizeof(DiffProgram)/sizeof(DiffProgram[0])));
+								ExpandEnvironmentStringsW((Opt.WinMergePath!=NULL?Opt.WinMergePath:L"%ProgramFiles%\\WinMerge\\WinMergeU.exe"),DiffProgram,(sizeof(DiffProgram)/sizeof(DiffProgram[0])));
 								if ((hFind=FindFirstFileW(DiffProgram,&wfdFindData)) != INVALID_HANDLE_VALUE)
 								{
 									bFindProg=true;
@@ -4194,7 +4192,7 @@ bool AdvCmpProc::CompareCurFile(const struct DirList *pLList,const struct DirLis
 	WIN32_FIND_DATA wfdFindData;
 	HANDLE hFind;
 	wchar_t DiffProgram[MAX_PATH];
-	ExpandEnvironmentStringsW(L"%ProgramFiles%\\WinMerge\\WinMergeU.exe",DiffProgram,(sizeof(DiffProgram)/sizeof(DiffProgram[0])));
+	ExpandEnvironmentStringsW((Opt.WinMergePath!=NULL?Opt.WinMergePath:L"%ProgramFiles%\\WinMerge\\WinMergeU.exe"),DiffProgram,(sizeof(DiffProgram)/sizeof(DiffProgram[0])));
 	bool bDiffProg=((hFind=FindFirstFileW(DiffProgram,&wfdFindData)) != INVALID_HANDLE_VALUE);
 	if (bDiffProg) FindClose(hFind);
 
