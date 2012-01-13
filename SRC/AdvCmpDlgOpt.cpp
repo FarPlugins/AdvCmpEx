@@ -857,6 +857,11 @@ int AdvCmpDlgOpt::ShowOptDialog()
 			Opt.WinMergePath=(wchar_t*)malloc((wcslen(item.String)+1)*sizeof(wchar_t));
 			if (Opt.WinMergePath) wcscpy(Opt.WinMergePath,item.String);
 		}
+		else
+		{
+			Opt.WinMergePath=(wchar_t*)malloc(40*sizeof(wchar_t));
+			if (Opt.WinMergePath) wcscpy(Opt.WinMergePath,L"%ProgramFiles%\\WinMerge\\WinMergeU.exe");
+		}
 		Info.SettingsControl(settings.Handle,SCTL_FREE,0,0);
 	}
 

@@ -2490,14 +2490,18 @@ GOTOCMPFILE:
 							}
 							else
 							{
-								bool bFindProg=false;
 								WIN32_FIND_DATA wfdFindData;
 								HANDLE hFind;
 								wchar_t DiffProgram[MAX_PATH];
-								ExpandEnvironmentStringsW((Opt.WinMergePath!=NULL?Opt.WinMergePath:L"%ProgramFiles%\\WinMerge\\WinMergeU.exe"),DiffProgram,(sizeof(DiffProgram)/sizeof(DiffProgram[0])));
-								if ((hFind=FindFirstFileW(DiffProgram,&wfdFindData)) != INVALID_HANDLE_VALUE)
+								ExpandEnvironmentStringsW(Opt.WinMergePath,DiffProgram,(sizeof(DiffProgram)/sizeof(DiffProgram[0])));
+								bool bFindDiffProg=((hFind=FindFirstFileW(DiffProgram,&wfdFindData)) != INVALID_HANDLE_VALUE);
+								if (!bFindDiffProg)
 								{
-									bFindProg=true;
+									ExpandEnvironmentStringsW(L"%ProgramFiles%\\WinMerge\\WinMergeU.exe",DiffProgram,(sizeof(DiffProgram)/sizeof(DiffProgram[0])));
+									bFindDiffProg=((hFind=FindFirstFileW(DiffProgram,&wfdFindData)) != INVALID_HANDLE_VALUE);
+								}
+								if (bFindDiffProg)
+								{
 									FindClose(hFind);
 									STARTUPINFO si;
 									PROCESS_INFORMATION pi;
@@ -2507,7 +2511,7 @@ GOTOCMPFILE:
 									FSF.sprintf(Command, L"\"%s\" -e \"%s\" \"%s\"", DiffProgram,GetPosToName(strLFullFileName.get()),GetPosToName(strRFullFileName.get()));
 									CreateProcess(0,Command,0,0,false,0,0,0,&si,&pi);
 								}
-								if (!bFindProg)
+								else
 									MessageBeep(MB_ICONASTERISK);
 							}
 						}
@@ -4192,9 +4196,14 @@ bool AdvCmpProc::CompareCurFile(const struct DirList *pLList,const struct DirLis
 	WIN32_FIND_DATA wfdFindData;
 	HANDLE hFind;
 	wchar_t DiffProgram[MAX_PATH];
-	ExpandEnvironmentStringsW((Opt.WinMergePath!=NULL?Opt.WinMergePath:L"%ProgramFiles%\\WinMerge\\WinMergeU.exe"),DiffProgram,(sizeof(DiffProgram)/sizeof(DiffProgram[0])));
-	bool bDiffProg=((hFind=FindFirstFileW(DiffProgram,&wfdFindData)) != INVALID_HANDLE_VALUE);
-	if (bDiffProg) FindClose(hFind);
+	ExpandEnvironmentStringsW(Opt.WinMergePath,DiffProgram,(sizeof(DiffProgram)/sizeof(DiffProgram[0])));
+	bool bFindDiffProg=((hFind=FindFirstFileW(DiffProgram,&wfdFindData)) != INVALID_HANDLE_VALUE);
+	if (!bFindDiffProg)
+	{
+		ExpandEnvironmentStringsW(L"%ProgramFiles%\\WinMerge\\WinMergeU.exe",DiffProgram,(sizeof(DiffProgram)/sizeof(DiffProgram[0])));
+		bFindDiffProg=((hFind=FindFirstFileW(DiffProgram,&wfdFindData)) != INVALID_HANDLE_VALUE);
+	}
+	if (bFindDiffProg) FindClose(hFind);
 
 	struct FarMenuItem MenuItems[4];
 	memset(MenuItems,0,sizeof(MenuItems));
@@ -4203,10 +4212,10 @@ bool AdvCmpProc::CompareCurFile(const struct DirList *pLList,const struct DirLis
 	MenuItems[2].Text=GetMsg(MPictures);
 	MenuItems[3].Text=GetMsg(MVisCmp);
 	MenuItems[3].Flags|=MIF_GRAYED;
-	if (!bDiffProg) MenuItems[1].Flags|=MIF_GRAYED;
+	if (!bFindDiffProg) MenuItems[1].Flags|=MIF_GRAYED;
 	if (!bImage) MenuItems[2].Flags|=MIF_GRAYED;
 	if (bImage) MenuItems[2].Flags|=MIF_SELECTED;
-	else if (bDiffProg) MenuItems[1].Flags|=MIF_SELECTED;
+	else if (bFindDiffProg) MenuItems[1].Flags|=MIF_SELECTED;
 	int MenuCode=Info.Menu(&MainGuid,&CmpMethodMenuGuid,-1,-1,0,FMENU_AUTOHIGHLIGHT|FMENU_WRAPMODE,L"Method",NULL,L"Contents",NULL,NULL,MenuItems,sizeof(MenuItems)/sizeof(MenuItems[0]));
 
 	if (MenuCode==0)
@@ -4226,7 +4235,7 @@ bool AdvCmpProc::CompareCurFile(const struct DirList *pLList,const struct DirLis
 		};
 		Info.Message(&MainGuid,&CompareCurFileMsgGuid,bDifferenceNotFound?0:FMSG_WARNING,0,MsgItems,sizeof(MsgItems)/sizeof(MsgItems[0]),1);
 	}
-	else if (MenuCode==1 && bDiffProg)
+	else if (MenuCode==1 && bFindDiffProg)
 	{
 		STARTUPINFO si;
 		PROCESS_INFORMATION pi;
