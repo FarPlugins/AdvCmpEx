@@ -13,7 +13,7 @@ rem  ======================== Set name and version ... =========================
 @set MyDir=%CD%
 @set companyname=Eugene Roshal ^& FAR Group
 @set filedescription=Advanced compare 2 for Far Manager
-@set legalcopyright=Copyright c 2006-2011 Alexey Samlyukov
+@set legalcopyright=Copyright c 2006-2012 Alexey Samlyukov
 
 rem  ==================== Make %PlugName%.def file... ==========================
 

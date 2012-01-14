@@ -6,7 +6,7 @@
 
   Распространяется под той же лицензией, что и сам Far Manager, т.е.:
 
-Copyright (c) 2006-2011 Alexey Samlyukov
+Copyright (c) 2006-2012 Alexey Samlyukov
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

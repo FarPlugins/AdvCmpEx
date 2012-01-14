@@ -3,7 +3,7 @@
  *
  * Plugin module for Far Manager 3.0
  *
- * Copyright (c) 2006-2011 Alexey Samlyukov
+ * Copyright (c) 2006-2012 Alexey Samlyukov
  ****************************************************************************/
 /*
 Redistribution and use in source and binary forms, with or without
@@ -395,6 +395,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 			FarPanelDirectory *buf=(FarPanelDirectory*)malloc(size);
 			if (buf)
 			{
+				buf->StructSize=sizeof(FarPanelDirectory);
 				Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIRECTORY,size,buf);
 				wcscpy(LPanel.Dir,buf->Name);
 				if (!(LPanel.PInfo.Flags&PFLAGS_PLUGIN))
@@ -459,6 +460,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 			FarPanelDirectory *buf=(FarPanelDirectory*)malloc(size);
 			if (buf)
 			{
+				buf->StructSize=sizeof(FarPanelDirectory);
 				Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIRECTORY,size,buf);
 				wcscpy(RPanel.Dir,buf->Name);
 				if (!(RPanel.PInfo.Flags&PFLAGS_PLUGIN))
