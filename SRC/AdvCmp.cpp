@@ -48,8 +48,11 @@ struct FarPanelInfo LPanel,RPanel;
 struct TotalCmpInfo CmpInfo;
 struct FarWindowsInfo WinInfo;
 bool bBrokenByEsc;
+bool bStartMsg;
 bool bGflLoaded=false;
+bool bBASSLoaded=false;   // bass.dll загружена?
 HMODULE GflHandle=NULL;
+HMODULE BASSHandle=NULL;
 HANDLE hConInp=INVALID_HANDLE_VALUE;
 
 
@@ -111,6 +114,7 @@ void FreeDirList(struct DirList *pList)
 PCOMPAREFILES pCompareFiles=NULL;
 
 ///  libgfl340.dll
+extern PGFLGETVERSION pGflGetVersion=NULL;
 PGFLLIBRARYINIT pGflLibraryInit=NULL;
 PGFLENABLELZW pGflEnableLZW=NULL;
 PGFLLIBRARYEXIT pGflLibraryExit=NULL;
@@ -123,6 +127,20 @@ PGFLROTATE pGflRotate=NULL;
 PGFLRESIZE pGflResize=NULL;
 PGFLFREEBITMAP pGflFreeBitmap=NULL;
 PGFLFREEFILEINFORMATION pGflFreeFileInformation=NULL;
+PGFLGETCOLORAT pGflGetColorAt=NULL;
+
+///  bass.dll
+PBASS_GETVERSION pBASS_GetVersion=NULL;
+PBASS_SETCONFIG pBASS_SetConfig=NULL;
+PBASS_INIT pBASS_Init=NULL;
+PBASS_FREE pBASS_Free=NULL;
+PBASS_STREAMCREATEFILE pBASS_StreamCreateFile=NULL;
+PBASS_STREAMFREE pBASS_StreamFree=NULL;
+PBASS_CHANNELGETLENGTH pBASS_ChannelGetLength=NULL;
+PBASS_CHANNELBYTES2SECONDS pBASS_ChannelBytes2Seconds=NULL;
+PBASS_CHANNELGETINFO pBASS_ChannelGetInfo=NULL;
+PBASS_CHANNELGETTAGS pBASS_ChannelGetTags=NULL;
+PBASS_STREAMGETFILEPOSITION pBASS_StreamGetFilePosition=NULL;
 
 
 bool FindFile(wchar_t *Dir, wchar_t *Pattern, string &strFileName)
@@ -203,6 +221,8 @@ bool LoadGfl(wchar_t *PlugPath)
 	{
 		if (!(GflHandle=LoadLibrary(strPatchGfl)))
 			return false;
+		if (!pGflGetVersion)
+			pGflGetVersion=(PGFLGETVERSION)GetProcAddress(GflHandle,"gflGetVersion");
 		if (!pGflLibraryInit)
 			pGflLibraryInit=(PGFLLIBRARYINIT)GetProcAddress(GflHandle,"gflLibraryInit");
 		if (!pGflEnableLZW)
@@ -227,19 +247,84 @@ bool LoadGfl(wchar_t *PlugPath)
 			pGflFreeBitmap=(PGFLFREEBITMAP)GetProcAddress(GflHandle,"gflFreeBitmap");
 		if (!pGflFreeFileInformation)
 			pGflFreeFileInformation=(PGFLFREEFILEINFORMATION)GetProcAddress(GflHandle,"gflFreeFileInformation");
+		if (!pGflGetColorAt)
+			pGflGetColorAt=(PGFLGETCOLORAT)GetProcAddress(GflHandle,"gflGetColorAt");
 
-		if (!pGflLibraryInit || !pGflEnableLZW || !pGflLibraryExit || !pGflLoadBitmapW || !pGflGetNumberOfFormat || !pGflGetFormatInformationByIndex ||
-				!pGflGetDefaultLoadParams || !pGflChangeColorDepth || !pGflRotate || !pGflResize || !pGflFreeBitmap || !pGflFreeFileInformation)
+		if (!pGflGetVersion || !pGflLibraryInit || !pGflEnableLZW || !pGflLibraryExit || !pGflLoadBitmapW || !pGflGetNumberOfFormat || !pGflGetFormatInformationByIndex ||
+				!pGflGetDefaultLoadParams || !pGflChangeColorDepth || !pGflRotate || !pGflResize || !pGflFreeBitmap || !pGflFreeFileInformation || !pGflGetColorAt)
+		{
+			FreeLibrary(GflHandle);
 			return false;
-
+		}
 		bGflLoaded=true;
 
-		if (pGflLibraryInit()!=GFL_NO_ERROR)
+		if (lstrcmpA(GFL_VERSION,pGflGetVersion())>0 || pGflLibraryInit()!=GFL_NO_ERROR)
 			UnLoadGfl();
 		if (bGflLoaded)
 			pGflEnableLZW(GFL_TRUE);
 	}
 	return bGflLoaded;
+}
+
+bool UnLoadBASS()
+{
+	if (bBASSLoaded)
+	{
+		pBASS_Free();
+		if (FreeLibrary(BASSHandle))
+			bBASSLoaded=false;
+		else
+			return false;
+	}
+	return true;
+}
+
+bool LoadBASS(wchar_t *PlugPath)
+{
+	if (bBASSLoaded) return true;
+
+	string strPatchBASS;
+	if (FindFile(PlugPath,L"bass.dll",strPatchBASS))
+	{
+		if (!(BASSHandle=LoadLibrary(strPatchBASS)))
+			return false;
+		if (!pBASS_GetVersion)
+			pBASS_GetVersion=(PBASS_GETVERSION)GetProcAddress(BASSHandle,"BASS_GetVersion");
+		if (!pBASS_SetConfig)
+			pBASS_SetConfig=(PBASS_SETCONFIG)GetProcAddress(BASSHandle,"BASS_SetConfig");
+		if (!pBASS_Init)
+			pBASS_Init=(PBASS_INIT)GetProcAddress(BASSHandle,"BASS_Init");
+		if (!pBASS_Free)
+			pBASS_Free=(PBASS_FREE)GetProcAddress(BASSHandle,"BASS_Free");
+		if (!pBASS_StreamCreateFile)
+			pBASS_StreamCreateFile=(PBASS_STREAMCREATEFILE)GetProcAddress(BASSHandle,"BASS_StreamCreateFile");
+		if (!pBASS_StreamFree)
+			pBASS_StreamFree=(PBASS_STREAMFREE)GetProcAddress(BASSHandle,"BASS_StreamFree");
+		if (!pBASS_ChannelGetLength)
+			pBASS_ChannelGetLength=(PBASS_CHANNELGETLENGTH)GetProcAddress(BASSHandle,"BASS_ChannelGetLength");
+		if (!pBASS_ChannelBytes2Seconds)
+			pBASS_ChannelBytes2Seconds=(PBASS_CHANNELBYTES2SECONDS)GetProcAddress(BASSHandle,"BASS_ChannelBytes2Seconds");
+		if (!pBASS_ChannelGetInfo)
+			pBASS_ChannelGetInfo=(PBASS_CHANNELGETINFO)GetProcAddress(BASSHandle,"BASS_ChannelGetInfo");
+		if (!pBASS_ChannelGetTags)
+			pBASS_ChannelGetTags=(PBASS_CHANNELGETTAGS)GetProcAddress(BASSHandle,"BASS_ChannelGetTags");
+		if (!pBASS_StreamGetFilePosition)
+			pBASS_StreamGetFilePosition=(PBASS_STREAMGETFILEPOSITION)GetProcAddress(BASSHandle,"BASS_StreamGetFilePosition");
+
+		if (!pBASS_GetVersion || !pBASS_SetConfig || !pBASS_Init || !pBASS_Free || !pBASS_StreamCreateFile || !pBASS_StreamFree ||
+				!pBASS_ChannelGetLength || !pBASS_ChannelBytes2Seconds || !pBASS_ChannelGetInfo || !pBASS_ChannelGetTags || !pBASS_StreamGetFilePosition)
+		{
+			FreeLibrary(BASSHandle);
+			return false;
+		}
+		bBASSLoaded=true;
+
+		if (HIWORD(pBASS_GetVersion())!=BASSVERSION || !pBASS_Init(0,44100,0,0,NULL))
+			UnLoadBASS();
+		if (bBASSLoaded)
+			pBASS_SetConfig(BASS_CONFIG_UPDATEPERIOD,0);
+	}
+	return bBASSLoaded;
 }
 
 
@@ -251,24 +336,24 @@ bool LoadGfl(wchar_t *PlugPath)
 /****************************************************************************
  * Эти функции плагина FAR вызывает в первую очередь
  ****************************************************************************/
-void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
+void WINAPI GetGlobalInfoW(struct GlobalInfo *pInfo)
 {
-	Info->StructSize=sizeof(GlobalInfo);
-	Info->MinFarVersion=FARMANAGERVERSION;
-	Info->Version=MAKEFARVERSION(3,0,0,34,VS_RC);
-	Info->Guid=MainGuid;
-	Info->Title=L"Advanced compare 2";
-	Info->Description=L"Advanced compare 2 plugin for Far Manager v3.0";
-	Info->Author=L"Alexey Samlyukov";
+	pInfo->StructSize=sizeof(GlobalInfo);
+	pInfo->MinFarVersion=FARMANAGERVERSION;
+	pInfo->Version=MAKEFARVERSION(3,0,0,34,VS_RC);
+	pInfo->Guid=MainGuid;
+	pInfo->Title=L"Advanced compare 2";
+	pInfo->Description=L"Advanced compare 2 plugin for Far Manager v3.0";
+	pInfo->Author=L"Alexey Samlyukov";
 }
 
 // заполним структуру PluginStartupInfo и сделаем ряд полезных действий...
-void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info)
+void WINAPI SetStartupInfoW(const struct PluginStartupInfo *pInfo)
 {
-	::Info = *Info;
-	if (Info->StructSize >= sizeof(PluginStartupInfo))
+	::Info = *pInfo;
+	if (pInfo->StructSize >= sizeof(PluginStartupInfo))
 	{
-		FSF = *Info->FSF;
+		FSF = *pInfo->FSF;
 		::Info.FSF = &FSF;
 
 		// обнулим кэш (туда будем помещать результаты сравнения)
@@ -278,6 +363,7 @@ void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info)
 		ExpandEnvironmentStringsW(L"%FARHOME%\\Plugins",PlugPath,(sizeof(PlugPath)/sizeof(PlugPath[0])));
 //		LoadVisComp(PlugPath);
 		LoadGfl(PlugPath);
+		LoadBASS(PlugPath);
 	}
 }
 
@@ -286,15 +372,15 @@ void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info)
  * Эту функцию плагина FAR вызывает во вторую очередь - заполним PluginInfo, т.е.
  * скажем FARу какие пункты добавить в "Plugin commands" и "Plugins configuration".
  ****************************************************************************/
-void WINAPI GetPluginInfoW(struct PluginInfo *Info)
+void WINAPI GetPluginInfoW(struct PluginInfo *pInfo)
 {
 	static const wchar_t *PluginMenuStrings[1];
-	PluginMenuStrings[0] = GetMsg(MCompareTitle);
+	PluginMenuStrings[0] = GetMsg(MCmpTitle);
 
-	Info->StructSize=sizeof(PluginInfo);
-	Info->PluginMenu.Guids=&MenuGuid;
-	Info->PluginMenu.Strings=PluginMenuStrings;
-	Info->PluginMenu.Count=sizeof(PluginMenuStrings)/sizeof(PluginMenuStrings[0]);
+	pInfo->StructSize=sizeof(PluginInfo);
+	pInfo->PluginMenu.Guids=&MenuGuid;
+	pInfo->PluginMenu.Strings=PluginMenuStrings;
+	pInfo->PluginMenu.Count=sizeof(PluginMenuStrings)/sizeof(PluginMenuStrings[0]);
 }
 
 
@@ -341,7 +427,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 	// Если панели нефайловые...
 	if (LPanel.PInfo.PanelType != PTYPE_FILEPANEL || RPanel.PInfo.PanelType != PTYPE_FILEPANEL)
 	{
-		ErrorMsg(MCompareTitle, MFilePanelsRequired);
+		ErrorMsg(MCmpTitle, MFilePanelsRequired);
 		return hPanel;
 	}
 
@@ -501,7 +587,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 	class AdvCmpDlgOpt AdvCmpOpt;
 	int ret=AdvCmpOpt.ShowOptDialog();
 
-	if (ret==42 || ret==43) // DlgOK || DlgUNDERCURSOR
+	if (ret==54 || ret==55) // DlgOK || DlgUNDERCURSOR
 	{
 		DWORD dwTicks=GetTickCount();
 		// откроем, для проверок на Esc
@@ -509,8 +595,10 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 
 		class AdvCmpProc AdvCmp;
 
-		if (ret==42)
+		if (ret==54)
 		{
+			if (Opt.Mode!=MODE_DUP)
+			{
 			bool bDifferenceNotFound=AdvCmp.CompareDirs(&LList,&RList,true,0);
 
 			if (hConInp!=INVALID_HANDLE_VALUE) CloseHandle(hConInp);
@@ -544,6 +632,11 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 				else if (!bDifferenceNotFound && Opt.Dialog)
 					AdvCmp.ShowCmpDialog(&LList,&RList);
 			}
+			}
+			else
+			{
+				AdvCmp.Duplicate(LPanel.PInfo.Flags&PFLAGS_FOCUS?&LList:&RList);
+			}
 		}
 		else
 		{
@@ -552,9 +645,11 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		}
 	}
 
-	if (Opt.Substr) free(Opt.Substr); // определен из диалога опций
-	if (Opt.WinMergePath) free(Opt.WinMergePath); // определен из диалога опций
-	Info.FileFilterControl(Opt.hCustomFilter,FFCTL_FREEFILEFILTER,0,0);  // определен из диалога опций
+	// определены из диалога опций
+	if (Opt.Substr) free(Opt.Substr);
+	if (Opt.WinMergePath) free(Opt.WinMergePath);
+	if (Opt.DupPath) free(Opt.DupPath);
+	Info.FileFilterControl(Opt.hCustomFilter,FFCTL_FREEFILEFILTER,0,0);
 
 	FreeDirList(&LList);
 	FreeDirList(&RList);
@@ -565,7 +660,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 /****************************************************************************
  * Эту функцию FAR вызывает перед выгрузкой плагина
  ****************************************************************************/
-void WINAPI ExitFARW(const struct ExitInfo *Info)
+void WINAPI ExitFARW(const struct ExitInfo *pInfo)
 {
 	//Освободим память в случае выгрузки плагина
 	if (Cache.RCI)
@@ -574,4 +669,5 @@ void WINAPI ExitFARW(const struct ExitInfo *Info)
 	Cache.ItemsNumber=0;
 
 	UnLoadGfl();
+	UnLoadBASS();
 }

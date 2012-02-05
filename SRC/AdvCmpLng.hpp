@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * Константы для извлечения строк из .lng файла
  ****************************************************************************/
 enum {
-	MCompareTitle = 0,
+	MCmpTitle = 0,
 
 	MOK,
 	MCancel,
@@ -41,38 +41,59 @@ enum {
 	/**** основной диалог ****/
 
 	MMode,
-	MCompare,
-	MSynchronize,
-	MCompareCase,
-	MCompareSize,
-	MCompareTime,
-	MCompareSeconds,
-	MCompareIgnoreSeconds,
-	MCompareLowPrecision,
-	MCompareIgnoreTimeZone,
-	MCompareContents,
-	MCompareOnlyTimeDiff,
-	MCache,
-	MCacheIgnore,
-	MCacheUse,
-	MCacheClearBotton,
-	MComparePartly,
-	MComparePartlyFull,
-	MComparePartlyKb,
-	MCompareIgnore,
 	// ---
-	MCompareIgnoreAllWhitespace,
-	MCompareIgnoreNewLines,
-	MCompareIgnoreWhitespace,
+	MModeCmp,
+	MModeSync,
+	MModeDup,
 	// ---
+	MCmpCase,
+	MCmpSize,
+	MCmpTime,
+	MCmpSeconds,
+	MCmpIgnoreSeconds,
+	MCmpLowPrecision,
+	MCmpIgnoreTimeZone,
+	MCmpContents,
+	MCmpOnlyTimeDiff,
+	MCmpCache,
+	MCmpCacheIgnore,
+	MCmpCacheUse,
+	MCmpCacheClearBotton,
+	MCmpPartly,
+	MCmpPartlyFull,
+	MCmpPartlyKb,
+	MCmpIgnore,
+	// ---
+	MCmpIgnoreAllWhitespace,
+	MCmpIgnoreNewLines,
+	MCmpIgnoreWhitespace,
+	// ---
+	MDupName,
+	MDupSize,
+	MDupContents,
+	MDupPic,
+	//---
+	MDupPicDiffNone,
+	MDupPicDiffSmall,
+	MDupPicDiffNormal,
+	MDupPicDiffBig,
+	MDupPicDiffVeryBig,
+	//---
+	MDupPicSize,
+	MDupPicFmt,
+	MDupMusic,
+	MDupMusicArtist,
+	MDupMusicTitle,
+	MDupMusicDuration,
+
 	MTitleOptions,
-	MProcessSubfolders,
+	MSubfolders,
 	MMaxScanDepth,
 	MScanSymlink,
 	MFilter,
 	MFilterBotton,
-	MProcessTillFirstDiff,
-	MCompareSkipSubstr,
+	MTillFirstDiff,
+	MSkipSubstr,
 	MProcessSelected,
 	MSelectedNew,
 	MSyncOnlyRight,
@@ -80,7 +101,7 @@ enum {
 	MShowMsg,
 	MSound,
 	MDialog,
-	MTotalProcess,
+	MTotalProgress,
 	MUnderCursorBotton,
 
 	/**** процесс ****/
@@ -92,6 +113,8 @@ enum {
 	MComparingDiffN,
 	MComparingN,
 	MWait,
+
+	MDupCurProc,
 
 	/**** сообщения ****/
 
@@ -130,7 +153,7 @@ enum {
 
 	MSyncLPanel,
 	MSyncRPanel,
-	MSyncRDel,
+	MSyncDel,
 	MSyncUseDelFilter,
 	MSyncEdit,
 
@@ -158,10 +181,13 @@ enum {
 	MFailedCopyDstFile,
 
 	MFailedDelFile,
+	MFailedDelFileRecycleBin,
 	MFailedDeleteFolder,
 
 	MDelFolder,
+	MDelFolderRecycleBin,
 	MDelFile,
+	MDelFileRecycleBin,
 	MAskDel,
 	MDelete,
 
@@ -169,5 +195,16 @@ enum {
 	MWinMerge,
 	MVisCmp,
 	MPictures,
+
+	MDupListBottom,
+
+	MDupTitle,
+	MNoDupBody,
+
+	MDupDel,
+	MDupDelRecycleBin,
+	MDupEdit,
+
+	MDupDelItems,
 };
 

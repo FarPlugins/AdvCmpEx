@@ -5,9 +5,10 @@
 "Ok"
 "Cancel"
 
-"Mode:"
-"&1 - compare files"
-"&2 - synchronize folders"
+"Mode work plug-in:"
+"1. Compare files"
+"2. Synchronize folders"
+"3. Search duplicate files"
 "compare case-sensiti&ve names"
 "&size"
 "&time"
@@ -28,6 +29,21 @@
 "all whitespace characters"
 "differences in new line characters"
 "whitespace and tabs"
+"same name"
+"same size"
+"same contents"
+"pictures, degree of difference:"
+"none"
+"small"
+"normal"
+"big"
+"very big"
+"control size"
+"control format"
+"music"
+"same artist"
+"same title"
+"duration, max. difference (sec):"
 
 // " C O M P A R E "
 ""
@@ -55,6 +71,7 @@
 " Found differences: %s - %s (errors: %s) "
 " Total: %s (%s) "
 "Data processing. Please wait several seconds..."
+" Processed: %s (errors: %s) "
 
 "No differences"
 "The compared files seem to be identical"
@@ -119,11 +136,14 @@
 "Failed to open target file while copying"
 "to file"
 
+"File deletion to the Recycle Bin failed"
 "File deletion failed"
 "Folder deletion failed"
 
 "Delete folder"
+"Delete folder to the Recycle Bin"
 "Delete file"
+"Delete file to the Recycle Bin"
 "Do you wish to delete it?"
 "&Delete"
 
@@ -131,3 +151,14 @@
 "Texts (WinMerge)"
 "Texts (VisualCompare)"
 "Pictures"
+
+"[%*.*s - %s] Duplicates: groups %u files %u (%u)"
+
+"Search duplicate files"
+"Elements for deletion are not found"
+
+"&Delete %u duplicate items"
+"Deletion to the &Recycle Bin"
+"&Edit"
+
+"Removed %s (%u files)"

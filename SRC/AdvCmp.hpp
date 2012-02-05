@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "farcolor.hpp"
 #include "string.hpp"
 #include "libgfl.h"
+#include "bass.h"
 #include "AdvCmpLng.hpp"        // набор констант для извлечения строк из .lng файла
 
 
@@ -76,6 +77,8 @@ DEFINE_GUID(MenuGuid,0xcf6df7e7, 0x60c, 0x4dd7, 0x80, 0xd8, 0x69, 0xe2, 0xf, 0x9
 DEFINE_GUID(OptDlgGuid,0x81184feb, 0x5a2c, 0x4e7d, 0x8c, 0x3f, 0xd2, 0x66, 0xb0, 0xe, 0x3c, 0xf6);
 // {50E6209D-3D39-42ad-B64A-CA960927A249}
 DEFINE_GUID(CmpDlgGuid,0x50e6209d, 0x3d39, 0x42ad, 0xb6, 0x4a, 0xca, 0x96, 0x9, 0x27, 0xa2, 0x49);
+// {1AEAB879-D71C-4542-B99D-06E4FE4BEE0A}
+DEFINE_GUID(DupDlgGuid,0x1aeab879, 0xd71c, 0x4542, 0xb9, 0x9d, 0x6, 0xe4, 0xfe, 0x4b, 0xee, 0xa);
 // {8FC5FB22-E223-41ef-9EB6-A77D9302D462}
 DEFINE_GUID(CurDlgGuid,0x8fc5fb22, 0xe223, 0x41ef, 0x9e, 0xb6, 0xa7, 0x7d, 0x93, 0x2, 0xd4, 0x62);
 // {543FD7B0-0B51-4F81-819A-449C503EEEC2}
@@ -114,6 +117,10 @@ DEFINE_GUID(CmpMethodMenuGuid,0x89258bf3, 0x3651, 0x4791, 0x91, 0xdf, 0xe4, 0x7,
 DEFINE_GUID(CompareCurFileMsgGuid,0xf36d329d, 0xc58, 0x4015, 0x96, 0xaf, 0x9b, 0xc3, 0x3d, 0x53, 0x9, 0xce);
 // {30F9985D-EEB9-4588-B4DB-349E920B7513}
 DEFINE_GUID(DlgNameGuid,0x30f9985d, 0xeeb9, 0x4588, 0xb4, 0xdb, 0x34, 0x9e, 0x92, 0xb, 0x75, 0x13);
+// {5B72A0FE-9BEC-4116-8455-7A52EA87D891}
+DEFINE_GUID(DupMsgGuid,0x5b72a0fe, 0x9bec, 0x4116, 0x84, 0x55, 0x7a, 0x52, 0xea, 0x87, 0xd8, 0x91);
+// {53F54C6D-1F0F-410C-8D9C-02AFEF73EB7E}
+DEFINE_GUID(NoDupMsgGuid,0x53f54c6d, 0x1f0f, 0x410c, 0x8d, 0x9c, 0x2, 0xaf, 0xef, 0x73, 0xeb, 0x7e);
 
 
 /****************************************************************************
@@ -127,7 +134,8 @@ extern struct FarStandardFunctions FSF;
  * Текущие настройки плагина
  ****************************************************************************/
 extern struct Options {
-	int CmpCase,
+	int Mode,
+			CmpCase,
 			CmpSize,
 			CmpTime,
 			Seconds,
@@ -135,42 +143,64 @@ extern struct Options {
 			IgnoreTimeZone,
 			CmpContents,
 			OnlyTimeDiff,
+			Cache,
+			CacheIgnore,
 			Partly,
 			PartlyFull,
 			PartlyKbSize,
 			Ignore,
 			IgnoreTemplates,
-			ProcessSubfolders,
+			DupName,
+			DupSize,
+			DupContents,
+			DupPic,
+			DupPicDiff,
+			DupPicSize,
+			DupPicFmt,
+			DupMusic,
+			DupMusicArtist,
+			DupMusicTitle,
+			DupMusicDuration,
+			Subfolders,
 			MaxScanDepth,
 			ScanSymlink,
 			Filter,
-			ProcessSelected,
+			TillFirstDiff,
 			SkipSubstr,
-			IgnoreMissing,
-			ProcessTillFirstDiff,
+			ProcessSelected,
 			SelectedNew,
-			Cache,
-			CacheIgnore,
+			SyncOnlyRight,
+			IgnoreMissing,
 			ShowMsg,
 			Sound,
-			TotalProcess,
 			Dialog,
+			TotalProgress,
 			Sync,
-			SyncOnlyRight,
 			SyncLPanel,
 			SyncRPanel,
-			SyncRDel,
+			SyncDel,
 			SyncUseDelFilter,
 			ProcessHidden,
+			Dup,
+			DupDel,
+			DupDelRecycleBin,
 			BufSize;
 	char *Buf[2];
-	wchar_t *Substr, *WinMergePath;
+	wchar_t *DupPath, *Substr, *WinMergePath;
 	HANDLE hCustomFilter;
 } Opt;
 
+enum ModeFlag {
+	MODE_CMP  = 0,
+	MODE_SYNC = 1,
+	MODE_DUP  = 2,
+};
+
 extern HANDLE hConInp;     // хэндл консол. ввода
 extern bool bBrokenByEsc;  //прекратить/прекратили операцию сравнения?
+extern bool bStartMsg;     //для ускорения отрисовки сообщения-прогресса
 extern bool bGflLoaded;    // libgfl340.dll загружена?
+extern bool bBASSLoaded;   // bass.dll загружена?
 
 // информация о панели
 extern struct FarPanelInfo {
@@ -226,13 +256,26 @@ enum ResultCmpItemFlag {
 	RCIF_USERNONE   = 0x020, // скинут флаг отличия
 	RCIF_USERLNEW   = 0x040, // установлен флаг "слева новый"
 	RCIF_USERRNEW   = 0x080, // установлен флаг "справа новый"
-	RCIF_USERDEL    = 0x100, // удалить файл на правой панели
+	RCIF_USERDEL    = 0x100, // удалить файл
 
 	// дополнительные флаги, для итогового диалога:
 	RCIF_LUNIQ  = 0x400,    // слева уникальный
 	RCIF_RUNIQ  = 0x800,    // справа уникальный
-};
 
+	// для дубликатов
+	RCIF_PIC    = 0x01000,  // картинка
+	RCIF_PICERR = 0x02000,  // битая картинка
+	RCIF_PICJPG = 0x04000,  // jpg-картинка
+	RCIF_PICBMP = 0x08000,  // bmp-картинка
+	RCIF_PICGIF = 0x10000,  // gif-картинка
+	RCIF_PICTIF = 0x20000,  // tif-картинка
+	RCIF_PICPNG = 0x40000,  // png-картинка
+	RCIF_PICICO = 0x80000,  // png-картинка
+
+	RCIF_MUSIC    = 0x100000,   // mp3-файл
+	RCIF_MUSICART = 0x200000,   // у mp3-файла заполнен Артист
+	RCIF_MUSICTIT = 0x400000,   // заполнено название
+};
 
 /****************************************************************************
  * Кеш сравнения "по содержимому"
@@ -254,10 +297,6 @@ const wchar_t *GetMsg(int MsgId);
 void ErrorMsg(DWORD Title, DWORD Body);
 bool YesNoMsg(DWORD Title, DWORD Body);
 int DebugMsg(wchar_t *msg, wchar_t *msg2 = L" ", unsigned int i = 1000);
-wchar_t* itoaa(__int64 num, wchar_t *buf);
-wchar_t *GetPosToName(const wchar_t *FileName);
-void GetFullFileName(string &strFullFileName, const wchar_t *Dir, const wchar_t *FileName, bool bNative=true);
-
 
 
 /****************************************************************************
@@ -270,6 +309,7 @@ extern PCOMPAREFILES pCompareFiles;
 /****************************************************************************
  *  libgfl340.dll
  ****************************************************************************/
+typedef const char* (WINAPI *PGFLGETVERSION)(void);
 typedef GFL_ERROR		(WINAPI *PGFLLIBRARYINIT)(void);
 typedef void				(WINAPI *PGFLENABLELZW)(GFL_BOOL);
 typedef void				(WINAPI *PGFLLIBRARYEXIT)(void);
@@ -282,7 +322,9 @@ typedef GFL_ERROR		(WINAPI *PGFLROTATE)(GFL_BITMAP* src, GFL_BITMAP** dst, GFL_I
 typedef GFL_ERROR		(WINAPI *PGFLRESIZE)(GFL_BITMAP *, GFL_BITMAP **, GFL_INT32, GFL_INT32, GFL_UINT32, GFL_UINT32);
 typedef void				(WINAPI *PGFLFREEBITMAP)(GFL_BITMAP *);
 typedef void				(WINAPI *PGFLFREEFILEINFORMATION)(GFL_FILE_INFORMATION* info);
+typedef GFL_ERROR		(WINAPI *PGFLGETCOLORAT)(const GFL_BITMAP *, GFL_INT32, GFL_INT32, GFL_COLOR*);
 
+extern PGFLGETVERSION pGflGetVersion;
 extern PGFLLIBRARYINIT pGflLibraryInit;
 extern PGFLENABLELZW pGflEnableLZW;
 extern PGFLLIBRARYEXIT pGflLibraryExit;
@@ -295,3 +337,33 @@ extern PGFLROTATE pGflRotate;
 extern PGFLRESIZE pGflResize;
 extern PGFLFREEBITMAP pGflFreeBitmap;
 extern PGFLFREEFILEINFORMATION pGflFreeFileInformation;
+extern PGFLGETCOLORAT pGflGetColorAt;
+
+
+/****************************************************************************
+ *  bass.dll
+ ****************************************************************************/
+typedef DWORD		(WINAPI *PBASS_GETVERSION)(void);
+typedef BOOL		(WINAPI *PBASS_SETCONFIG)(DWORD option, DWORD value);
+typedef BOOL		(WINAPI *PBASS_INIT)(int device, DWORD freq, DWORD flags, HWND win, const GUID *dsguid);
+typedef BOOL		(WINAPI *PBASS_FREE)(void);
+typedef HSTREAM	(WINAPI *PBASS_STREAMCREATEFILE)(BOOL mem, const void *file, QWORD offset, QWORD length, DWORD flags);
+typedef BOOL		(WINAPI *PBASS_STREAMFREE)(HSTREAM handle);
+typedef QWORD		(WINAPI *PBASS_CHANNELGETLENGTH)(DWORD handle, DWORD mode);
+typedef double	(WINAPI *PBASS_CHANNELBYTES2SECONDS)(DWORD handle, QWORD pos);
+typedef QWORD		(WINAPI *PBASS_STREAMGETFILEPOSITION)(HSTREAM handle, DWORD mode);
+typedef BOOL		(WINAPI *PBASS_CHANNELGETINFO)(DWORD handle, BASS_CHANNELINFO *info);
+typedef const char*	(WINAPI *PBASS_CHANNELGETTAGS)(DWORD handle, DWORD tags);
+
+
+extern PBASS_GETVERSION pBASS_GetVersion;
+extern PBASS_SETCONFIG pBASS_SetConfig;
+extern PBASS_INIT pBASS_Init;
+extern PBASS_FREE pBASS_Free;
+extern PBASS_STREAMCREATEFILE pBASS_StreamCreateFile;
+extern PBASS_STREAMFREE pBASS_StreamFree;
+extern PBASS_CHANNELGETLENGTH pBASS_ChannelGetLength;
+extern PBASS_CHANNELBYTES2SECONDS pBASS_ChannelBytes2Seconds;
+extern PBASS_CHANNELGETINFO pBASS_ChannelGetInfo;
+extern PBASS_CHANNELGETTAGS pBASS_ChannelGetTags;
+extern PBASS_STREAMGETFILEPOSITION pBASS_StreamGetFilePosition;
