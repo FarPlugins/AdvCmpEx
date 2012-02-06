@@ -1521,6 +1521,10 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 			}
 		}
 	}
+
+	if (bBrokenByEsc)
+		goto END;
+
 	// освободимся от уникальных
 	FSF.qsort(dFList.F,dFList.iCount,sizeof(dFList.F[0]),dupSortListByGroup);
 	int Index;
