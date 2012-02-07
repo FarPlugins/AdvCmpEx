@@ -492,7 +492,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgSELECTEDNEW,(void*)true);
 						Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgSELECTEDNEW,(void*)(Opt.SelectedNew?BSTATE_CHECKED:BSTATE_UNCHECKED));
 						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORMISSING,(void*)true);
-						Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgIGNORMISSING,(void*)(Opt.IgnoreMissing?BSTATE_CHECKED:BSTATE_UNCHECKED));
+						Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgIGNORMISSING,(void*)(Opt.IgnoreMissing==2?BSTATE_3STATE:(Opt.IgnoreMissing?BSTATE_CHECKED:BSTATE_UNCHECKED)));
 						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDIALOG,(void*)true);
 						Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgDIALOG,(void*)(Opt.Dialog?BSTATE_CHECKED:BSTATE_UNCHECKED));
 						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgUNDERCURSOR,(void*)(!LPanel.bCurFile || !RPanel.bCurFile?false:true));
@@ -511,7 +511,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgSELECTEDNEW,(void*)false);
 						Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgSELECTEDNEW,(void*)BSTATE_UNCHECKED);
 						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORMISSING,(void*)true);
-						Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgIGNORMISSING,(void*)(Opt.IgnoreMissing?BSTATE_CHECKED:BSTATE_UNCHECKED));
+						Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgIGNORMISSING,(void*)(Opt.IgnoreMissing==2?BSTATE_3STATE:(Opt.IgnoreMissing?BSTATE_CHECKED:BSTATE_UNCHECKED)));
 						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDIALOG,(void*)false);
 						Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgDIALOG,(void*)BSTATE_CHECKED);
 						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgUNDERCURSOR,(void*)false);
@@ -1032,7 +1032,7 @@ int AdvCmpDlgOpt::ShowOptDialog()
 		/*45*/{DI_CHECKBOX,   2,18,  33,   0, 0, 0,                   0,                                0, GetMsg(MProcessSelected),0,0},
 		/*46*/{DI_CHECKBOX,  35,18,   0,   0, 0, 0,                   0,                                0, GetMsg(MSelectedNew),0,0},
 		/*47*/{DI_CHECKBOX,   2,19,  33,   0, 0, 0,                   0,                                0, GetMsg(MSyncOnlyRight),0,0},
-		/*48*/{DI_CHECKBOX,  35,19,   0,   0, 0, 0,                   0,                                0, GetMsg(MIgnoreMissing),0,0},
+		/*48*/{DI_CHECKBOX,  35,19,   0,   0, 0, 0,                   0,                       DIF_3STATE, GetMsg(MIgnoreMissing),0,0},
 		/*49*/{DI_CHECKBOX,   2,20,   0,   0, 1, 0,                   0,                                0, GetMsg(MShowMsg),0,0},
 		/*50*/{DI_CHECKBOX,  35,20,   0,   0, 0, 0,                   0,                                0, GetMsg(MSound),0,0},
 		/*51*/{DI_CHECKBOX,   2,21,   0,   0, 0, 0,                   0,                                0, GetMsg(MDialog),0,0},

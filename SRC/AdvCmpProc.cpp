@@ -1747,7 +1747,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 
 				CmpContinueL:
 				dwFlag=RCIF_DIFFER;
-				if (!Opt.IgnoreMissing)
+				if (!Opt.IgnoreMissing || (Opt.IgnoreMissing==2 && ScanDepth))
 				{
 					if (!LPanel.bTMP)
 					{
@@ -1816,7 +1816,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 
 				CmpContinueR:
 				dwFlag=RCIF_DIFFER;
-				if (!Opt.IgnoreMissing)
+				if (!Opt.IgnoreMissing || (Opt.IgnoreMissing==2 && ScanDepth))
 				{
 					if (!RPanel.bTMP)
 					{
@@ -1880,14 +1880,14 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 	if (!bBrokenByEsc)
 	{
 		// —обственно сравнение окончено. ѕометим то, что осталось необработанным в массивах
-		if (!Opt.IgnoreMissing && i<LII.iCount)
+		if ((!Opt.IgnoreMissing || (Opt.IgnoreMissing==2 && ScanDepth)) && i<LII.iCount)
 		{
 			if (!LPanel.bTMP)
 				bDifferenceNotFound=false;
 			if (bCompareAll)
 				goto CmpContinueL;
 		}
-		if (!Opt.IgnoreMissing && j<RII.iCount)
+		if ((!Opt.IgnoreMissing || (Opt.IgnoreMissing==2 && ScanDepth)) && j<RII.iCount)
 		{
 			if (!RPanel.bTMP)
 				bDifferenceNotFound=false;
