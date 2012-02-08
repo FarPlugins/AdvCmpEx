@@ -218,8 +218,6 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 				if ((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN))
 				{
 					Opt.Mode=MODE_CMP;
-					FarListPos SetPos = {Opt.Mode, -1};
-					Info.SendDlgMessage(hDlg,DM_LISTSETCURPOS,DlgMODEBOX,&SetPos);
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgMODEBOX,(void*)false);
 				}
 				//-------------
@@ -382,14 +380,6 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPMUSICDURL,(void*)false);
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPMUSICDURE,(void*)false);
 				}
-/*				if (!Opt.DupContents || !bGflLoaded)
-				{
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPPIC,(void*)false);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPPICDIFF,(void*)false);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPPICSIZE,(void*)false);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPPICFMT,(void*)false);
-				}
-*/
 				if (!Opt.DupContents)
 				{
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPPIC,(void*)false);
@@ -1116,10 +1106,14 @@ int AdvCmpDlgOpt::ShowOptDialog()
 	for (int i=0; i<n; i++)
 	{
 		itemModeBox[i].Flags = 0;
-		if (i==Opt.Mode)
-			itemModeBox[i].Flags |= LIF_SELECTED;
+		// !!! обходим непонятки в фаре: нельзя изменить значение LIF_SELECTED из DN_INITDIALOG
+		if ((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN))
+			itemModeBox[0].Flags |= LIF_SELECTED;
 		else
-			itemModeBox[i].Flags &= ~LIF_SELECTED;
+		{
+			if (i==Opt.Mode)
+			itemModeBox[i].Flags |= LIF_SELECTED;
+		}
 		itemModeBox[i].Text=GetMsg(MModeCmp+i);
 	}
 	FarList ModeBox = {n, itemModeBox};
@@ -1133,8 +1127,6 @@ int AdvCmpDlgOpt::ShowOptDialog()
 		itemIgnoreTemplates[i].Flags = 0;
 		if (i==Opt.IgnoreTemplates)
 			itemIgnoreTemplates[i].Flags |= LIF_SELECTED;
-		else
-			itemIgnoreTemplates[i].Flags &= ~LIF_SELECTED;
 		itemIgnoreTemplates[i].Text=GetMsg(MCmpIgnoreAllWhitespace+i);
 	}
 	FarList IgnoreTemplates = {n, itemIgnoreTemplates};
@@ -1148,8 +1140,6 @@ int AdvCmpDlgOpt::ShowOptDialog()
 		itemPicDiffBox[i].Flags = 0;
 		if (i==Opt.DupPicDiff)
 			itemPicDiffBox[i].Flags |= LIF_SELECTED;
-		else
-			itemPicDiffBox[i].Flags &= ~LIF_SELECTED;
 		itemPicDiffBox[i].Text=GetMsg(MDupPicDiffNone+i);
 	}
 	FarList PicDiffBox = {n, itemPicDiffBox};

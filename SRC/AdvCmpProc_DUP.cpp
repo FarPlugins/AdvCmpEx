@@ -703,196 +703,52 @@ GOTOCHANGEMARK:
 						MessageBeep(MB_OK);
 						return true;
 					}
+*/
 				}
 				else if (IsCtrl(record))
 				{
-					if (vk==VK_CONTROL)
+					if (vk==VK_PRIOR)
 					{
 						int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
-						cmpFile **tmp=(cmpFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
-						cmpFile *cur=(tmp && *tmp)?*tmp:NULL;
+						dupFile **tmp=(dupFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
+						dupFile *cur=(tmp && *tmp)?*tmp:NULL;
 						if (cur)
 						{
-							string strVirtDir=GetPosToName(cur->LDir)+wcslen(LPanel.Dir);
-							if (strVirtDir.length()>0)
-								FSF.TruncStr(strVirtDir.get(),WinInfo.TruncLen-wcslen(GetMsg(MListBottomCurDir)));
-							else
-							{
-								MessageBeep(MB_OK);
-								return true;
-							}
-							strVirtDir.updsize();
-							SetBottom(hDlg,pFileList,strVirtDir.get());
-							bSetBottom=true;
-							return true;
-						}
-					}
-					else if (vk==0x52) //VK_R
-					{
-						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
-						pFileList->bShowSelect=true;
-						pFileList->bShowIdentical=true;
-						pFileList->bShowDifferent=true;
-						pFileList->bShowLNew=true;
-						pFileList->bShowRNew=true;
-						pFileList->bClearUserFlags=true;
-						MakeCmpFarList(hDlg,pFileList);
-						pFileList->bClearUserFlags=false; // восстановим!
-						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
-						return true;
-					}
-					else if (vk==VK_OEM_5 && !(pFileList->bShowSelect && pFileList->Select==0))
-					{
-						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
-						pFileList->bShowSelect=(pFileList->bShowSelect?false:true);
-						MakeCmpFarList(hDlg,pFileList);
-						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
-						return true;
-					}
-					else if (vk==VK_OEM_PLUS && !(pFileList->bShowIdentical && pFileList->Identical==0))
-					{
-						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
-						pFileList->bShowIdentical=(pFileList->bShowIdentical?false:true);
-						MakeCmpFarList(hDlg,pFileList);
-						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
-						return true;
-					}
-					else if (vk==VK_OEM_MINUS && !(pFileList->bShowDifferent && pFileList->Different==0))
-					{
-						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
-						pFileList->bShowDifferent=(pFileList->bShowDifferent?false:true);
-						MakeCmpFarList(hDlg,pFileList);
-						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
-						return true;
-					}
-					else if (vk==VK_OEM_4 && !(pFileList->bShowLNew && pFileList->LNew==0))
-					{
-						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
-						pFileList->bShowLNew=(pFileList->bShowLNew?false:true);
-						MakeCmpFarList(hDlg,pFileList);
-						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
-						return true;
-					}
-					else if (vk==VK_OEM_6 && !(pFileList->bShowRNew && pFileList->RNew==0))
-					{
-						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
-						pFileList->bShowRNew=(pFileList->bShowRNew?false:true);
-						MakeCmpFarList(hDlg,pFileList);
-						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
-						return true;
-					}
-					else if (vk==VK_PRIOR)
-					{
-						int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
-						cmpFile **tmp=(cmpFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
-						cmpFile *cur=(tmp && *tmp)?*tmp:NULL;
-						if (cur)
-						{
-							if ((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN))
-							{
-								MessageBeep(MB_OK);
-								return true;
-							}
-
 							Opt.Mode=MODE_CMP; //скидываем!!!
 
-							PanelRedrawInfo LRInfo={0,0}, RRInfo={0,0};
-							bool bSetLDir=false, bSetLFile=false;
-							bool bSetRDir=false, bSetRFile=false;
-							if (FSF.LStricmp(LPanel.Dir,GetPosToName(cur->LDir)))
+							PanelRedrawInfo RInfo={0,0};
+							bool bLeft=LPanel.PInfo.Flags&PFLAGS_FOCUS;
+							if (FSF.LStricmp(bLeft?LPanel.Dir:RPanel.Dir,GetPosToName(cur->Dir)))
 							{
-								FarPanelDirectory dirInfo={sizeof(FarPanelDirectory),GetPosToName(cur->LDir),NULL,{0},NULL};
-								bSetLDir=Info.PanelControl(LPanel.hPanel,FCTL_SETPANELDIRECTORY,0,&dirInfo);
-								Info.PanelControl(LPanel.hPanel,FCTL_BEGINSELECTION,0,0);
+								FarPanelDirectory dirInfo={sizeof(FarPanelDirectory),GetPosToName(cur->Dir),NULL,{0},NULL};
+								Info.PanelControl(bLeft?LPanel.hPanel:RPanel.hPanel,FCTL_SETPANELDIRECTORY,0,&dirInfo);
 							}
-							{
-								PanelInfo PInfo;
-								PInfo.StructSize=sizeof(PanelInfo);
-								Info.PanelControl(LPanel.hPanel,FCTL_GETPANELINFO,0,&PInfo);
-								FarGetPluginPanelItem FGPPI;
+							PanelInfo PInfo;
+							PInfo.StructSize=sizeof(PanelInfo);
+							Info.PanelControl(bLeft?LPanel.hPanel:RPanel.hPanel,FCTL_GETPANELINFO,0,&PInfo);
+							FarGetPluginPanelItem FGPPI;
 
-								for (int i=0; i<PInfo.ItemsNumber; i++)
+							for (int i=0; i<PInfo.ItemsNumber; i++)
+							{
+								FGPPI.Size=0; FGPPI.Item=0;
+								FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(bLeft?LPanel.hPanel:RPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI));
+								if (FGPPI.Item)
 								{
-									FGPPI.Size=0; FGPPI.Item=0;
-									FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI));
-									if (FGPPI.Item)
+									Info.PanelControl(bLeft?LPanel.hPanel:RPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI);
+									if (!FSF.LStricmp(cur->FileName,FGPPI.Item->FileName))
 									{
-										Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI);
-										if (!bSetLFile && cur->FileName && !FSF.LStricmp(cur->FileName,FGPPI.Item->FileName))
-										{
-											LRInfo.CurrentItem=i;
-											bSetLFile=true;
-										}
-										if (bSetLDir)
-										{
-											for (int j=0; j<pFileList->iCount; j++)
-											{
-												if (FSF.LStricmp(pFileList->F[j].LDir,cur->LDir))
-													continue;
-												if (!FSF.LStricmp(pFileList->F[j].FileName,FGPPI.Item->FileName))
-												{
-													Info.PanelControl(LPanel.hPanel,FCTL_SETSELECTION,i,(void*)((pFileList->F[j].dwFlags&RCIF_DIFFER) || (pFileList->F[j].dwFlags&RCIF_LNEW) || (pFileList->F[j].dwFlags&RCIF_RNEW)));
-													break;
-												}
-											}
-										}
+										RInfo.CurrentItem=i;
 										free(FGPPI.Item);
+										break;
 									}
+									free(FGPPI.Item);
 								}
-								if (bSetLDir)
-									Info.PanelControl(LPanel.hPanel,FCTL_ENDSELECTION,0,0);
 							}
-
-							if (FSF.LStricmp(RPanel.Dir,GetPosToName(cur->RDir)))
-							{
-								FarPanelDirectory dirInfo={sizeof(FarPanelDirectory),GetPosToName(cur->RDir),NULL,{0},NULL};
-								bSetRDir=Info.PanelControl(RPanel.hPanel,FCTL_SETPANELDIRECTORY,0,&dirInfo);
-								Info.PanelControl(RPanel.hPanel,FCTL_BEGINSELECTION,0,0);
-							}
-							{
-								PanelInfo PInfo;
-								PInfo.StructSize=sizeof(PanelInfo);
-								Info.PanelControl(RPanel.hPanel,FCTL_GETPANELINFO,0,&PInfo);
-								FarGetPluginPanelItem FGPPI;
-
-								for (int i=0; i<PInfo.ItemsNumber; i++)
-								{
-									FGPPI.Size=0; FGPPI.Item=0;
-									FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI));
-									if (FGPPI.Item)
-									{
-										Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI);
-										if (!bSetRFile && cur->FileName && !FSF.LStricmp(cur->FileName,FGPPI.Item->FileName))
-										{
-											RRInfo.CurrentItem=i;
-											bSetRFile=true;
-										}
-										if (bSetRDir)
-										{
-											for (int j=0; j<pFileList->iCount; j++)
-											{
-												if (FSF.LStricmp(pFileList->F[j].RDir,cur->RDir))
-													continue;
-												if (!FSF.LStricmp(pFileList->F[j].FileName,FGPPI.Item->FileName))
-												{
-													Info.PanelControl(RPanel.hPanel,FCTL_SETSELECTION,i,(void*)((pFileList->F[j].dwFlags&RCIF_DIFFER) || (pFileList->F[j].dwFlags&RCIF_LNEW) || (pFileList->F[j].dwFlags&RCIF_RNEW)));
-													break;
-												}
-											}
-										}
-										free(FGPPI.Item);
-									}
-								}
-								if (bSetRDir)
-									Info.PanelControl(RPanel.hPanel,FCTL_ENDSELECTION,0,0);
-							}
-							Info.PanelControl(LPanel.hPanel,FCTL_REDRAWPANEL,0,&LRInfo);
-							Info.PanelControl(RPanel.hPanel,FCTL_REDRAWPANEL,0,&RRInfo);
+							Info.PanelControl(bLeft?LPanel.hPanel:RPanel.hPanel,FCTL_REDRAWPANEL,0,&RInfo);
 							Info.SendDlgMessage(hDlg,DM_CLOSE,0,0);
 						}
 						return true;
 					}
-*/
 				}
 			}
 		}
@@ -922,10 +778,6 @@ int AdvCmpProc::ShowDupDialog()
 		Info.DialogFree(hDlg);
 	}
 
-/*
-	if (Opt.Mode==MODE_SYNC && Opt.Sync==2)
-		Synchronize(&cFList);
-*/
 	return 1;
 }
 
