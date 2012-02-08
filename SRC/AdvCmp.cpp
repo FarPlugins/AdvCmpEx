@@ -659,9 +659,6 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 	FreeDirList(&LList);
 	FreeDirList(&RList);
 
-	if (bBASSLoaded)
-		pBASS_Free();
-
 	return hPanel;
 }
 
