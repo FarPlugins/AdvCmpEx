@@ -91,6 +91,8 @@ struct cmpFileList {
 	bool bShowLNew;
 	bool bShowRNew;
 	bool bClearUserFlags;
+	int  Copy;   // <0 - налево, =0 - нет, >0 - направо
+	bool bCopyNew;
 };
 
 const int PIXELS_SIZE=32;

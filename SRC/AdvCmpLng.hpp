@@ -157,6 +157,12 @@ enum {
 	MSyncUseDelFilter,
 	MSyncEdit,
 
+	MSyncSelTitle,
+	MSyncSelDiff,
+	MSyncSelDiffToRight,
+	MSyncSelDiffToLeft,
+	MSyncSelDiffNew,
+
 	MWarning,
 	MFileIsReadOnly,
 	MFileAlreadyExists,

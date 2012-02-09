@@ -257,6 +257,26 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 		{
 			if (!pFileList->bShowDifferent)
 				continue;
+
+			__int64 Delta=(((__int64)cur->ftLLastWriteTime.dwHighDateTime << 32) | cur->ftLLastWriteTime.dwLowDateTime) -
+										(((__int64)cur->ftRLastWriteTime.dwHighDateTime << 32) | cur->ftRLastWriteTime.dwLowDateTime);
+
+			if ((pFileList->Copy>0 && !pFileList->bCopyNew) || (pFileList->Copy>0 && pFileList->bCopyNew && Delta>0))
+			{
+				cur->dwFlags|=RCIF_USERLNEW;
+				cur->dwFlags&=~RCIF_USERRNEW;
+			}
+			else if ((pFileList->Copy<0 && !pFileList->bCopyNew) || (pFileList->Copy<0 && pFileList->bCopyNew && Delta<0))
+			{
+				cur->dwFlags|=RCIF_USERRNEW;
+				cur->dwFlags&=~RCIF_USERLNEW;
+			}
+			else
+			{
+				cur->dwFlags&=~RCIF_USERLNEW;
+				cur->dwFlags&=~RCIF_USERRNEW;
+			}
+
 			if (cur->dwFlags&RCIF_USERLNEW) Mark=0x25ba;
 			else if (!Opt.SyncOnlyRight && (cur->dwFlags&RCIF_USERRNEW)) Mark=0x25c4;
 			else Mark=0x2260;
@@ -385,8 +405,8 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 	if (bSetCurPos)
 	{
 		FarListPos ListPos;
-		ListPos.SelectPos=0; //ListInfo.SelectPos;
-		ListPos.TopPos=-1/*ListInfo.TopPos*/;
+		ListPos.SelectPos=ListInfo.SelectPos;
+		ListPos.TopPos=ListInfo.TopPos;
 		Info.SendDlgMessage(hDlg,DM_LISTSETCURPOS,0,&ListPos);
 	}
 	return true;
@@ -932,6 +952,41 @@ GOTOCHANGEMARK:
 						pFileList->bShowRNew=(pFileList->bShowRNew?false:true);
 						MakeCmpFarList(hDlg,pFileList);
 						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
+						return true;
+					}
+					else if (vk==VK_SPACE && Opt.Mode==MODE_SYNC)
+					{
+						pFileList->Copy=0;
+						int ret=0;
+						struct FarDialogItem DialogItems[] = {
+						//			Type	X1	Y1	X2	Y2				Selected	History	Mask	Flags	Data	MaxLen	UserParam
+						/* 0*/{DI_DOUBLEBOX,  3, 1,60, 7, 0, 0, 0,                   0, GetMsg(MSyncSelTitle),0,0},
+						/* 1*/{DI_TEXT,       5, 2, 0, 0, 0, 0, 0,                   0, GetMsg(MSyncSelDiff),0,0},
+						/* 2*/{DI_RADIOBUTTON,5, 3, 0, 0, 1, 0, 0, DIF_FOCUS|DIF_GROUP, GetMsg(MSyncSelDiffToRight),0,0},
+						/* 3*/{DI_RADIOBUTTON,34,3, 0, 0, 0, 0, 0,                   0, GetMsg(MSyncSelDiffToLeft),0,0},
+						/* 4*/{DI_CHECKBOX,   5, 4, 0, 0, 0, 0, 0,                   0, GetMsg(MSyncSelDiffNew),0,0},
+						/* 5*/{DI_TEXT,       0, 5, 0, 0, 0, 0, 0,       DIF_SEPARATOR, 0,0,0},
+						/* 6*/{DI_BUTTON,     0, 6, 0, 0, 0, 0, 0, DIF_DEFAULTBUTTON|DIF_CENTERGROUP, GetMsg(MOK),0,0},
+						/* 7*/{DI_BUTTON,     0, 6, 0, 0, 0, 0, 0,     DIF_CENTERGROUP, GetMsg(MCancel),0,0}
+						};
+
+						HANDLE hDlgCur=Info.DialogInit(&MainGuid,&DlgSyncSel,-1,-1,64,9,L"DlgCmp", DialogItems,sizeof(DialogItems)/sizeof(DialogItems[0]),0,0,0,0);
+						if (hDlgCur != INVALID_HANDLE_VALUE)
+						{
+							ret=Info.DialogRun(hDlgCur);
+							if (ret==6)
+							{
+								pFileList->Copy=(Info.SendDlgMessage(hDlgCur,DM_GETCHECK,2,0)?1:-1);
+								pFileList->bCopyNew=Info.SendDlgMessage(hDlgCur,DM_GETCHECK,4,0);
+							}
+							Info.DialogFree(hDlgCur);
+						}
+						if (ret==6)
+						{
+							Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
+							MakeCmpFarList(hDlg,pFileList,true,false);
+							Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
+						}
 						return true;
 					}
 					else if (vk==VK_PRIOR)

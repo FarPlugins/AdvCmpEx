@@ -113,6 +113,12 @@
 "Use &filter when deleting"
 "&Edit"
 
+"Отметка элементов для копирования"
+"Различающиеся элементы:"
+"Копировать направо"
+"Копировать налево"
+"Если новее"
+
 "Warning"
 "The file is read only"
 "File already exists"

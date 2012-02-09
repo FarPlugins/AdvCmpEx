@@ -318,6 +318,8 @@ AdvCmpProc::AdvCmpProc()
 	cFList.bShowLNew=true;
 	cFList.bShowRNew=true;
 	cFList.bClearUserFlags=false;
+	cFList.Copy=0;
+	cFList.bCopyNew=false;
 
 	dFList.F=NULL;
 	dFList.iCount=0;
