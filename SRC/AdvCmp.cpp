@@ -321,6 +321,12 @@ bool LoadBASS(wchar_t *PlugPath)
 
 		if (HIWORD(pBASS_GetVersion())!=BASSVERSION)
 			UnLoadBASS();
+		if (bBASSLoaded)
+		{
+			pBASS_SetConfig(BASS_CONFIG_UPDATEPERIOD,0);
+			if (!pBASS_Init(0,44100,0,0,NULL))
+				UnLoadBASS();
+		}
 	}
 	return bBASSLoaded;
 }
@@ -581,14 +587,14 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 
 	memset(&CmpInfo,0,sizeof(CmpInfo));
 	bBrokenByEsc=false;
-
+/*
 	if (bBASSLoaded)
 	{
 		pBASS_SetConfig(BASS_CONFIG_UPDATEPERIOD,0);
 		if (!pBASS_Init(0,44100,0,0,NULL))
 			UnLoadBASS();
 	}
-
+*/
 	class AdvCmpDlgOpt AdvCmpOpt;
 	int ret=AdvCmpOpt.ShowOptDialog();
 
@@ -659,8 +665,8 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 	FreeDirList(&LList);
 	FreeDirList(&RList);
 
-	if (bBASSLoaded)
-		pBASS_Free();
+//	if (bBASSLoaded)
+//		pBASS_Free();
 
 	return hPanel;
 }
