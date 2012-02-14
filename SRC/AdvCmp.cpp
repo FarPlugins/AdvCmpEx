@@ -367,7 +367,7 @@ void WINAPI SetStartupInfoW(const struct PluginStartupInfo *pInfo)
 
 		wchar_t PlugPath[MAX_PATH];
 		ExpandEnvironmentStringsW(L"%FARHOME%\\Plugins",PlugPath,(sizeof(PlugPath)/sizeof(PlugPath[0])));
-//		LoadVisComp(PlugPath);
+		LoadVisComp(PlugPath);
 		LoadGfl(PlugPath);
 		LoadBASS(PlugPath);
 	}
@@ -656,7 +656,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		else
 		{
 			if (hConInp!=INVALID_HANDLE_VALUE) CloseHandle(hConInp);
-			AdvCmp.CompareCurFile(&LList,&RList);
+			AdvCmp.CompareCurFile(LList.Dir,LList.PPI[LPanel.PInfo.CurrentItem].FileName,RList.Dir,RList.PPI[RPanel.PInfo.CurrentItem].FileName,1);
 		}
 	}
 

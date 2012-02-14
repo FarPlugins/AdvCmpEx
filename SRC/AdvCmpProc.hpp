@@ -93,6 +93,7 @@ struct cmpFileList {
 	bool bClearUserFlags;
 	int  Copy;   // <0 - налево, =0 - нет, >0 - направо
 	bool bCopyNew;
+	class AdvCmpProc *AdvCmp;
 };
 
 const int PIXELS_SIZE=32;
@@ -226,7 +227,7 @@ class AdvCmpProc
 			// синхронизация
 		int QueryOverwriteFile(const wchar_t *FileName, FILETIME *srcTime, FILETIME *destTime, __int64 srcSize, __int64 destSize, int direction, bool bReadOnlyType);
 		int QueryDelete(const wchar_t *FileName, bool bIsDir, bool bReadOnlyType);
-		int FileExists(const wchar_t *FileName, __int64 *pSize, FILETIME *pTime, DWORD *pAttrib, int CheckForFilter);
+		int FileExists(const wchar_t *FileName, unsigned __int64 *pSize, FILETIME *pTime, DWORD *pAttrib, int CheckForFilter);
 		int SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName, int direction);
 		int DelFile(const wchar_t *FileName);
 		int SyncDir(const wchar_t *srcDirName, const wchar_t *destDirName, int direction);
@@ -246,7 +247,7 @@ class AdvCmpProc
 		~AdvCmpProc();
 
 		bool CompareDirs(const struct DirList *pLList,const struct DirList *pRList,bool bCompareAll,int ScanDepth);
-		bool CompareCurFile(const struct DirList *pLList,const struct DirList *pRList);
+		bool CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, const wchar_t *RDir, const wchar_t *RFileName, int Method);
 		int ShowCmpDialog(const struct DirList *pLList,const struct DirList *pRList);
 		int Duplicate(const struct DirList *pList);
 };

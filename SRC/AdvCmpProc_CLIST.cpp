@@ -675,6 +675,7 @@ GOTOCMPFILE:
 								MessageBeep(MB_OK);
 								return true;
 							}
+/*
 							string strLFullFileName, strRFullFileName;
 							GetFullFileName(strLFullFileName,cur->LDir,cur->FileName);
 							GetFullFileName(strRFullFileName,cur->RDir,cur->FileName);
@@ -714,6 +715,10 @@ GOTOCMPFILE:
 								else
 									MessageBeep(MB_ICONASTERISK);
 							}
+*/
+
+							if (!pFileList->AdvCmp->CompareCurFile(cur->LDir,cur->FileName,cur->RDir,cur->FileName,0))
+								MessageBeep(MB_ICONASTERISK);
 						}
 						return true;
 					}
@@ -874,6 +879,28 @@ GOTOCHANGEMARK:
 							}
 						}
 						MessageBeep(MB_OK);
+						return true;
+					}
+				}
+				else if (IsShift(record))
+				{
+					if (vk==VK_RETURN)
+					{
+						int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
+						cmpFile **tmp=(cmpFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
+						cmpFile *cur=(tmp && *tmp)?*tmp:NULL;
+						if (cur)
+						{
+							if ((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN) ||
+									(cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY) || (cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY) ||
+									(cur->dwFlags&RCIF_LUNIQ) || (cur->dwFlags&RCIF_RUNIQ))
+							{
+								MessageBeep(MB_OK);
+								return true;
+							}
+							if (!pFileList->AdvCmp->CompareCurFile(cur->LDir,cur->FileName,cur->RDir,cur->FileName,1))
+								MessageBeep(MB_ICONASTERISK);
+						}
 						return true;
 					}
 				}
@@ -1176,6 +1203,7 @@ int AdvCmpProc::ShowCmpDialog(const struct DirList *pLList,const struct DirList 
 		FSF.sprintf(buf, L"%s %s",buf1,buf2);
 		DialogItems[0].Data=buf;
 	}
+	cFList.AdvCmp=this;
 
 	HANDLE hDlg=Info.DialogInit(&MainGuid,&CmpDlgGuid,0,0,WinInfo.Con.Right,WinInfo.Con.Bottom-WinInfo.Con.Top,L"DlgCmp",DialogItems,
 															sizeof(DialogItems)/sizeof(DialogItems[0]),0,FDLG_SMALLDIALOG|FDLG_KEEPCONSOLETITLE,ShowCmpDialogProc,&cFList);

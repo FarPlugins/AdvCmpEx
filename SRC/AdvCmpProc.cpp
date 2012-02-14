@@ -2325,39 +2325,22 @@ int AdvCmpProc::ShowCmpCurDialog(const PluginPanelItem *pLPPI,const PluginPanelI
 	return true;
 }
 
-bool AdvCmpProc::CompareCurFile(const struct DirList *pLList,const struct DirList *pRList)
+bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, const wchar_t *RDir, const wchar_t *RFileName, int Method)
 {
 	string strLFullFileName, strRFullFileName;
-	GetFullFileName(strLFullFileName,pLList->Dir,pLList->PPI[LPanel.PInfo.CurrentItem].FileName);
-	GetFullFileName(strRFullFileName,pRList->Dir,pRList->PPI[RPanel.PInfo.CurrentItem].FileName);
+	GetFullFileName(strLFullFileName,LDir,LFileName);
+	GetFullFileName(strRFullFileName,RDir,RFileName);
 
-	bool bImage=false;
-	if (bGflLoaded)
-	{
-		CmpPic.L.FileName=strLFullFileName.get();
-		CmpPic.R.FileName=strRFullFileName.get();
-		CmpPic.L.DrawRect.left=1;
-		CmpPic.R.DrawRect.left=WinInfo.Con.Right/2+2;
-		CmpPic.L.DrawRect.top=CmpPic.R.DrawRect.top=1;
-		CmpPic.L.DrawRect.right=WinInfo.Con.Right/2-1;
-		CmpPic.R.DrawRect.right=WinInfo.Con.Right-1;
-		CmpPic.L.DrawRect.bottom=CmpPic.R.DrawRect.bottom=WinInfo.Con.Bottom-WinInfo.Con.Top-2-2;
-		CmpPic.L.FirstRun=CmpPic.R.FirstRun=true;
-		CmpPic.L.Redraw=CmpPic.R.Redraw=false;
-		CmpPic.L.Loaded=CmpPic.R.Loaded=false;
-		BITMAPINFOHEADER BmpHeader1, BmpHeader2;
-		CmpPic.L.BmpHeader=&BmpHeader1;
-		CmpPic.R.BmpHeader=&BmpHeader2;
-		CmpPic.L.DibData=CmpPic.R.DibData=NULL;
-		GFL_FILE_INFORMATION pic_info1, pic_info2;
-		CmpPic.L.pic_info=&pic_info1;
-		CmpPic.R.pic_info=&pic_info2;
-		CmpPic.L.Page=CmpPic.R.Page=1;
-		CmpPic.L.Rotate=CmpPic.R.Rotate=0;
+	PluginPanelItem LPPI, RPPI;
+	memset(&LPPI,0,sizeof(PluginPanelItem));
+	memset(&RPPI,0,sizeof(PluginPanelItem));
+	if (!FileExists(strLFullFileName.get(),&LPPI.FileSize,&LPPI.LastWriteTime,&LPPI.FileAttributes,0) ||
+			!FileExists(strRFullFileName.get(),&RPPI.FileSize,&RPPI.LastWriteTime,&RPPI.FileAttributes,0))
+		return false;
 
-		bImage=(UpdateImage(&CmpPic.L,true) && UpdateImage(&CmpPic.R,true));
-	}
-
+	wchar_t Command[32768];
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
 	WIN32_FIND_DATA wfdFindData;
 	HANDLE hFind;
 	wchar_t DiffProgram[MAX_PATH];
@@ -2368,46 +2351,94 @@ bool AdvCmpProc::CompareCurFile(const struct DirList *pLList,const struct DirLis
 		ExpandEnvironmentStringsW(L"%ProgramFiles%\\WinMerge\\WinMergeU.exe",DiffProgram,(sizeof(DiffProgram)/sizeof(DiffProgram[0])));
 		bFindDiffProg=((hFind=FindFirstFileW(DiffProgram,&wfdFindData)) != INVALID_HANDLE_VALUE);
 	}
-	if (bFindDiffProg) FindClose(hFind);
-
-	struct FarMenuItem MenuItems[4];
-	memset(MenuItems,0,sizeof(MenuItems));
-	MenuItems[0].Text=GetMsg(MDefault);
-	MenuItems[1].Text=GetMsg(MWinMerge);
-	MenuItems[2].Text=GetMsg(MPictures);
-	MenuItems[3].Text=GetMsg(MVisCmp);
-	MenuItems[3].Flags|=MIF_GRAYED;
-	if (!bFindDiffProg) MenuItems[1].Flags|=MIF_GRAYED;
-	if (!bImage) MenuItems[2].Flags|=MIF_GRAYED;
-	if (bImage) MenuItems[2].Flags|=MIF_SELECTED;
-	else if (bFindDiffProg) MenuItems[1].Flags|=MIF_SELECTED;
-	int MenuCode=Info.Menu(&MainGuid,&CmpMethodMenuGuid,-1,-1,0,FMENU_AUTOHIGHLIGHT|FMENU_WRAPMODE,L"Method",NULL,L"Contents",NULL,NULL,MenuItems,sizeof(MenuItems)/sizeof(MenuItems[0]));
-
-	if (MenuCode==0)
+	if (bFindDiffProg)
 	{
-		bool bDifferenceNotFound;
-		Opt.TotalProgress=0;
-		if (Opt.CmpCase || Opt.CmpSize || Opt.CmpTime || Opt.CmpContents)
-			bDifferenceNotFound=CompareFiles(pLList->Dir,&pLList->PPI[LPanel.PInfo.CurrentItem],pRList->Dir,&pRList->PPI[RPanel.PInfo.CurrentItem],0);
-		else
-			bDifferenceNotFound=!FSF.LStricmp(pLList->PPI[LPanel.PInfo.CurrentItem].FileName,pRList->PPI[RPanel.PInfo.CurrentItem].FileName);
-		const wchar_t *MsgItems[]=
-		{
-			GetMsg(bDifferenceNotFound?MNoDiffTitle:MFirstDiffTitle),
-			GetPosToName(strLFullFileName.get()),
-			GetPosToName(strRFullFileName.get()),
-			GetMsg(MOK)
-		};
-		Info.Message(&MainGuid,&CompareCurFileMsgGuid,bDifferenceNotFound?0:FMSG_WARNING,0,MsgItems,sizeof(MsgItems)/sizeof(MsgItems[0]),1);
-	}
-	else if (MenuCode==1 && bFindDiffProg)
-	{
-		STARTUPINFO si;
-		PROCESS_INFORMATION pi;
+		FindClose(hFind);
 		memset(&si, 0, sizeof(si));
 		si.cb = sizeof(si);
-		wchar_t Command[32768];
 		FSF.sprintf(Command, L"\"%s\" -e \"%s\" \"%s\"", DiffProgram,GetPosToName(strLFullFileName.get()),GetPosToName(strRFullFileName.get()));
+	}
+
+	if (Method) // перебираем всё
+	{
+		bool bImage=false;
+		if (bGflLoaded)
+		{
+			CmpPic.L.FileName=strLFullFileName.get();
+			CmpPic.R.FileName=strRFullFileName.get();
+			CmpPic.L.DrawRect.left=1;
+			CmpPic.R.DrawRect.left=WinInfo.Con.Right/2+2;
+			CmpPic.L.DrawRect.top=CmpPic.R.DrawRect.top=1;
+			CmpPic.L.DrawRect.right=WinInfo.Con.Right/2-1;
+			CmpPic.R.DrawRect.right=WinInfo.Con.Right-1;
+			CmpPic.L.DrawRect.bottom=CmpPic.R.DrawRect.bottom=WinInfo.Con.Bottom-WinInfo.Con.Top-2-2;
+			CmpPic.L.FirstRun=CmpPic.R.FirstRun=true;
+			CmpPic.L.Redraw=CmpPic.R.Redraw=false;
+			CmpPic.L.Loaded=CmpPic.R.Loaded=false;
+			BITMAPINFOHEADER BmpHeader1, BmpHeader2;
+			CmpPic.L.BmpHeader=&BmpHeader1;
+			CmpPic.R.BmpHeader=&BmpHeader2;
+			CmpPic.L.DibData=CmpPic.R.DibData=NULL;
+			GFL_FILE_INFORMATION pic_info1, pic_info2;
+			CmpPic.L.pic_info=&pic_info1;
+			CmpPic.R.pic_info=&pic_info2;
+			CmpPic.L.Page=CmpPic.R.Page=1;
+			CmpPic.L.Rotate=CmpPic.R.Rotate=0;
+
+			bImage=(UpdateImage(&CmpPic.L,true) && UpdateImage(&CmpPic.R,true));
+		}
+
+		struct FarMenuItem MenuItems[4];
+		memset(MenuItems,0,sizeof(MenuItems));
+		MenuItems[0].Text=GetMsg(MDefault);
+		MenuItems[1].Text=GetMsg(MWinMerge);
+		MenuItems[2].Text=GetMsg(MPictures);
+		MenuItems[3].Text=GetMsg(MVisCmp);
+		if (!pCompareFiles) MenuItems[3].Flags|=MIF_GRAYED;
+		if (!bFindDiffProg) MenuItems[1].Flags|=MIF_GRAYED;
+		if (!bImage) MenuItems[2].Flags|=MIF_GRAYED;
+		if (bImage) MenuItems[2].Flags|=MIF_SELECTED;
+		else if (pCompareFiles) MenuItems[3].Flags|=MIF_SELECTED;
+		int MenuCode=Info.Menu(&MainGuid,&CmpMethodMenuGuid,-1,-1,0,FMENU_AUTOHIGHLIGHT|FMENU_WRAPMODE,L"Method",NULL,L"Contents",NULL,NULL,MenuItems,sizeof(MenuItems)/sizeof(MenuItems[0]));
+
+		if (MenuCode==0)
+		{
+			bool bDifferenceNotFound;
+			Opt.TotalProgress=0;
+			if (Opt.CmpCase || Opt.CmpSize || Opt.CmpTime || Opt.CmpContents)
+			{
+				bDifferenceNotFound=CompareFiles(LDir,&LPPI,RDir,&RPPI,0);
+			}
+			else
+				bDifferenceNotFound=!FSF.LStricmp(LFileName,RFileName);
+			const wchar_t *MsgItems[]=
+			{
+				GetMsg(bDifferenceNotFound?MNoDiffTitle:MFirstDiffTitle),
+				GetPosToName(strLFullFileName.get()),
+				GetPosToName(strRFullFileName.get()),
+				GetMsg(MOK)
+			};
+			Info.Message(&MainGuid,&CompareCurFileMsgGuid,bDifferenceNotFound?0:FMSG_WARNING,0,MsgItems,sizeof(MsgItems)/sizeof(MsgItems[0]),1);
+		}
+		else if (MenuCode==1 && bFindDiffProg)
+		{
+			if (CreateProcess(0,Command,0,0,false,0,0,0,&si,&pi))
+			{
+				WaitForSingleObject(pi.hProcess,INFINITE);
+				CloseHandle(pi.hProcess);
+				CloseHandle(pi.hThread);
+			}
+		}
+		else if (MenuCode==2 && bImage)
+			ShowCmpCurDialog(&LPPI,&RPPI);
+		else if (MenuCode==3 && pCompareFiles)
+			pCompareFiles(strLFullFileName.get(),strRFullFileName.get(),0);
+
+		FreeImage(&CmpPic.L);
+		FreeImage(&CmpPic.R);
+	}
+	else if (bFindDiffProg) // WinMerge
+	{
 		if (CreateProcess(0,Command,0,0,false,0,0,0,&si,&pi))
 		{
 			WaitForSingleObject(pi.hProcess,INFINITE);
@@ -2415,13 +2446,6 @@ bool AdvCmpProc::CompareCurFile(const struct DirList *pLList,const struct DirLis
 			CloseHandle(pi.hThread);
 		}
 	}
-	else if (MenuCode==2 && bImage)
-		ShowCmpCurDialog(&pLList->PPI[LPanel.PInfo.CurrentItem],&pRList->PPI[RPanel.PInfo.CurrentItem]);
-	else if (MenuCode==3 && pCompareFiles)
-		pCompareFiles(strLFullFileName.get(),strRFullFileName.get(),0);
-
-	FreeImage(&CmpPic.L);
-	FreeImage(&CmpPic.R);
 
 	return true;
 }

@@ -244,7 +244,7 @@ DWORD WINAPI SynchronizeFileCopyCallback( LARGE_INTEGER TotalFileSize, LARGE_INT
 /***************************************************************************
  * Проверка на наличие файла
  ***************************************************************************/
-int AdvCmpProc::FileExists(const wchar_t *FileName, __int64 *pSize, FILETIME *pTime, DWORD *pAttrib, int CheckForFilter)
+int AdvCmpProc::FileExists(const wchar_t *FileName, unsigned __int64 *pSize, FILETIME *pTime, DWORD *pAttrib, int CheckForFilter)
 {
 	int ret=0; // продолжим, но пропустим элемент
 	WIN32_FIND_DATA wfdFindData;
@@ -296,7 +296,7 @@ int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName
 	if (((direction < 0) && !Opt.SyncLPanel) || ((direction > 0) && !Opt.SyncRPanel))
 		return ret;
 
-	__int64 srcSize=0, destSize=0;
+	unsigned __int64 srcSize=0, destSize=0;
 	DWORD srcAttrib=0, destAttrib=0;
 	FILETIME srcTime, destTime;
 
@@ -459,7 +459,7 @@ int AdvCmpProc::DelFile(const wchar_t *FileName)
 	if ((Opt.Mode==MODE_SYNC && !Opt.SyncDel) || (Opt.Mode==MODE_DUP && !Opt.DupDel))
 		return ret;
 
-	__int64 Size=0;
+	unsigned __int64 Size=0;
 	DWORD Attrib=0;
 	FILETIME Time;
 
@@ -618,7 +618,7 @@ int AdvCmpProc::SyncDir(const wchar_t *srcDirName, const wchar_t *destDirName, i
 		return 0;
 	}
 
-	__int64 Size=0;
+	unsigned __int64 Size=0;
 	DWORD Attrib=0;
 	FILETIME Time;
 
@@ -715,7 +715,7 @@ int AdvCmpProc::DelDir(const wchar_t *DirName)
 		return 0;
 	}
 
-	__int64 Size=0;
+	unsigned __int64 Size=0;
 	DWORD Attrib=0;
 	FILETIME Time;
 
