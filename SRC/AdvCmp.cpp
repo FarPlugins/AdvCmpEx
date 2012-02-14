@@ -141,6 +141,7 @@ PBASS_CHANNELBYTES2SECONDS pBASS_ChannelBytes2Seconds=NULL;
 PBASS_CHANNELGETINFO pBASS_ChannelGetInfo=NULL;
 PBASS_CHANNELGETTAGS pBASS_ChannelGetTags=NULL;
 PBASS_STREAMGETFILEPOSITION pBASS_StreamGetFilePosition=NULL;
+PBASS_GETDEVICEINFO pBASS_GetDeviceInfo=NULL;
 
 
 bool FindFile(wchar_t *Dir, wchar_t *Pattern, string &strFileName)
@@ -310,8 +311,10 @@ bool LoadBASS(wchar_t *PlugPath)
 			pBASS_ChannelGetTags=(PBASS_CHANNELGETTAGS)GetProcAddress(BASSHandle,"BASS_ChannelGetTags");
 		if (!pBASS_StreamGetFilePosition)
 			pBASS_StreamGetFilePosition=(PBASS_STREAMGETFILEPOSITION)GetProcAddress(BASSHandle,"BASS_StreamGetFilePosition");
+		if (!pBASS_GetDeviceInfo)
+			pBASS_GetDeviceInfo=(PBASS_GETDEVICEINFO)GetProcAddress(BASSHandle,"BASS_GetDeviceInfo");
 
-		if (!pBASS_GetVersion || !pBASS_SetConfig || !pBASS_Init || !pBASS_Free || !pBASS_StreamCreateFile || !pBASS_StreamFree ||
+		if (!pBASS_GetVersion || !pBASS_SetConfig || !pBASS_Init || !pBASS_Free || !pBASS_StreamCreateFile || !pBASS_StreamFree || !pBASS_GetDeviceInfo ||
 				!pBASS_ChannelGetLength || !pBASS_ChannelBytes2Seconds || !pBASS_ChannelGetInfo || !pBASS_ChannelGetTags || !pBASS_StreamGetFilePosition)
 		{
 			FreeLibrary(BASSHandle);
@@ -323,7 +326,6 @@ bool LoadBASS(wchar_t *PlugPath)
 			UnLoadBASS();
 		if (bBASSLoaded)
 		{
-			pBASS_SetConfig(BASS_CONFIG_UPDATEPERIOD,0);
 			if (!pBASS_Init(0,44100,0,0,NULL))
 				UnLoadBASS();
 		}
@@ -587,14 +589,16 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 
 	memset(&CmpInfo,0,sizeof(CmpInfo));
 	bBrokenByEsc=false;
-/*
+
 	if (bBASSLoaded)
 	{
-		pBASS_SetConfig(BASS_CONFIG_UPDATEPERIOD,0);
-		if (!pBASS_Init(0,44100,0,0,NULL))
-			UnLoadBASS();
+		BASS_DEVICEINFO info;
+		pBASS_GetDeviceInfo(0,&info);
+		if (!(info.flags&BASS_DEVICE_INIT))
+			if (!pBASS_Init(0,44100,0,0,NULL))
+				UnLoadBASS();
 	}
-*/
+
 	class AdvCmpDlgOpt AdvCmpOpt;
 	int ret=AdvCmpOpt.ShowOptDialog();
 
@@ -664,9 +668,6 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 
 	FreeDirList(&LList);
 	FreeDirList(&RList);
-
-//	if (bBASSLoaded)
-//		pBASS_Free();
 
 	return hPanel;
 }

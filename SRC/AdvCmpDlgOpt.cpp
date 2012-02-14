@@ -143,7 +143,7 @@ struct ParamStore
 	{DlgDUPPICSIZE,  L"DupPicSize",          &Opt.DupPicSize},
 	{DlgDUPPICFMT,   L"DupPicFmt",           &Opt.DupPicFmt},
 	{DlgDUPMUSIC,    L"DupMusic",            &Opt.DupMusic},
-	{DlgDUPMUSICARTIST,L"DupPicMusicArtist", &Opt.DupMusicArtist},
+	{DlgDUPMUSICARTIST,L"DupMusicArtist",    &Opt.DupMusicArtist},
 	{DlgDUPMUSICTITLE,L"DupMusicTitle",      &Opt.DupMusicTitle},
 	{DlgDUPMUSICDURL,0,                      0},
 	{DlgDUPMUSICDURE,L"DupMusicDuration",    &Opt.DupMusicDuration},
