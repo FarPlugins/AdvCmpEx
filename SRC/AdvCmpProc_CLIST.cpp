@@ -665,7 +665,7 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 GOTOCMPFILE:
 						int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
 						cmpFile **tmp=(cmpFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
-						cmpFile *cur=(tmp && *tmp)?*tmp:NULL;
+						cmpFile *cur=tmp?*tmp:NULL;
 						if (cur)
 						{
 							if ((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN) ||
@@ -727,7 +727,7 @@ GOTOCMPFILE:
 						struct FarListPos FLP;
 						Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,&FLP);
 						cmpFile **tmp=(cmpFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)FLP.SelectPos);
-						cmpFile *cur=(tmp && *tmp)?*tmp:NULL;
+						cmpFile *cur=tmp?*tmp:NULL;
 						if (cur && pFileList->bShowSelect)
 						{
 							struct FarListGetItem FLGI;
@@ -766,7 +766,7 @@ GOTOCMPFILE:
 GOTOCHANGEMARK:
 						int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
 						cmpFile **tmp=(cmpFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
-						cmpFile *cur=(tmp && *tmp)?*tmp:NULL;
+						cmpFile *cur=tmp?*tmp:NULL;
 						if (cur && !(cur->dwFlags&RCIF_EQUAL) && Opt.Mode==MODE_SYNC)
 						{
 							struct FarListGetItem FLGI;
@@ -888,7 +888,7 @@ GOTOCHANGEMARK:
 					{
 						int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
 						cmpFile **tmp=(cmpFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
-						cmpFile *cur=(tmp && *tmp)?*tmp:NULL;
+						cmpFile *cur=tmp?*tmp:NULL;
 						if (cur)
 						{
 							if ((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN) ||
@@ -910,7 +910,7 @@ GOTOCHANGEMARK:
 					{
 						int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
 						cmpFile **tmp=(cmpFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
-						cmpFile *cur=(tmp && *tmp)?*tmp:NULL;
+						cmpFile *cur=tmp?*tmp:NULL;
 						if (cur)
 						{
 							string strVirtDir=GetPosToName(cur->LDir)+wcslen(LPanel.Dir);
@@ -1020,7 +1020,7 @@ GOTOCHANGEMARK:
 					{
 						int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
 						cmpFile **tmp=(cmpFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
-						cmpFile *cur=(tmp && *tmp)?*tmp:NULL;
+						cmpFile *cur=tmp?*tmp:NULL;
 						if (cur)
 						{
 							if ((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN))

@@ -1004,8 +1004,8 @@ int AdvCmpDlgOpt::ShowOptDialog()
 		/*28*/{DI_CHECKBOX,  10, 7,   0,   0, 0, 0,                   0,                                0, GetMsg(MDupPicSize),0,0},
 		/*29*/{DI_CHECKBOX,  35, 7,   0,   0, 0, 0,                   0,                                0, GetMsg(MDupPicFmt),0,0},
 		/*30*/{DI_CHECKBOX,   6, 8,   0,   0, 0, 0,                   0,                                0, GetMsg(MDupMusic),0,0},
-		/*31*/{DI_CHECKBOX,  10, 9,   0,   0, 0, 0,                   0,                                0, GetMsg(MDupMusicArtist),0,0},
-		/*32*/{DI_CHECKBOX,  35, 9,   0,   0, 0, 0,                   0,                                0, GetMsg(MDupMusicTitle),0,0},
+		/*31*/{DI_CHECKBOX,  10, 9,   0,   0, 0, 0,                   0,                       DIF_3STATE, GetMsg(MDupMusicArtist),0,0},
+		/*32*/{DI_CHECKBOX,  35, 9,   0,   0, 0, 0,                   0,                       DIF_3STATE, GetMsg(MDupMusicTitle),0,0},
 		/*33*/{DI_TEXT,      10,10,   0,   0, 0, 0,                   0,                                0, GetMsg(MDupMusicDuration),0,0},
 		/*34*/{DI_FIXEDIT,    0,10,   2,   0, 0, 0,              L"999",                     DIF_MASKEDIT, L"3",0,0},
 					/// Прочие опции

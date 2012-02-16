@@ -356,7 +356,7 @@ AdvCmpProc::~AdvCmpProc()
 	Info.FileFilterControl(LPanel.hFilter,FFCTL_FREEFILEFILTER,0,0);
 	Info.FileFilterControl(RPanel.hFilter,FFCTL_FREEFILEFILTER,0,0);
 
-	Info.RestoreScreen(hScreen);
+	if (hScreen) Info.RestoreScreen(hScreen);
 	// Восстановим заголовок консоли ФАРа...
 	if (TitleSaved) SetConsoleTitle(strFarTitle);
 
@@ -2337,6 +2337,8 @@ bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, c
 	if (!FileExists(strLFullFileName.get(),&LPPI.FileSize,&LPPI.LastWriteTime,&LPPI.FileAttributes,0) ||
 			!FileExists(strRFullFileName.get(),&RPPI.FileSize,&RPPI.LastWriteTime,&RPPI.FileAttributes,0))
 		return false;
+	LPPI.FileName=LFileName;
+	RPPI.FileName=RFileName;
 
 	wchar_t Command[32768];
 	STARTUPINFO si;
@@ -2411,6 +2413,10 @@ bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, c
 			}
 			else
 				bDifferenceNotFound=!FSF.LStricmp(LFileName,RFileName);
+
+			Info.PanelControl(LPanel.hPanel,FCTL_REDRAWPANEL,0,0);
+			Info.PanelControl(RPanel.hPanel,FCTL_REDRAWPANEL,0,0);
+
 			const wchar_t *MsgItems[]=
 			{
 				GetMsg(bDifferenceNotFound?MNoDiffTitle:MFirstDiffTitle),

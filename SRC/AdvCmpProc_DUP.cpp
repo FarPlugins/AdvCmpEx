@@ -323,7 +323,7 @@ INT_PTR WINAPI ShowDupDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 			Info.SendDlgMessage(hDlg,DM_SETITEMPOSITION,0,&WinInfo.Con);
 			int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
 			dupFile **tmp=(dupFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
-			dupFile *cur=(tmp && *tmp)?*tmp:NULL;
+			dupFile *cur=tmp?*tmp:NULL;
 			if (cur) SetBottom(hDlg,pFileList,cur);
 			c.X=c.Y=-1;
 			Info.SendDlgMessage(hDlg,DM_MOVEDIALOG,true,&c);
@@ -371,7 +371,7 @@ INT_PTR WINAPI ShowDupDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 			if (Param1==0)
 			{
 				dupFile **tmp=(dupFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Param2);
-				dupFile *cur=(tmp && *tmp)?*tmp:NULL;
+				dupFile *cur=tmp?*tmp:NULL;
 				if (cur)
 				{
 					SetBottom(hDlg,pFileList,cur);
@@ -528,7 +528,7 @@ GOTOCMPFILE:
 					{
 						int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
 						dupFile **tmp=(dupFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
-						dupFile *cur=(tmp && *tmp)?*tmp:NULL;
+						dupFile *cur=tmp?*tmp:NULL;
 						if (cur)
 						{
 							string strFullFileName;
@@ -548,7 +548,7 @@ GOTOCMPFILE:
 						struct FarListPos FLP;
 						Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,&FLP);
 						dupFile **tmp=(dupFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)FLP.SelectPos);
-						dupFile *cur=(tmp && *tmp)?*tmp:NULL;
+						dupFile *cur=tmp?*tmp:NULL;
 						if (cur)
 						{
 							struct FarListGetItem FLGI;
@@ -711,7 +711,7 @@ GOTOCHANGEMARK:
 					{
 						int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
 						dupFile **tmp=(dupFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
-						dupFile *cur=(tmp && *tmp)?*tmp:NULL;
+						dupFile *cur=tmp?*tmp:NULL;
 						if (cur)
 						{
 							Opt.Mode=MODE_CMP; //скидываем!!!
@@ -907,19 +907,17 @@ int AdvCmpProc::GetMp3(dupFile *cur)
 	if (CheckForEsc())
 		return ret;
 
-	HSTREAM stream;
+	HSTREAM stream=NULL;
 
 	if (FSF.ProcessName(L"*.mp3",cur->FileName,0,PN_CMPNAME))
 	{
 		string strFullFileName;
 		GetFullFileName(strFullFileName,cur->Dir,cur->FileName);
-
+		BASS_CHANNELINFO info;
 		if (stream=pBASS_StreamCreateFile(FALSE,strFullFileName.get(),0,0,BASS_STREAM_DECODE|BASS_UNICODE))
-		{
-			BASS_CHANNELINFO info;
-			if (pBASS_ChannelGetInfo(stream,&info) && info.ctype==BASS_CTYPE_STREAM_MP3)
-				cur->dwFlags|=RCIF_MUSIC;
-		}
+			if (pBASS_ChannelGetInfo(stream,&info))
+				if (info.ctype==BASS_CTYPE_STREAM_MP3)
+					cur->dwFlags|=RCIF_MUSIC;
 	}
 
 	if (!(cur->dwFlags&RCIF_MUSIC))
@@ -936,26 +934,25 @@ int AdvCmpProc::GetMp3(dupFile *cur)
 	TAG_ID3 *id3=(TAG_ID3*)pBASS_ChannelGetTags(stream,BASS_TAG_ID3);
 	if (id3)
 	{
-		int len=lstrlenA(id3->artist);
-		if (len)
+		const unsigned int nSize=30;
+		int nFrameSize=nSize;
+		while (nFrameSize>0 && id3->artist[nFrameSize-1] == ' ') nFrameSize--;
+		cur->MusicArtist=(wchar_t*)malloc(nSize*sizeof(wchar_t));
+		if (cur->MusicArtist)
 		{
-			cur->MusicArtist=(wchar_t*)malloc((len+1)*sizeof(wchar_t));
-			if (cur->MusicArtist)
-			{
-				MultiByteToWideChar(CP_ACP,0,id3->artist,-1,cur->MusicArtist,len+1);
+			MultiByteToWideChar(CP_ACP,0,id3->artist,nFrameSize,cur->MusicArtist,nSize);
+			if (*cur->MusicArtist)
 				cur->dwFlags|=RCIF_MUSICART;
-			}
 		}
 
-		len=lstrlenA(id3->title);
-		if (len)
+		nFrameSize=nSize;
+		while (nFrameSize>0 && id3->title[nFrameSize-1] == ' ') nFrameSize--;
+		cur->MusicTitle=(wchar_t*)malloc(nSize*sizeof(wchar_t));
+		if (cur->MusicTitle)
 		{
-			cur->MusicTitle=(wchar_t*)malloc((len+1)*sizeof(wchar_t));
-			if (cur->MusicTitle)
-			{
-				MultiByteToWideChar(CP_ACP,0,id3->title,-1,cur->MusicTitle,len+1);
+			MultiByteToWideChar(CP_ACP,0,id3->title,nFrameSize,cur->MusicTitle,nSize);
+			if (*cur->MusicTitle)
 				cur->dwFlags|=RCIF_MUSICTIT;
-			}
 		}
 	}
 /*
@@ -1321,39 +1318,59 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 						}
 						if (Opt.DupMusicArtist)
 						{
-							if (!src->MusicArtist || !cur->MusicArtist)
+							if (!src->MusicArtist || !(*src->MusicArtist) || !cur->MusicArtist || !(*cur->MusicArtist))
 								continue;
 
-							unsigned LenS=wcslen(src->MusicArtist);
-							unsigned LenC=wcslen(cur->MusicArtist);
-							bool srcbig=(LenS>LenC); //исходная строка больше - ищем в исходной, и наоборот
-							int r=1;
-							for (int i=0;i<(srcbig?LenS:LenC);i++)
+							if (Opt.DupMusicArtist==2)
 							{
-								r=(srcbig?FSF.LStrnicmp(src->MusicArtist+i,cur->MusicArtist,LenC):FSF.LStrnicmp(cur->MusicArtist+i,src->MusicArtist,LenS));
-								if (r==0)
-									break;
+								unsigned LenS=wcslen(src->MusicArtist);
+								unsigned LenC=wcslen(cur->MusicArtist);
+								int r=1;
+								if (LenS<=LenC);
+								{
+									for (int l=0;l<LenC;l++)
+									{
+										r=FSF.LStrnicmp(cur->MusicArtist+l,src->MusicArtist,LenS);
+										if (r==0)
+											break;
+									}
+								}
+								if (r)
+									continue;
 							}
-							if (r)
-								continue;
+							else
+							{
+								if (FSF.LStricmp(cur->MusicArtist,src->MusicArtist))
+									continue;
+							}
 						}
 						if (Opt.DupMusicTitle)
 						{
-							if (!src->MusicTitle || !cur->MusicTitle)
+							if (!src->MusicTitle || !(*src->MusicTitle) || !cur->MusicTitle || !(*cur->MusicTitle))
 								continue;
 
-							unsigned LenS=wcslen(src->MusicTitle);
-							unsigned LenC=wcslen(cur->MusicTitle);
-							bool srcbig=(LenS>LenC); //исходная строка больше - ищем в исходной, и наоборот
-							int r=1;
-							for (int i=0;i<(srcbig?LenS:LenC);i++)
+							if (Opt.DupMusicTitle==2)
 							{
-								r=(srcbig?FSF.LStrnicmp(src->MusicTitle+i,cur->MusicTitle,LenC):FSF.LStrnicmp(cur->MusicTitle+i,src->MusicTitle,LenS));
-								if (r==0)
-									break;
+								unsigned LenS=wcslen(src->MusicTitle);
+								unsigned LenC=wcslen(cur->MusicTitle);
+								int r=1;
+								if (LenS<=LenC)
+								{
+									for (int l=0;l<LenC;l++)
+									{
+										r=FSF.LStrnicmp(cur->MusicTitle+l,src->MusicTitle,LenS);
+										if (r==0)
+											break;
+									}
+								}
+								if (r)
+									continue;
 							}
-							if (r)
-								continue;
+							else
+							{
+								if (FSF.LStricmp(cur->MusicTitle,src->MusicTitle))
+									continue;
+							}
 						}
 					}
 					else if (cur->nFileSize)

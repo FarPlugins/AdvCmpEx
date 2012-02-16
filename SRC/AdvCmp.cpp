@@ -194,8 +194,12 @@ bool LoadVisComp(wchar_t *PlugPath)
 	if (FindFile(PlugPath,L"VisComp.dll",strPatchVisComp) &&
 			Info.PluginsControl(INVALID_HANDLE_VALUE,PCTL_FORCEDLOADPLUGIN,PLT_PATH,strPatchVisComp.get()))
 	{
-		pCompareFiles=(PCOMPAREFILES)GetProcAddress(GetModuleHandleW(L"VisComp.dll"),"CompareFiles");
-		return true;
+		HMODULE h=GetModuleHandleW(L"VisComp.dll");
+		if (h)
+		{
+			pCompareFiles=(PCOMPAREFILES)GetProcAddress(h,"CompareFiles");
+			return true;
+		}
 	}
 	return false;
 }
