@@ -897,6 +897,121 @@ DWORD AdvCmpProc::GetCRC(const dupFile *cur)
 	return dwFileCRC;
 }
 
+static unsigned int GetSyncSafeInt(unsigned char *b)
+{
+	return (b[0]<<21) | (b[1]<<14) | (b[2]<<7) | (b[3]);
+}
+
+static unsigned int GetNonSyncSafeInt23(unsigned char *b)
+{
+	return (b[0]<<24) | (b[1]<<16) | (b[2]<<8) | (b[3]);
+}
+
+static unsigned int GetNonSyncSafeInt22(unsigned char *b)
+{
+	return (b[0]<<16) | (b[1]<<8) | (b[2]);
+}
+
+bool ID3_ReadFrameText(char bType, char *pTextRaw, int nTextRawSize, wchar_t *pszBuf, int nBufSize)
+{
+	if ((bType == 3) || (bType != 1 && bType != 2 && nTextRawSize>= 3 && pTextRaw[0] == 0xef && pTextRaw[1] == 0xbb && pTextRaw[2] == 0xbf))
+	{
+		/* UTF8 */
+		if (nTextRawSize>= 3 && pTextRaw[0] == 0xef && pTextRaw[1] == 0xbb && pTextRaw[2] == 0xbf)
+		{
+			pTextRaw += 3;
+			nTextRawSize -= 3;
+		}
+		MultiByteToWideChar(CP_UTF8, 0, pTextRaw, nTextRawSize, pszBuf, nBufSize);
+	}
+	else if (bType == 1 || bType == 2)
+	{
+		/* UTF16 LE*/
+		if (nTextRawSize>= 2 && pTextRaw[0] == 0xff && pTextRaw[1] == 0xfe)
+		{
+			pTextRaw += 2;
+			nTextRawSize -= 2;
+			bType = 1;
+		} 
+		/* UTF16 BE*/
+		else if (nTextRawSize>= 2 && pTextRaw[0] == 0xfe && pTextRaw[1] == 0xff)
+		{
+			pTextRaw += 2;
+			nTextRawSize -= 2;
+			bType = 2;
+		}
+		if (bType == 2)
+		{
+			char *pa = (char *)malloc(nTextRawSize);
+			if (pa)
+			{
+				int l = nTextRawSize >> 1;
+				for (int i=0; i<l; i++)
+				{
+					pa[i * 2 + 0] = pTextRaw[i * 2 + 1];
+					pa[i * 2 + 1] = pTextRaw[i * 2 + 0];
+				}
+				ID3_ReadFrameText(1, pa, nTextRawSize, pszBuf, nBufSize);
+				free(pa);
+				return true;
+			}
+			return false;
+		}
+#define XMIN(x,y) ((x>y)?y:x)
+		memcpy(pszBuf, pTextRaw, XMIN((nTextRawSize >> 1), nBufSize) * sizeof(wchar_t));
+	}
+	else
+	{
+		MultiByteToWideChar(CP_ACP, 0, pTextRaw, nTextRawSize, pszBuf, nBufSize);
+	}
+	FSF.RTrim(pszBuf);
+	return true;
+}
+
+char *Unsync(char *pSrc, unsigned nSrcLen, unsigned nDstLmt, unsigned *pnDstLen)
+{
+	char *pUnsync=(char *)malloc(nSrcLen?nSrcLen:nDstLmt);
+	if (pUnsync)
+	{
+		unsigned i=0, j=0;
+		for ( ; (nSrcLen?i<nSrcLen:j<nDstLmt); i++)
+		{
+			char b=pSrc[i];
+			pUnsync[j++]=b; 
+			if (b==0xff && pSrc[i+1] == 0) i++;
+		}
+		*pnDstLen=j;
+	}
+	return pUnsync;
+}
+
+bool ID3V23_ReadFrame(int nFlag, char *pRaw, unsigned nFrameSize, wchar_t *pszBuf, int nBufSize)
+{
+	bool bRet=false;
+	unsigned nRawSize=nFrameSize;
+	if (nFlag&1)
+	{
+		nRawSize -= 4;
+		pRaw += 4;
+	}
+	if (nFlag&2)
+	{
+		unsigned nUnsynced;
+		char *pUnsync=Unsync(pRaw+1, nRawSize-1, 0, &nUnsynced);
+		if (pUnsync)
+		{
+			bRet=ID3_ReadFrameText(pRaw[0], pUnsync, nUnsynced, pszBuf, nBufSize);
+			free(pUnsync);
+		}
+	}
+	else
+	{
+		bRet=ID3_ReadFrameText(pRaw[0], pRaw+1, nRawSize-1, pszBuf, nBufSize);
+	}
+	return bRet;
+}
+
+
 int AdvCmpProc::GetMp3(dupFile *cur)
 {
 	int ret=0;
@@ -916,14 +1031,14 @@ int AdvCmpProc::GetMp3(dupFile *cur)
 		BASS_CHANNELINFO info;
 		if (stream=pBASS_StreamCreateFile(FALSE,strFullFileName.get(),0,0,BASS_STREAM_DECODE|BASS_UNICODE))
 			if (pBASS_ChannelGetInfo(stream,&info))
-				if (info.ctype==BASS_CTYPE_STREAM_MP3)
+				if (info.ctype==BASS_CTYPE_STREAM_MP3 || info.ctype==BASS_CTYPE_STREAM_MP2)
 					cur->dwFlags|=RCIF_MUSIC;
 	}
 
 	if (!(cur->dwFlags&RCIF_MUSIC))
 	{
-		if (stream) pBASS_StreamFree(stream);
-		return ret;
+		ret=0;
+		goto END;
 	}
 
 	ShowDupMsg(GetPosToName(cur->Dir),cur->FileName,true);
@@ -931,28 +1046,133 @@ int AdvCmpProc::GetMp3(dupFile *cur)
 	cur->MusicBitrate=(DWORD)(pBASS_StreamGetFilePosition(stream,BASS_FILEPOS_END)/
 														(125*pBASS_ChannelBytes2Seconds(stream,pBASS_ChannelGetLength(stream,BASS_POS_BYTE)))+0.5); // bitrate (Kbps)
 	cur->MusicTime=pBASS_ChannelBytes2Seconds(stream,pBASS_ChannelGetLength(stream,BASS_POS_BYTE));
+
+	const unsigned int nSize=256;
+	cur->MusicArtist=(wchar_t*)malloc(nSize*sizeof(wchar_t));
+	cur->MusicTitle=(wchar_t*)malloc(nSize*sizeof(wchar_t));
+
+	if (!cur->MusicArtist || !cur->MusicTitle)
+	{
+		ret=0;
+		goto END;
+	}
+
+	char *p=(char *)pBASS_ChannelGetTags(stream,BASS_TAG_ID3V2);
+	if (p && p[0]=='I' && p[1]=='D' && p[2]=='3')
+	{
+		unsigned nVersion = ((*(p + 3)) << 8) | (*(p + 4));
+		unsigned nFlag = *(p + 5);
+		unsigned nTagSize = GetSyncSafeInt((unsigned char*)p + 6);
+		char szFrameID[5];
+		unsigned nFrameSize;
+		unsigned nTotal=0;
+		char *pUnsync=NULL;
+
+		if ((nFlag&0x80) && (nVersion<=0x300))
+			p = pUnsync = Unsync(p+10,0,nTagSize,&nTagSize);
+		else
+			p += 10;
+		if (p)
+		{
+			if (nVersion>=0x300)
+			{
+				if (nFlag & 0x40)
+					nTotal += (nVersion==0x300) ? (4+GetNonSyncSafeInt23((unsigned char*)p+nTotal)) : GetSyncSafeInt((unsigned char*)p+nTotal);
+
+				while(nTotal<nTagSize)
+				{
+					int nFrameFlag=0;
+					// Ver.2.3
+					lstrcpynA(szFrameID,(p+nTotal),5);
+					if (nVersion== 0x300)
+						nFrameSize=GetNonSyncSafeInt23((unsigned char*)p+nTotal+4);
+					else
+						nFrameSize=GetSyncSafeInt((unsigned char*)p+nTotal+4);
+					int nLenID=lstrlenA(szFrameID);
+					if (nLenID>0 && nLenID<4 && nTotal>4)
+					{
+						/* broken tag */
+						lstrcpynA(szFrameID,(p+nTotal-4+nLenID),5);
+						if (lstrlenA(szFrameID)==4)
+						{
+							nTotal += -4+nLenID;
+							continue;
+						}
+					}
+					if (nLenID!=4)
+						break;
+					if (nVersion!=0x300)
+						nFrameFlag = (p[nTotal+9] & 3) | ((nFlag & 0x80) ? 2 : 0);
+
+					if(!lstrcmpA(szFrameID, "TPE1"))
+						ID3V23_ReadFrame(nFrameFlag, p+nTotal+10,nFrameSize,cur->MusicArtist,nSize);
+					else if(!lstrcmpA(szFrameID, "TIT2"))
+						ID3V23_ReadFrame(nFrameFlag, p+nTotal+10,nFrameSize,cur->MusicTitle,nSize);
+					nTotal += nFrameSize+10;
+				}
+			}
+			else
+			{
+				while(nTotal<nTagSize)
+				{
+					int nFrameFlag=0;
+					// Ver.2.2
+					lstrcpynA(szFrameID,(p+nTotal),4);
+					nFrameSize=GetNonSyncSafeInt22((unsigned char*)p+nTotal+3);
+					if (lstrlenA(szFrameID)!=3)
+						break;
+
+					if(!lstrcmpA(szFrameID, "TP1"))
+						ID3V23_ReadFrame(nFrameFlag, p+nTotal+6,nFrameSize,cur->MusicArtist,nSize);
+					else if(!lstrcmpA(szFrameID, "TT2"))
+						ID3V23_ReadFrame(nFrameFlag, p+nTotal+6, nFrameSize,cur->MusicTitle,nSize);
+					nTotal += nFrameSize+6;
+				}
+			}
+		}
+		if (pUnsync) free(pUnsync);
+	}
+	if (*cur->MusicArtist)
+	{
+//DebugMsg(L"cur->MusicArtist-2",cur->MusicArtist);
+		ret=1;
+		cur->dwFlags|=RCIF_MUSICART;
+	}
+	if (*cur->MusicTitle)
+	{
+//DebugMsg(L"cur->MusicTitle-2",cur->MusicTitle);
+		ret=1;
+		cur->dwFlags|=RCIF_MUSICTIT;
+	}
+
 	TAG_ID3 *id3=(TAG_ID3*)pBASS_ChannelGetTags(stream,BASS_TAG_ID3);
 	if (id3)
 	{
-		const unsigned int nSize=30;
-		int nFrameSize=nSize;
-		while (nFrameSize>0 && id3->artist[nFrameSize-1] == ' ') nFrameSize--;
-		cur->MusicArtist=(wchar_t*)malloc(nSize*sizeof(wchar_t));
-		if (cur->MusicArtist)
+		int nFrameSize=30;
+		if (!(cur->dwFlags&RCIF_MUSICART))
 		{
+			while (nFrameSize>0 && id3->artist[nFrameSize-1] == 0x20) nFrameSize--;
 			MultiByteToWideChar(CP_ACP,0,id3->artist,nFrameSize,cur->MusicArtist,nSize);
+			FSF.RTrim(cur->MusicArtist);
 			if (*cur->MusicArtist)
+			{
+//DebugMsg(L"cur->MusicArtist-1",cur->MusicArtist);
+				ret=1;
 				cur->dwFlags|=RCIF_MUSICART;
+			}
 		}
-
-		nFrameSize=nSize;
-		while (nFrameSize>0 && id3->title[nFrameSize-1] == ' ') nFrameSize--;
-		cur->MusicTitle=(wchar_t*)malloc(nSize*sizeof(wchar_t));
-		if (cur->MusicTitle)
+		nFrameSize=30;
+		if (!(cur->dwFlags&RCIF_MUSICTIT))
 		{
+			while (nFrameSize>0 && id3->title[nFrameSize-1] == 0x20) nFrameSize--;
 			MultiByteToWideChar(CP_ACP,0,id3->title,nFrameSize,cur->MusicTitle,nSize);
+			FSF.RTrim(cur->MusicTitle);
 			if (*cur->MusicTitle)
+			{
+//DebugMsg(L"cur->MusicTitle-1",cur->MusicTitle);
+				ret=1;
 				cur->dwFlags|=RCIF_MUSICTIT;
+			}
 		}
 	}
 /*
@@ -1011,9 +1231,10 @@ int AdvCmpProc::GetMp3(dupFile *cur)
 		}
 	}
 */
-	pBASS_StreamFree(stream);
+END:
+	if (stream) pBASS_StreamFree(stream);
 
-	return ret=1;
+	return ret;
 }
 
 
