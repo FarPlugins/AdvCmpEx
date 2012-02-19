@@ -145,8 +145,8 @@ struct ParamStore
 	{DlgDUPMUSIC,    L"DupMusic",            &Opt.DupMusic},
 	{DlgDUPMUSICARTIST,L"DupMusicArtist",    &Opt.DupMusicArtist},
 	{DlgDUPMUSICTITLE,L"DupMusicTitle",      &Opt.DupMusicTitle},
-	{DlgDUPMUSICDURL,0,                      0},
-	{DlgDUPMUSICDURE,L"DupMusicDuration",    &Opt.DupMusicDuration},
+	{DlgDUPMUSICDURL,L"DupMusicDuration",    &Opt.DupMusicDuration},
+	{DlgDUPMUSICDURE,L"DupMusicDurationSec", &Opt.DupMusicDurationSec},
 
 	{DlgSEP1,        0,                      0},
 	{DlgSUBFOLDER,   L"Subfolders",          &Opt.Subfolders},
@@ -368,6 +368,8 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPPICSIZE,(void*)false);
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPPICFMT,(void*)false);
 				}
+				if (!Opt.DupMusicDuration)
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPMUSICDURE,(void*)false);
 				if (!Opt.DupMusic || !bBASSLoaded)
 				{
 					if (!bBASSLoaded)
@@ -791,7 +793,8 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPMUSICARTIST,(void*)true);
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPMUSICTITLE,(void*)true);
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPMUSICDURL,(void*)true);
-					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPMUSICDURE,(void*)true);
+					if (Info.SendDlgMessage(hDlg,DM_GETCHECK,DlgDUPMUSICDURL,0))
+						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPMUSICDURE,(void*)true);
 				}
 				else
 				{
@@ -800,6 +803,13 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPMUSICDURL,(void*)false);
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPMUSICDURE,(void*)false);
 				}
+			}
+			else if (Param1 == DlgDUPMUSICDURL)
+			{
+				if (Param2)
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPMUSICDURE,(void*)true);
+				else
+					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPMUSICDURE,(void*)false);
 			}
 			break;
 
@@ -1006,7 +1016,7 @@ int AdvCmpDlgOpt::ShowOptDialog()
 		/*30*/{DI_CHECKBOX,   6, 8,   0,   0, 0, 0,                   0,                                0, GetMsg(MDupMusic),0,0},
 		/*31*/{DI_CHECKBOX,  10, 9,   0,   0, 0, 0,                   0,                       DIF_3STATE, GetMsg(MDupMusicArtist),0,0},
 		/*32*/{DI_CHECKBOX,  35, 9,   0,   0, 0, 0,                   0,                       DIF_3STATE, GetMsg(MDupMusicTitle),0,0},
-		/*33*/{DI_TEXT,      10,10,   0,   0, 0, 0,                   0,                                0, GetMsg(MDupMusicDuration),0,0},
+		/*33*/{DI_CHECKBOX,  10,10,   0,   0, 1, 0,                   0,                                0, GetMsg(MDupMusicDuration),0,0},
 		/*34*/{DI_FIXEDIT,    0,10,   2,   0, 0, 0,              L"999",                     DIF_MASKEDIT, L"3",0,0},
 					/// Прочие опции
 		/*35*/{DI_TEXT,      -1,12,   0,   0, 0, 0,                   0,                    DIF_SEPARATOR, GetMsg(MTitleOptions),0,0},
@@ -1048,7 +1058,7 @@ int AdvCmpDlgOpt::ShowOptDialog()
 	DialogItems[DlgIGNORETEMPL].X1 = DialogItems[DlgIGNORE].X1 + wcslen(DialogItems[DlgIGNORE].Data) - (wcschr(DialogItems[DlgIGNORE].Data, L'&')?1:0) + 5;
 	DialogItems[DlgCACHEIGNORE].X1 = DialogItems[DlgCACHE].X1 + wcslen(DialogItems[DlgCACHE].Data) - (wcschr(DialogItems[DlgCACHE].Data, L'&')?1:0) + 5;
 	DialogItems[DlgDUPPICDIFF].X1 = DialogItems[DlgDUPPIC].X1 + wcslen(DialogItems[DlgDUPPIC].Data) - (wcschr(DialogItems[DlgDUPPIC].Data, L'&')?1:0) + 5;
-	DialogItems[DlgDUPMUSICDURE].X1 = DialogItems[DlgDUPMUSICDURL].X1 + wcslen(DialogItems[DlgDUPMUSICDURL].Data) - (wcschr(DialogItems[DlgDUPMUSICDURL].Data, L'&')?1:0) + 1;
+	DialogItems[DlgDUPMUSICDURE].X1 = DialogItems[DlgDUPMUSICDURL].X1 + wcslen(DialogItems[DlgDUPMUSICDURL].Data) - (wcschr(DialogItems[DlgDUPMUSICDURL].Data, L'&')?1:0) + 5;
 	DialogItems[DlgDUPMUSICDURE].X2 += DialogItems[DlgDUPMUSICDURE].X1;
 
 	// расставим опции в диалоге

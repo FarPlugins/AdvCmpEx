@@ -209,10 +209,10 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 		FSF.qsort(pFileList->F,pFileList->iCount,sizeof(pFileList->F[0]),dupSortListByGroupEx);
 
 	int Index=0;
-	wchar_t buf[65536];
-//	wchar_t Time[20];
-	wchar_t Size[10];
-	wchar_t MetaData[80];
+	string strBuf;
+	strBuf.get(32768);
+	wchar_t Size[10], Time[20], w[64], h[64];
+	wchar_t MetaData[160];
 
 	int digits_count=1, m=10;
 	while (m <= pFileList->GroupCount)
@@ -225,27 +225,34 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 	{
 		dupFile *cur=&pFileList->F[i];
 
-		FSF.FormatFileSize(cur->nFileSize,7,FFFS_FLOATSIZE|FFFS_SHOWBYTESINDEX|FFFS_ECONOMIC,Size,8);
 		string strPath(GetPosToName(cur->Dir));
-		FSF.TruncPathStr(strPath.get(),40);
-		strPath.updsize();
+		FSF.FormatFileSize(cur->nFileSize,7,FFFS_FLOATSIZE|FFFS_SHOWBYTESINDEX|FFFS_ECONOMIC,Size,8);
+
 		if ((cur->dwFlags&RCIF_PIC) || (cur->dwFlags&RCIF_PICERR && cur->PicWidth && cur->PicHeight))
 		{
-			wchar_t w[20], h[20];
-			FSF.FormatFileSize(cur->PicWidth,7,FFFS_COMMAS,w,8);
-			FSF.FormatFileSize(cur->PicHeight,7,FFFS_COMMAS,h,8);
-			FSF.sprintf(MetaData,L"%s x %s",w,h);
+			FSF.TruncPathStr(strPath.get(),70);
+			strPath.updsize();
+			GetStrFileTime(&cur->ftLastWriteTime,Time,true);
+			FSF.itoa(cur->PicWidth,w,10);
+			FSF.itoa(cur->PicHeight,h,10);
+			FSF.sprintf(MetaData,L"%-70.70s%c%-19.19s %4.4s x %-4.4s",strPath.get(),0x2551,Time,w,h);
 		}
 		else if (cur->dwFlags&RCIF_MUSIC)
 		{
-			FSF.sprintf(MetaData,L"%02u:%02u %03uKb/s %-20.20s %-20.20s",cur->MusicTime/60,cur->MusicTime%60,cur->MusicBitrate,(cur->dwFlags&RCIF_MUSICART)?cur->MusicArtist:L"",(cur->dwFlags&RCIF_MUSICTIT)?cur->MusicTitle:L"");
+			FSF.TruncPathStr(strPath.get(),30);
+			strPath.updsize();
+			FSF.sprintf(MetaData,L"%-30.30s%c%-30.30s %-30.30s %02u:%02u %03u",strPath.get(),0x2551,(cur->dwFlags&RCIF_MUSICART)?cur->MusicArtist:L"",(cur->dwFlags&RCIF_MUSICTIT)?cur->MusicTitle:L"",cur->MusicTime/60,cur->MusicTime%60,cur->MusicBitrate);
 		}
 		else
 		{
-			GetStrFileTime(&cur->ftLastWriteTime,MetaData,true);
+			FSF.TruncPathStr(strPath.get(),82);
+			strPath.updsize();
+			GetStrFileTime(&cur->ftLastWriteTime,Time,true);
+			FSF.sprintf(MetaData,L"%-82.82s%c%-19.19s",strPath.get(),0x2551,Time);
 		}
 
-		FSF.sprintf(buf, L"%*d%c%*.*s%c%-*.*s%c%-*.*s%c%s",digits_count,cur->nGroup,0x2502,7,7,Size,0x2551,60,60,MetaData,0x2551,40,40,strPath.get(),0x2551,cur->FileName);
+		FSF.sprintf(strBuf.get(), L"%*d%c%-102.102s%c%-7.7s%c%s",digits_count,cur->nGroup,0x2502,MetaData,0x2551,Size,0x2551,cur->FileName);
+		strBuf.updsize();
 
 		struct FarListItem Item;
 		Item.Flags=0;
@@ -254,7 +261,7 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 			Item.Flags|=(LIF_CHECKED|LIF_GRAYED);
 			pFileList->Del++;
 		}
-		Item.Text=buf;
+		Item.Text=strBuf.get();
 		Item.Reserved[0]=Item.Reserved[1]=Item.Reserved[2]=0;
 		struct FarList List;
 		List.ItemsNumber=1;
@@ -1041,12 +1048,6 @@ int AdvCmpProc::GetMp3(dupFile *cur)
 		goto END;
 	}
 
-	ShowDupMsg(GetPosToName(cur->Dir),cur->FileName,true);
-
-	cur->MusicBitrate=(DWORD)(pBASS_StreamGetFilePosition(stream,BASS_FILEPOS_END)/
-														(125*pBASS_ChannelBytes2Seconds(stream,pBASS_ChannelGetLength(stream,BASS_POS_BYTE)))+0.5); // bitrate (Kbps)
-	cur->MusicTime=pBASS_ChannelBytes2Seconds(stream,pBASS_ChannelGetLength(stream,BASS_POS_BYTE));
-
 	const unsigned int nSize=256;
 	cur->MusicArtist=(wchar_t*)malloc(nSize*sizeof(wchar_t));
 	cur->MusicTitle=(wchar_t*)malloc(nSize*sizeof(wchar_t));
@@ -1056,6 +1057,12 @@ int AdvCmpProc::GetMp3(dupFile *cur)
 		ret=0;
 		goto END;
 	}
+
+	ShowDupMsg(GetPosToName(cur->Dir),cur->FileName,true);
+
+	cur->MusicBitrate=(DWORD)(pBASS_StreamGetFilePosition(stream,BASS_FILEPOS_END)/
+														(125*pBASS_ChannelBytes2Seconds(stream,pBASS_ChannelGetLength(stream,BASS_POS_BYTE)))+0.5); // bitrate (Kbps)
+	cur->MusicTime=pBASS_ChannelBytes2Seconds(stream,pBASS_ChannelGetLength(stream,BASS_POS_BYTE));
 
 	char *p=(char *)pBASS_ChannelGetTags(stream,BASS_TAG_ID3V2);
 	if (p && p[0]=='I' && p[1]=='D' && p[2]=='3')
@@ -1175,7 +1182,7 @@ int AdvCmpProc::GetMp3(dupFile *cur)
 			}
 		}
 	}
-/*
+
 	if (!(cur->dwFlags&RCIF_MUSICART) || !(cur->dwFlags&RCIF_MUSICTIT))
 	{
 		wchar_t *Name=cur->FileName;
@@ -1193,44 +1200,53 @@ int AdvCmpProc::GetMp3(dupFile *cur)
 			}
 		}
 
-		if (!cur->MusicArtist && Ptr!=lenName)
+		if (!(cur->dwFlags&RCIF_MUSICART) && Ptr!=lenName)
 		{
-			cur->MusicArtist=(wchar_t*)malloc((Ptr+1)*sizeof(wchar_t));
-			if (cur->MusicArtist)
+			bool bNum=true;
+			for (int i=0,j=0; Name[j] && j<Ptr && i<nSize; j++)
 			{
-				bool bNum=true;
-				for (int i=0,j=0; Name[j] && j<Ptr; j++)
+				if (bNum)
 				{
-					if (bNum)
-					{
-						if (Name[j]>=L'0' && Name[j]<=L'9')
-							continue;
-						else
-							bNum=false;
-					}
-					cur->MusicArtist[i++]=Name[j];
+					if (Name[j]>=L'0' && Name[j]<=L'9')
+						continue;
+					else
+						bNum=false;
 				}
+				cur->MusicArtist[i++]=Name[j];
+			}
+			//!!! память обнулена - cur->MusicArtist[i]=0 не делаем !!!
+			FSF.RTrim(cur->MusicArtist);
+			FSF.LTrim(cur->MusicArtist);
+			if (*cur->MusicArtist)
+			{
+//DebugMsg(L"cur->MusicArtist-0",cur->MusicArtist);
+				ret=1;
 			}
 		}
-		if (!cur->MusicTitle)
+
+		if (!(cur->dwFlags&RCIF_MUSICTIT))
 		{
 			if (Ptr!=lenName)
 			{
-				cur->MusicTitle=(wchar_t*)malloc((lenName-Ptr)*sizeof(wchar_t));
-				if (cur->MusicTitle)
-					for (int i=0,j=Ptr+3; j<lenName; i++,j++)
-						cur->MusicTitle[i]=Name[j];
+				for (int i=0,j=Ptr+3; j<lenName && i<nSize; i++,j++)
+					cur->MusicTitle[i]=Name[j];
 			}
 			else
 			{
-				cur->MusicTitle=(wchar_t*)malloc((lenName+1)*sizeof(wchar_t));
-				if (cur->MusicTitle)
-					for (int i=0; Name[i] && i<lenName; i++)
-						cur->MusicTitle[i]=Name[i];
+				for (int i=0; Name[i] && i<lenName && i<nSize; i++)
+					cur->MusicTitle[i]=Name[i];
+			}
+			//!!! память обнулена, cur->MusicTitle[i]=0 не делаем !!!
+			FSF.RTrim(cur->MusicTitle);
+			FSF.LTrim(cur->MusicTitle);
+			if (*cur->MusicTitle)
+			{
+//DebugMsg(L"cur->MusicTitle-0",cur->MusicTitle);
+				ret=1;
 			}
 		}
 	}
-*/
+
 END:
 	if (stream) pBASS_StreamFree(stream);
 
@@ -1534,7 +1550,7 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 						if (Opt.DupMusicDuration)
 						{
 							int nDiff=(src->MusicTime>=cur->MusicTime?src->MusicTime-cur->MusicTime:cur->MusicTime-src->MusicTime);
-							if (nDiff>Opt.DupMusicDuration)
+							if (nDiff>Opt.DupMusicDurationSec)
 								continue;
 						}
 						if (Opt.DupMusicArtist)

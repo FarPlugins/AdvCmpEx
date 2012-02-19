@@ -163,6 +163,7 @@ extern struct Options {
 			DupMusicArtist,
 			DupMusicTitle,
 			DupMusicDuration,
+			DupMusicDurationSec,
 			Subfolders,
 			MaxScanDepth,
 			ScanSymlink,

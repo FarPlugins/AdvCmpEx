@@ -805,7 +805,7 @@ void AdvCmpProc::ShowCmpMsg(const wchar_t *Dir1, const wchar_t *Name1, const wch
 	TruncCopy(TruncDir2, GetPosToName(Dir2), WinInfo.TruncLen, GetMsg(MComparingWith));
 	TruncCopy(TruncName2, Name2, WinInfo.TruncLen);
 
-	wchar_t LDiff[100], RDiff[100], Errors[100], DiffOut[MAX_PATH];
+	wchar_t LDiff[64], RDiff[64], Errors[64], DiffOut[MAX_PATH];
 	FSF.sprintf(Buf,GetMsg(MComparingDiffN),itoaa(CmpInfo.LDiff,LDiff),itoaa(CmpInfo.RDiff,RDiff),itoaa(CmpInfo.Errors,Errors));
 	strcentr(DiffOut,Buf,WinInfo.TruncLen,0x00002500);
 
@@ -820,7 +820,7 @@ void AdvCmpProc::ShowCmpMsg(const wchar_t *Dir1, const wchar_t *Name1, const wch
 		FSF.sprintf(Buf,GetMsg(MComparingFiles2),CmpInfo.CountSize && !((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN))?(CmpInfo.ProcSize*100/CmpInfo.CountSize):0);
 		SetConsoleTitle(Buf);
 
-		wchar_t Count[100], CountSize[100];
+		wchar_t Count[64], CountSize[64];
 		FSF.sprintf(Buf,GetMsg(MComparingN),itoaa(CmpInfo.CountSize,CountSize),itoaa(CmpInfo.Count,Count));
 		strcentr(ItemsOut,Buf,WinInfo.TruncLen,0x00002500);
 
@@ -868,7 +868,7 @@ void AdvCmpProc::ShowDupMsg(const wchar_t *Dir, const wchar_t *Name, bool bRedra
 	TruncCopy(TruncDir, GetPosToName(Dir), WinInfo.TruncLen, GetMsg(MComparing));
 	TruncCopy(TruncName, Name, WinInfo.TruncLen);
 
-	wchar_t CurProc[100], Errors[100], CurProcOut[MAX_PATH];
+	wchar_t CurProc[64], Errors[64], CurProcOut[MAX_PATH];
 	FSF.sprintf(Buf,GetMsg(MDupCurProc),itoaa(CmpInfo.Proc,CurProc),itoaa(CmpInfo.Errors,Errors));
 	strcentr(CurProcOut,Buf,WinInfo.TruncLen,0x00002500);
 
@@ -883,7 +883,7 @@ void AdvCmpProc::ShowDupMsg(const wchar_t *Dir, const wchar_t *Name, bool bRedra
 		FSF.sprintf(Buf,GetMsg(MComparingFiles2),CmpInfo.CountSize && !((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN))?(CmpInfo.ProcSize*100/CmpInfo.CountSize):0);
 		SetConsoleTitle(Buf);
 
-		wchar_t Count[100], CountSize[100];
+		wchar_t Count[64], CountSize[64];
 		FSF.sprintf(Buf,GetMsg(MComparingN),itoaa(CmpInfo.CountSize,CountSize),itoaa(CmpInfo.Count,Count));
 		strcentr(ItemsOut,Buf,WinInfo.TruncLen,0x00002500);
 

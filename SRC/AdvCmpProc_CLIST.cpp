@@ -258,23 +258,26 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 			if (!pFileList->bShowDifferent)
 				continue;
 
-			__int64 Delta=(((__int64)cur->ftLLastWriteTime.dwHighDateTime << 32) | cur->ftLLastWriteTime.dwLowDateTime) -
-										(((__int64)cur->ftRLastWriteTime.dwHighDateTime << 32) | cur->ftRLastWriteTime.dwLowDateTime);
+			if (!pFileList->bClearUserFlags)
+			{
+				__int64 Delta=(((__int64)cur->ftLLastWriteTime.dwHighDateTime << 32) | cur->ftLLastWriteTime.dwLowDateTime) -
+											(((__int64)cur->ftRLastWriteTime.dwHighDateTime << 32) | cur->ftRLastWriteTime.dwLowDateTime);
 
-			if ((pFileList->Copy>0 && !pFileList->bCopyNew) || (pFileList->Copy>0 && pFileList->bCopyNew && Delta>0))
-			{
-				cur->dwFlags|=RCIF_USERLNEW;
-				cur->dwFlags&=~RCIF_USERRNEW;
-			}
-			else if ((pFileList->Copy<0 && !pFileList->bCopyNew) || (pFileList->Copy<0 && pFileList->bCopyNew && Delta<0))
-			{
-				cur->dwFlags|=RCIF_USERRNEW;
-				cur->dwFlags&=~RCIF_USERLNEW;
-			}
-			else
-			{
-				cur->dwFlags&=~RCIF_USERLNEW;
-				cur->dwFlags&=~RCIF_USERRNEW;
+				if ((pFileList->Copy>0 && !pFileList->bCopyNew) || (pFileList->Copy>0 && pFileList->bCopyNew && Delta>0))
+				{
+					cur->dwFlags|=RCIF_USERLNEW;
+					cur->dwFlags&=~RCIF_USERRNEW;
+				}
+				else if ((pFileList->Copy<0 && !pFileList->bCopyNew) || (pFileList->Copy<0 && pFileList->bCopyNew && Delta<0))
+				{
+					cur->dwFlags|=RCIF_USERRNEW;
+					cur->dwFlags&=~RCIF_USERLNEW;
+				}
+				else
+				{
+					cur->dwFlags&=~RCIF_USERLNEW;
+					cur->dwFlags&=~RCIF_USERRNEW;
+				}
 			}
 
 			if (cur->dwFlags&RCIF_USERLNEW) Mark=0x25ba;
