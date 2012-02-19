@@ -2340,7 +2340,8 @@ bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, c
 	LPPI.FileName=LFileName;
 	RPPI.FileName=RFileName;
 
-	wchar_t Command[32768];
+	string strCommand;
+	strCommand.get(32768);
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
 	WIN32_FIND_DATA wfdFindData;
@@ -2358,7 +2359,8 @@ bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, c
 		FindClose(hFind);
 		memset(&si, 0, sizeof(si));
 		si.cb = sizeof(si);
-		FSF.sprintf(Command, L"\"%s\" -e \"%s\" \"%s\"", DiffProgram,GetPosToName(strLFullFileName.get()),GetPosToName(strRFullFileName.get()));
+		FSF.sprintf(strCommand.get(), L"\"%s\" -e \"%s\" \"%s\"", DiffProgram,GetPosToName(strLFullFileName.get()),GetPosToName(strRFullFileName.get()));
+		strCommand.updsize();
 	}
 
 	if (Method) // перебираем всё
@@ -2428,7 +2430,7 @@ bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, c
 		}
 		else if (MenuCode==1 && bFindDiffProg)
 		{
-			if (CreateProcess(0,Command,0,0,false,0,0,0,&si,&pi))
+			if (CreateProcess(0,strCommand.get(),0,0,false,0,0,0,&si,&pi))
 			{
 				WaitForSingleObject(pi.hProcess,INFINITE);
 				CloseHandle(pi.hProcess);
@@ -2445,7 +2447,7 @@ bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, c
 	}
 	else if (bFindDiffProg) // WinMerge
 	{
-		if (CreateProcess(0,Command,0,0,false,0,0,0,&si,&pi))
+		if (CreateProcess(0,strCommand.get(),0,0,false,0,0,0,&si,&pi))
 		{
 			WaitForSingleObject(pi.hProcess,INFINITE);
 			CloseHandle(pi.hProcess);

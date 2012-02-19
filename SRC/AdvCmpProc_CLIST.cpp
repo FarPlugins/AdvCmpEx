@@ -231,7 +231,8 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 		FSF.qsort(pFileList->F,pFileList->iCount,sizeof(pFileList->F[0]),cmpSortList);
 
 	int Index=0;
-	wchar_t buf[65536];
+	string strBuf;
+	strBuf.get(65536);
 	const int nSIZE=32; // размер €чейки дл€ FSF.sprintf(%*.*)
 
 	for (int i=0; i<pFileList->iCount; i++)
@@ -320,8 +321,9 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 			Item.Flags=LIF_DISABLE;
 			wchar_t Size[65];
 			strcentr(Size,GetMsg(MFolder),nSIZE,L' ');
-			FSF.sprintf(buf, L"%*.*s%c%*.*s%c%c%c%s",nSIZE,nSIZE,Size,0x2551,nSIZE,nSIZE,Size,0x2551,L' ',0x2502,strVirtDir.get());
-			Item.Text=buf;
+			FSF.sprintf(strBuf.get(), L"%*.*s%c%*.*s%c%c%c%s",nSIZE,nSIZE,Size,0x2551,nSIZE,nSIZE,Size,0x2551,L' ',0x2502,strVirtDir.get());
+			strBuf.updsize();
+			Item.Text=strBuf.get();
 			Item.Reserved[0]=Item.Reserved[1]=Item.Reserved[2]=0;
 			struct FarList List;
 			List.ItemsNumber=1;
@@ -361,7 +363,8 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 			}
 		}
 
-		MakeListItemText(buf,cur,Mark);
+		MakeListItemText(strBuf.get(),cur,Mark);
+		strBuf.updsize();
 
 		struct FarListItem Item;
 		Item.Flags=0;
@@ -372,7 +375,7 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 			Item.Flags|=LIF_CHECKED;
 			pFileList->Select++;
 		}
-		Item.Text=buf;
+		Item.Text=strBuf.get();
 		Item.Reserved[0]=Item.Reserved[1]=Item.Reserved[2]=0;
 		struct FarList List;
 		List.ItemsNumber=1;
@@ -394,9 +397,10 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 		{
 			wchar_t Size[65];
 			strcentr(Size,GetMsg(MFolder),nSIZE,L' ');
-			FSF.sprintf(buf, L"%*.*s%c%*.*s%c%c%c%s",nSIZE,nSIZE,Size,0x2551,nSIZE,nSIZE,Size,0x2551,L' ',0x2502,strVirtDir.get());
+			FSF.sprintf(strBuf.get(), L"%*.*s%c%*.*s%c%c%c%s",nSIZE,nSIZE,Size,0x2551,nSIZE,nSIZE,Size,0x2551,L' ',0x2502,strVirtDir.get());
+			strBuf.updsize();
 			Item.Flags=LIF_DISABLE;
-			Item.Text=buf;
+			Item.Text=strBuf.get();
 			List.Items=&Item;
 			Info.SendDlgMessage(hDlg,DM_LISTADD,0,&List);
 			Index++;
@@ -853,7 +857,8 @@ GOTOCHANGEMARK:
 									}
 								}
 
-								wchar_t buf[65536];
+								string strBuf;
+								strBuf.get(65536);
 								wchar_t Mark=L' ';
 								if (cur->dwFlags&RCIF_DIFFER)
 								{
@@ -872,11 +877,12 @@ GOTOCHANGEMARK:
 									else if (!Opt.SyncOnlyRight && !(cur->dwFlags&RCIF_USERNONE)) Mark=0x2190;
 									else if (cur->dwFlags&RCIF_USERDEL) Mark=L'x';
 								}
-								MakeListItemText(buf,cur,Mark);
+								MakeListItemText(strBuf.get(),cur,Mark);
+								strBuf.updsize();
 								struct FarListUpdate FLU;
 								FLU.Index=FLGI.ItemIndex;
 								FLU.Item=FLGI.Item;
-								FLU.Item.Text=buf;
+								FLU.Item.Text=strBuf.get();
 								if (Info.SendDlgMessage(hDlg,DM_LISTUPDATE,0,&FLU))
 									return true;
 							}
