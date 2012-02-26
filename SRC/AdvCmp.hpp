@@ -187,6 +187,7 @@ extern struct Options {
 			Dup,
 			DupDel,
 			DupDelRecycleBin,
+			DupListSkipColumn,
 			BufSize;
 	char *Buf[2];
 	wchar_t *DupPath, *Substr, *WinMergePath;

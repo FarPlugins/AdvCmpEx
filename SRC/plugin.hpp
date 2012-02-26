@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2468
+  Plugin API for Far Manager 3.0 build 2491
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2468
+#define FARMANAGERVERSION_BUILD 2491
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -1761,6 +1761,9 @@ enum FARSETTINGS_SUBFOLDERS
 	FSSF_FOLDERSHORTCUT_8           = 14,
 	FSSF_FOLDERSHORTCUT_9           = 15,
 	FSSF_CONFIRMATIONS              = 16,
+	FSSF_SYSTEM                     = 17,
+	FSSF_PANEL                      = 18,
+	FSSF_EDITOR                     = 19,
 };
 
 enum FAR_PLUGIN_SETTINGS_LOCATION
@@ -2267,6 +2270,7 @@ static const OPERATION_MODES
 	OPM_DESCR      =0x0000000000000020ULL,
 	OPM_QUICKVIEW  =0x0000000000000040ULL,
 	OPM_PGDN       =0x0000000000000080ULL,
+	OPM_COMMANDS   =0x0000000000000100ULL,
 	OPM_NONE       =0;
 
 struct OpenPanelInfo

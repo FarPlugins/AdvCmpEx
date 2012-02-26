@@ -1006,7 +1006,7 @@ int AdvCmpDlgOpt::ShowOptDialog()
 		/*21*/{DI_COMBOBOX,   0,11,dW-3,   0, 0, 0,                   0,DIF_LISTAUTOHIGHLIGHT|DIF_DROPDOWNLIST|DIF_LISTWRAPMODE, L"",0,0},
 					/// Режим "дубликаты"
 		/*22*/{DI_EDIT,       2, 2,dW-3,   0, 0, L"AdvCmpDupPath",    0,         DIF_READONLY|DIF_HISTORY, (LPanel.PInfo.Flags&PFLAGS_FOCUS?LPanel.Dir:RPanel.Dir),0,0},
-		/*23*/{DI_CHECKBOX,   2, 3,   0,   0, 1, 0,                   0,                                0, GetMsg(MDupName),0,0},
+		/*23*/{DI_CHECKBOX,   2, 3,   0,   0, 1, 0,                   0,                       DIF_3STATE, GetMsg(MDupName),0,0},
 		/*24*/{DI_CHECKBOX,   2, 4,   0,   0, 0, 0,                   0,                                0, GetMsg(MDupSize),0,0},
 		/*25*/{DI_CHECKBOX,   2, 5,   0,   0, 0, 0,                   0,                                0, GetMsg(MDupContents),0,0},
 		/*26*/{DI_CHECKBOX,   6, 6,   0,   0, 0, 0,                   0,                                0, GetMsg(MDupPic),0,0},

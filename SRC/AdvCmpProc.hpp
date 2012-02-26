@@ -43,6 +43,12 @@ enum QueryResult {
 	QR_SKIPALL=3
 };
 
+// не показывать колонки в листе дублей
+enum DupListSkip {
+	DLS_PATH=0x1,
+	DLS_SIZE=0x2,
+};
+
 // элемент для показа в диалоге результатов
 struct cmpFile
 {

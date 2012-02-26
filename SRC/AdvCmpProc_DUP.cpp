@@ -230,28 +230,45 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 
 		if ((cur->dwFlags&RCIF_PIC) || (cur->dwFlags&RCIF_PICERR && cur->PicWidth && cur->PicHeight))
 		{
-			FSF.TruncPathStr(strPath.get(),70);
-			strPath.updsize();
-			GetStrFileTime(&cur->ftLastWriteTime,Time,true);
 			FSF.itoa(cur->PicWidth,w,10);
 			FSF.itoa(cur->PicHeight,h,10);
-			FSF.sprintf(MetaData,L"%-70.70s%c%-19.19s %4.4s x %-4.4s",strPath.get(),0x2551,Time,w,h);
+			if (!(Opt.DupListSkipColumn&DLS_PATH))
+			{
+				FSF.TruncPathStr(strPath.get(),88);
+				strPath.updsize();
+				FSF.sprintf(MetaData,L"%-88.88s%c%5.5s x %-5.5s",strPath.get(),0x2551,w,h);
+			}
+			else
+				FSF.sprintf(MetaData,L"%5.5s x %-5.5s",w,h);
 		}
 		else if (cur->dwFlags&RCIF_MUSIC)
 		{
-			FSF.TruncPathStr(strPath.get(),30);
-			strPath.updsize();
-			FSF.sprintf(MetaData,L"%-30.30s%c%-30.30s %-30.30s %02u:%02u %03u",strPath.get(),0x2551,(cur->dwFlags&RCIF_MUSICART)?cur->MusicArtist:L"",(cur->dwFlags&RCIF_MUSICTIT)?cur->MusicTitle:L"",cur->MusicTime/60,cur->MusicTime%60,cur->MusicBitrate);
+			if (!(Opt.DupListSkipColumn&DLS_PATH))
+			{
+				FSF.TruncPathStr(strPath.get(),30);
+				strPath.updsize();
+				FSF.sprintf(MetaData,L"%-30.30s%c%-30.30s %-30.30s %02u:%02u %03u",strPath.get(),0x2551,(cur->dwFlags&RCIF_MUSICART)?cur->MusicArtist:L"",(cur->dwFlags&RCIF_MUSICTIT)?cur->MusicTitle:L"",cur->MusicTime/60,cur->MusicTime%60,cur->MusicBitrate);
+			}
+			else
+				FSF.sprintf(MetaData,L"%-30.30s %-30.30s %02u:%02u %03u",(cur->dwFlags&RCIF_MUSICART)?cur->MusicArtist:L"",(cur->dwFlags&RCIF_MUSICTIT)?cur->MusicTitle:L"",cur->MusicTime/60,cur->MusicTime%60,cur->MusicBitrate);
 		}
 		else
 		{
-			FSF.TruncPathStr(strPath.get(),82);
-			strPath.updsize();
 			GetStrFileTime(&cur->ftLastWriteTime,Time,true);
-			FSF.sprintf(MetaData,L"%-82.82s%c%-19.19s",strPath.get(),0x2551,Time);
+			if (!(Opt.DupListSkipColumn&DLS_PATH))
+			{
+				FSF.TruncPathStr(strPath.get(),82);
+				strPath.updsize();
+				FSF.sprintf(MetaData,L"%-82.82s%c%-19.19s",strPath.get(),0x2551,Time);
+			}
+			else
+				FSF.sprintf(MetaData,L"%-19.19s",Time);
 		}
 
-		FSF.sprintf(strBuf.get(), L"%*d%c%-102.102s%c%-7.7s%c%s",digits_count,cur->nGroup,0x2502,MetaData,0x2551,Size,0x2551,cur->FileName);
+		if (Opt.DupListSkipColumn&DLS_PATH)
+			FSF.sprintf(strBuf.get(), L"%*d%c%-71.71s%c%-7.7s%c%s",digits_count,cur->nGroup,0x2502,MetaData,0x2551,Size,0x2551,cur->FileName);
+		else
+			FSF.sprintf(strBuf.get(), L"%*d%c%-102.102s%c%-7.7s%c%s",digits_count,cur->nGroup,0x2502,MetaData,0x2551,Size,0x2551,cur->FileName);
 		strBuf.updsize();
 
 		struct FarListItem Item;
@@ -295,8 +312,8 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 	if (bSetCurPos)
 	{
 		FarListPos ListPos;
-		ListPos.SelectPos=0; //ListInfo.SelectPos;
-		ListPos.TopPos=-1/*ListInfo.TopPos*/;
+		ListPos.SelectPos=ListInfo.SelectPos;
+		ListPos.TopPos=ListInfo.TopPos;
 		Info.SendDlgMessage(hDlg,DM_LISTSETCURPOS,0,&ListPos);
 	}
 	return true;
@@ -714,7 +731,15 @@ GOTOCHANGEMARK:
 				}
 				else if (IsCtrl(record))
 				{
-					if (vk==VK_PRIOR)
+					if (vk==0x31) //VK_1
+					{
+						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
+						Opt.DupListSkipColumn&DLS_PATH ? Opt.DupListSkipColumn&=~DLS_PATH : Opt.DupListSkipColumn|=DLS_PATH;
+						MakeDupFarList(hDlg,pFileList,true,false);
+						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
+						return true;
+					}
+					else if (vk==VK_PRIOR)
 					{
 						int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
 						dupFile **tmp=(dupFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
@@ -781,7 +806,27 @@ int AdvCmpProc::ShowDupDialog()
 															sizeof(DialogItems)/sizeof(DialogItems[0]),0,FDLG_SMALLDIALOG|FDLG_KEEPCONSOLETITLE,ShowDupDialogProc,&dFList);
 	if (hDlg != INVALID_HANDLE_VALUE)
 	{
+		FarSettingsCreate settings={sizeof(FarSettingsCreate),MainGuid,INVALID_HANDLE_VALUE};
+		Opt.DupListSkipColumn=0;
+		if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings))
+		{
+			int Root=0; // корень ключа
+			FarSettingsItem item={Root,L"DupListSkipColumn",FST_QWORD};
+			if (Info.SettingsControl(settings.Handle,SCTL_GET,0,&item))
+				Opt.DupListSkipColumn=(int)item.Number;
+			Info.SettingsControl(settings.Handle,SCTL_FREE,0,0);
+		}
+
 		Info.DialogRun(hDlg);
+
+		if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings))
+		{
+			int Root=0; // корень ключа
+			FarSettingsItem item={Root,L"DupListSkipColumn",FST_QWORD};
+			item.Number=Opt.DupListSkipColumn;
+			Info.SettingsControl(settings.Handle,SCTL_SET,0,&item);
+			Info.SettingsControl(settings.Handle,SCTL_FREE,0,0);
+		}
 		Info.DialogFree(hDlg);
 	}
 
@@ -1351,6 +1396,64 @@ int AdvCmpProc::GetPic(dupFile *cur)
 	return ret;
 }
 
+bool CmpNameEx(const wchar_t *FileName1, const wchar_t *FileName2)
+{
+	bool ret=false;
+	// определим указатель на расширение файла
+	wchar_t *p1=(wchar_t *)FileName1, *p2=(wchar_t *)FileName2;
+	while (*p1++) ;
+	wchar_t *pEnd1=p1-1;
+	while (--p1 != FileName1 && *p1 != L'.') ;
+	while (*p2++) ;
+	wchar_t *pEnd2=p2-1;
+	while (--p2 != FileName2 && *p2 != L'.') ;
+
+	int lenName1=(*p1== L'.'?p1-FileName1:pEnd1-FileName1);
+	int lenName2=(*p2== L'.'?p2-FileName2:pEnd2-FileName2);
+	// если есть только расширение
+	if (!lenName1 && !lenName2) return true;
+	if (!lenName1 || !lenName2) return false;
+	// если нет расширения
+	if (*p1 != L'.') p1=pEnd1;
+	if (*p2 != L'.') p2=pEnd2;
+
+	wchar_t *Name1=(wchar_t *)malloc((lenName1+1)*sizeof(wchar_t));
+	wchar_t *Name2=(wchar_t *)malloc((lenName2+1)*sizeof(wchar_t));
+
+	if (Name1 && Name2)
+	{
+		wchar_t *s1=(wchar_t *)FileName1, *s2=(wchar_t *)FileName2;
+		wchar_t *ss1=Name1, *ss2=Name2;
+		while (s1!=p1)
+		{
+			if (FSF.LIsAlpha(*s1)) *ss1++ = *s1++;
+			else s1++;
+		}
+		while (s2!=p2)
+		{
+			if (FSF.LIsAlpha(*s2)) *ss2++ = *s2++;
+			else s2++;
+		}
+		unsigned Len1=ss1-Name1;
+		unsigned Len2=ss2-Name2;
+		if (Len1<=Len2 && Len1>(Len2>>1))
+		{
+			for (int l=0;l<Len2;l++)
+			{
+				if (!FSF.LStrnicmp(Name2+l,Name1,Len1))
+				{
+					ret=true;
+					break;
+				}
+			}
+		}
+	}
+	if (Name1) free(Name1);
+	if (Name2) free(Name2);
+
+	return ret;
+}
+
 int AdvCmpProc::Duplicate(const struct DirList *pList)
 {
 	int ret=0;
@@ -1392,8 +1495,16 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 				{
 					if (Opt.DupName)
 					{
-						if (FSF.LStricmp(src->FileName,cur->FileName))
-							continue;   // разные, сразу переходим к следующему
+						if (Opt.DupName==2)
+						{
+							if (!CmpNameEx(src->FileName,cur->FileName))
+								continue;   // разные, сразу переходим к следующему
+						}
+						else
+						{
+							if (FSF.LStricmp(src->FileName,cur->FileName))
+								continue;   // разные, сразу переходим к следующему
+						}
 					}
 					if (Opt.DupSize || (Opt.DupContents && !Opt.DupPic && !Opt.DupMusic))
 					{
@@ -1485,9 +1596,6 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 				{
 					if ((Opt.DupName || Opt.DupSize || (Opt.DupContents && !Opt.DupPic && !Opt.DupMusic)) && !(cur->dwFlags&RCIF_EQUAL))
 						continue;   // обрабатывали -они разные, переходим к следующему
-
-					if (!Opt.DupPic && !Opt.DupMusic && src->nFileSize != cur->nFileSize)
-						continue;   // разные, сразу переходим к следующему
 
 					if (Opt.DupPic && (src->dwFlags&RCIF_PIC) && (cur->dwFlags&RCIF_PIC))
 					{
@@ -1610,9 +1718,11 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 							}
 						}
 					}
-					else if (cur->nFileSize)
+					else
 					{
-						if (!src->dwCRC || !cur->dwCRC || src->dwCRC!=cur->dwCRC)
+						if (src->nFileSize!=cur->nFileSize)
+							continue;
+						if (src->nFileSize && cur->nFileSize && (!src->dwCRC || !cur->dwCRC || src->dwCRC!=cur->dwCRC))
 							continue;
 					}
 					bSetGroupCount=true;
