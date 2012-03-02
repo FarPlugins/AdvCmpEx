@@ -438,7 +438,8 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 
 	/************************************************************************/
 
-		case DN_LISTCHANGE:
+		case DN_LISTHOTKEY:  // для плагина это
+		case DN_LISTCHANGE:  //  одно и тоже
 			if (Param1 == DlgMODEBOX)
 			{
 				if (Param2 == (void*)2)
@@ -511,7 +512,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 						Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgONLYRIGHT,(void*)(Opt.SyncOnlyRight?BSTATE_CHECKED:BSTATE_UNCHECKED));
 					}
 				}
-				return true;
+				return Msg==DN_LISTHOTKEY?false:true;    // апи требует разного возврата - сделаем разным
 			}
 			break;
 
