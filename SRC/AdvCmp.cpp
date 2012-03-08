@@ -454,12 +454,14 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 			FarGetPluginPanelItem FGPPI;
 			for (int i=0; i<LList.ItemsNumber; i++)
 			{
-				FGPPI.Size=0; FGPPI.Item=0;
-				FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI));
+				FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,0));
 				if (FGPPI.Item)
 				{
 					Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI);
-					LList.PPI[i]=*(FGPPI.Item);
+					LList.PPI[i].FileAttributes=FGPPI.Item->FileAttributes;
+					LList.PPI[i].LastAccessTime=FGPPI.Item->LastAccessTime;
+					LList.PPI[i].LastWriteTime=FGPPI.Item->LastWriteTime;
+					LList.PPI[i].FileSize=FGPPI.Item->FileSize;
 					LList.PPI[i].FileName=(wchar_t*)malloc((wcslen(FGPPI.Item->FileName)+1)*sizeof(wchar_t));
 					if (LList.PPI[i].FileName) wcscpy((wchar_t*)LList.PPI[i].FileName,FGPPI.Item->FileName);
 					{
@@ -477,7 +479,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 			}
 		}
 		if (!LPanel.bARC)
-			LPanel.bARC=LPanel.PInfo.Flags&PFLAGS_USECRC32;
+			LPanel.bARC=(LPanel.PInfo.Flags&PFLAGS_USECRC32?true:false);
 	}
 	else
 	{
@@ -519,12 +521,14 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 			FarGetPluginPanelItem FGPPI;
 			for (int i=0; i<RList.ItemsNumber; i++)
 			{
-				FGPPI.Size=0; FGPPI.Item=0;
-				FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI));
+				FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,0));
 				if (FGPPI.Item)
 				{
 					Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI);
-					RList.PPI[i]=*(FGPPI.Item);
+					RList.PPI[i].FileAttributes=FGPPI.Item->FileAttributes;
+					RList.PPI[i].LastAccessTime=FGPPI.Item->LastAccessTime;
+					RList.PPI[i].LastWriteTime=FGPPI.Item->LastWriteTime;
+					RList.PPI[i].FileSize=FGPPI.Item->FileSize;
 					RList.PPI[i].FileName=(wchar_t*)malloc((wcslen(FGPPI.Item->FileName)+1)*sizeof(wchar_t));
 					if (RList.PPI[i].FileName) wcscpy((wchar_t*)RList.PPI[i].FileName,FGPPI.Item->FileName);
 					{
@@ -542,7 +546,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 			}
 		}
 		if (!RPanel.bARC)
-			RPanel.bARC=RPanel.PInfo.Flags&PFLAGS_USECRC32;
+			RPanel.bARC=(RPanel.PInfo.Flags&PFLAGS_USECRC32?true:false);
 	}
 	else
 	{

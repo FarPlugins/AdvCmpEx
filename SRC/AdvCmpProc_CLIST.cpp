@@ -1065,7 +1065,7 @@ DebugMsg(strLPanelDir.get(),L"strLPanelDir.get()");
 								Info.PanelControl(LPanel.hPanel,FCTL_GETPANELINFO,0,&PInfo);
 								FarGetPluginPanelItem FGPPI;
 
-								for (int i=0; i<PInfo.ItemsNumber; i++)
+								for (unsigned i=0; i<PInfo.ItemsNumber; i++)
 								{
 									FGPPI.Size=0; FGPPI.Item=0;
 									FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI));
@@ -1109,7 +1109,7 @@ DebugMsg(strLPanelDir.get(),L"strLPanelDir.get()");
 								Info.PanelControl(RPanel.hPanel,FCTL_GETPANELINFO,0,&PInfo);
 								FarGetPluginPanelItem FGPPI;
 
-								for (int i=0; i<PInfo.ItemsNumber; i++)
+								for (unsigned i=0; i<PInfo.ItemsNumber; i++)
 								{
 									FGPPI.Size=0; FGPPI.Item=0;
 									FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI));

@@ -749,7 +749,7 @@ GOTOCHANGEMARK:
 							Opt.Mode=MODE_CMP; //скидываем!!!
 
 							PanelRedrawInfo RInfo={0,0};
-							bool bLeft=LPanel.PInfo.Flags&PFLAGS_FOCUS;
+							bool bLeft=(LPanel.PInfo.Flags&PFLAGS_FOCUS?true:false);
 							if (FSF.LStricmp(bLeft?LPanel.Dir:RPanel.Dir,GetPosToName(cur->Dir)))
 							{
 								FarPanelDirectory dirInfo={sizeof(FarPanelDirectory),GetPosToName(cur->Dir),NULL,{0},NULL};
@@ -760,7 +760,7 @@ GOTOCHANGEMARK:
 							Info.PanelControl(bLeft?LPanel.hPanel:RPanel.hPanel,FCTL_GETPANELINFO,0,&PInfo);
 							FarGetPluginPanelItem FGPPI;
 
-							for (int i=0; i<PInfo.ItemsNumber; i++)
+							for (unsigned i=0; i<PInfo.ItemsNumber; i++)
 							{
 								FGPPI.Size=0; FGPPI.Item=0;
 								FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(bLeft?LPanel.hPanel:RPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI));
@@ -1107,7 +1107,7 @@ int AdvCmpProc::GetMp3(dupFile *cur)
 
 	cur->MusicBitrate=(DWORD)(pBASS_StreamGetFilePosition(stream,BASS_FILEPOS_END)/
 														(125*pBASS_ChannelBytes2Seconds(stream,pBASS_ChannelGetLength(stream,BASS_POS_BYTE)))+0.5); // bitrate (Kbps)
-	cur->MusicTime=pBASS_ChannelBytes2Seconds(stream,pBASS_ChannelGetLength(stream,BASS_POS_BYTE));
+	cur->MusicTime=(DWORD)pBASS_ChannelBytes2Seconds(stream,pBASS_ChannelGetLength(stream,BASS_POS_BYTE));
 
 	char *p=(char *)pBASS_ChannelGetTags(stream,BASS_TAG_ID3V2);
 	if (p && p[0]=='I' && p[1]=='D' && p[2]=='3')
@@ -1438,7 +1438,7 @@ bool CmpNameEx(const wchar_t *FileName1, const wchar_t *FileName2)
 		unsigned Len2=ss2-Name2;
 		if (Len1<=Len2 && Len1>(Len2>>1))
 		{
-			for (int l=0;l<Len2;l++)
+			for (unsigned l=0;l<Len2;l++)
 			{
 				if (!FSF.LStrnicmp(Name2+l,Name1,Len1))
 				{
@@ -1671,9 +1671,9 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 								unsigned LenS=wcslen(src->MusicArtist);
 								unsigned LenC=wcslen(cur->MusicArtist);
 								int r=1;
-								if (LenS<=LenC);
+								if (LenS<=LenC)
 								{
-									for (int l=0;l<LenC;l++)
+									for (unsigned l=0;l<LenC;l++)
 									{
 										r=FSF.LStrnicmp(cur->MusicArtist+l,src->MusicArtist,LenS);
 										if (r==0)
@@ -1701,7 +1701,7 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 								int r=1;
 								if (LenS<=LenC)
 								{
-									for (int l=0;l<LenC;l++)
+									for (unsigned l=0;l<LenC;l++)
 									{
 										r=FSF.LStrnicmp(cur->MusicTitle+l,src->MusicTitle,LenS);
 										if (r==0)

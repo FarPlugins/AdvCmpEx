@@ -5,7 +5,7 @@
 "Ok"
 "Cancel"
 
-"Mode work plug-in:"
+"&Mode work plug-in:"
 "1. Compare files"
 "2. Synchronize folders"
 "3. Search duplicate files"
@@ -58,7 +58,7 @@
 "Select new files"
 "Only in right panel"
 "Ignore missing items"
-"Display &messages"
+"Display messages"
 "Sound notification"
 "Show &results dialog"
 "Total progress indicator"

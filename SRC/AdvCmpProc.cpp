@@ -148,7 +148,7 @@ wchar_t* itoaa(__int64 num, wchar_t *buf)
 void ProgressLine(wchar_t *Dest, unsigned __int64 nCurrent, unsigned __int64 nTotal)
 {
 	int n=0, len=WinInfo.TruncLen-4;
-	if (nTotal>0) n=nCurrent*len / nTotal;
+	if (nTotal>0) n=nCurrent * (unsigned __int64)len / nTotal;
 	if (n>len) n=len;
 	wchar_t *Buf=(wchar_t*)malloc(WinInfo.TruncLen*sizeof(wchar_t));
 	if (Buf)
@@ -1281,7 +1281,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 													(Opt.PartlyFull && pLPPI->FileSize > Opt.BufSize) );
 
 				bool bPartlyKb=( Opt.Partly && !Opt.Ignore && !(LPanel.bARC || RPanel.bARC) &&
-												(!Opt.PartlyFull && PartlyKbSize && pLPPI->FileSize > abs(PartlyKbSize)) );
+												(!Opt.PartlyFull && PartlyKbSize && pLPPI->FileSize > (unsigned __int64)abs(PartlyKbSize)) );
 
 				unsigned int BlockIndex=pLPPI->FileSize / Opt.BufSize;
 				unsigned int LCurBlockIndex=0, RCurBlockIndex=0;
@@ -1313,7 +1313,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 						LBufPos=0;
 						LPtr=Opt.Buf[0];
 						// читаем блоком Opt.BufSize
-						while (LBufPos < Opt.BufSize)
+						while (LBufPos < (unsigned)Opt.BufSize)
 						{
 							if (CheckForEsc() || 
 									!ReadFile(hLFile,Opt.Buf[0]+LBufPos,(!bPartlyKb || bFromEnd || LFilePos+ReadBlock<=PartlyKbSize)?ReadBlock:(PartlyKbSize-LFilePos),&LReadSize,0))
@@ -1338,7 +1338,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 						RBufPos=0;
 						RPtr=Opt.Buf[1];
 						// читаем блоком Opt.BufSize
-						while (RBufPos < Opt.BufSize)
+						while (RBufPos < (unsigned)Opt.BufSize)
 						{
 							if (CheckForEsc() || 
 									!ReadFile(hRFile,Opt.Buf[1]+RBufPos,(!bPartlyKb || bFromEnd || RFilePos+ReadBlock<=PartlyKbSize)?ReadBlock:(PartlyKbSize-RFilePos),&RReadSize,0))
