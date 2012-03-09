@@ -239,7 +239,7 @@ class AdvCmpProc
 		int SyncDir(const wchar_t *srcDirName, const wchar_t *destDirName, int direction);
 		int DelDir(const wchar_t *DirName);
 		int Synchronize();
-
+			// дубликаты
 		void ShowDupMsg(const wchar_t *Dir, const wchar_t *Name, bool bRedraw);
 		int ScanDir(const wchar_t *DirName, int ScanDepth);
 		DWORD GetCRC(const dupFile *cur);
@@ -249,8 +249,11 @@ class AdvCmpProc
 		int ShowDupDialog();
 
 	public:
-		AdvCmpProc();
-		~AdvCmpProc();
+		AdvCmpProc() {}
+		~AdvCmpProc() {}
+
+		void Init();
+		void Close();
 
 		bool CompareDirs(const struct DirList *pLList,const struct DirList *pRList,bool bCompareAll,int ScanDepth);
 		bool CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, const wchar_t *RDir, const wchar_t *RFileName, int Method);

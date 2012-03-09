@@ -297,9 +297,7 @@ int GetArgv(const wchar_t *cmd, wchar_t ***argv)
 }
 
 
-
-
-AdvCmpProc::AdvCmpProc()
+void AdvCmpProc::Init()
 {
 	hScreen=Info.SaveScreen(0,0,-1,-1);
 	bStartMsg=true;
@@ -348,7 +346,7 @@ AdvCmpProc::AdvCmpProc()
 	SetConsoleTitle(GetMsg(MComparingFiles));
 }
 
-AdvCmpProc::~AdvCmpProc()
+void AdvCmpProc::Close()
 {
 	if (Opt.Buf[0]) free(Opt.Buf[0]);
 	if (Opt.Buf[1]) free(Opt.Buf[1]);

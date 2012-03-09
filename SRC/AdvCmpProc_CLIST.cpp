@@ -200,7 +200,6 @@ void SetBottom(HANDLE hDlg, cmpFileList *pFileList, wchar_t *CurDir)
 								pFileList->Identical,pFileList->bShowIdentical?L' ':L'*',
 								pFileList->Different,pFileList->bShowDifferent?L' ':L'*',
 								pFileList->LNew,pFileList->bShowLNew?L' ':L'*',pFileList->RNew,pFileList->bShowRNew?L' ':L'*');
-//	ListTitle.Bottom=Bottom;
 	Info.SendDlgMessage(hDlg,DM_LISTSETTITLES,0,&ListTitle);
 }
 

@@ -617,6 +617,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		hConInp=CreateFileW(L"CONIN$", GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
 
 		class AdvCmpProc AdvCmp;
+		AdvCmp.Init();
 
 		if (ret==54)
 		{
@@ -666,6 +667,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 			if (hConInp!=INVALID_HANDLE_VALUE) CloseHandle(hConInp);
 			AdvCmp.CompareCurFile(LList.Dir,LList.PPI[LPanel.PInfo.CurrentItem].FileName,RList.Dir,RList.PPI[RPanel.PInfo.CurrentItem].FileName,1);
 		}
+		AdvCmp.Close();
 	}
 
 	// определены из диалога опций
