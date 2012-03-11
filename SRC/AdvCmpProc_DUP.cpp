@@ -949,17 +949,17 @@ DWORD AdvCmpProc::GetCRC(const dupFile *cur)
 	return dwFileCRC;
 }
 
-static unsigned int GetSyncSafeInt(unsigned char *b)
+unsigned int GetSyncSafeInt(unsigned char *b)
 {
 	return (b[0]<<21) | (b[1]<<14) | (b[2]<<7) | (b[3]);
 }
 
-static unsigned int GetNonSyncSafeInt23(unsigned char *b)
+unsigned int GetNonSyncSafeInt23(unsigned char *b)
 {
 	return (b[0]<<24) | (b[1]<<16) | (b[2]<<8) | (b[3]);
 }
 
-static unsigned int GetNonSyncSafeInt22(unsigned char *b)
+unsigned int GetNonSyncSafeInt22(unsigned char *b)
 {
 	return (b[0]<<16) | (b[1]<<8) | (b[2]);
 }

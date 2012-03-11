@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma hdrstop
 #include "AdvCmpProc.hpp"
 
+extern "C" int _fltused=0;
 
 /****************************************************************************
  *
@@ -2356,6 +2357,7 @@ bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, c
 	{
 		FindClose(hFind);
 		memset(&si, 0, sizeof(si));
+		memset(&pi, 0, sizeof(pi));
 		si.cb = sizeof(si);
 		FSF.sprintf(strCommand.get(), L"\"%s\" -e \"%s\" \"%s\"", DiffProgram,GetPosToName(strLFullFileName.get()),GetPosToName(strRFullFileName.get()));
 		strCommand.updsize();

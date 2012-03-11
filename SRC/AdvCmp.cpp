@@ -462,6 +462,8 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 					LList.PPI[i].LastAccessTime=FGPPI.Item->LastAccessTime;
 					LList.PPI[i].LastWriteTime=FGPPI.Item->LastWriteTime;
 					LList.PPI[i].FileSize=FGPPI.Item->FileSize;
+					LList.PPI[i].CRC32=FGPPI.Item->CRC32;
+					LList.PPI[i].Flags=FGPPI.Item->Flags;
 					LList.PPI[i].FileName=(wchar_t*)malloc((wcslen(FGPPI.Item->FileName)+1)*sizeof(wchar_t));
 					if (LList.PPI[i].FileName) wcscpy((wchar_t*)LList.PPI[i].FileName,FGPPI.Item->FileName);
 					{
@@ -529,6 +531,8 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 					RList.PPI[i].LastAccessTime=FGPPI.Item->LastAccessTime;
 					RList.PPI[i].LastWriteTime=FGPPI.Item->LastWriteTime;
 					RList.PPI[i].FileSize=FGPPI.Item->FileSize;
+					RList.PPI[i].CRC32=FGPPI.Item->CRC32;
+					RList.PPI[i].Flags=FGPPI.Item->Flags;
 					RList.PPI[i].FileName=(wchar_t*)malloc((wcslen(FGPPI.Item->FileName)+1)*sizeof(wchar_t));
 					if (RList.PPI[i].FileName) wcscpy((wchar_t*)RList.PPI[i].FileName,FGPPI.Item->FileName);
 					{
