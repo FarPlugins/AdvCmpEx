@@ -263,7 +263,7 @@ int AdvCmpProc::FileExists(const wchar_t *FileName, unsigned __int64 *pSize, FIL
 			ppi.FileAttributes=wfdFindData.dwFileAttributes;
 			ppi.LastAccessTime=wfdFindData.ftLastAccessTime;
 			ppi.LastWriteTime=wfdFindData.ftLastWriteTime;
-			ppi.FileSize=((__int64)wfdFindData.nFileSizeHigh << 32) | wfdFindData.nFileSizeLow;
+			ppi.FileSize=((unsigned __int64)wfdFindData.nFileSizeHigh << 32) | wfdFindData.nFileSizeLow;
 			ppi.FileName=FSF.PointToName(FileName);
 
 			if ( (CheckForFilter>0?LPanel.hFilter:RPanel.hFilter)!=INVALID_HANDLE_VALUE &&
@@ -273,7 +273,7 @@ int AdvCmpProc::FileExists(const wchar_t *FileName, unsigned __int64 *pSize, FIL
 			if (Opt.Filter && !Info.FileFilterControl(Opt.hCustomFilter,FFCTL_ISFILEINFILTER,0,&ppi))
 				return ret;
 		}
-		*pSize=((__int64)wfdFindData.nFileSizeHigh << 32) | wfdFindData.nFileSizeLow;
+		*pSize=((unsigned __int64)wfdFindData.nFileSizeHigh << 32) | wfdFindData.nFileSizeLow;
 		*pTime=wfdFindData.ftLastWriteTime;
 		*pAttrib=wfdFindData.dwFileAttributes;
 		ret=1; // ÎÊ
@@ -877,9 +877,9 @@ int AdvCmpProc::Synchronize()
 	{
 		bBrokenByEsc=false;
 		bStartMsg=true;
-		bAskLOverwrite=bAskROverwrite=Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0,0) & FCS_COPYOVERWRITE;
-		bAskLReadOnly=bAskRReadOnly=Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0,0) & FCS_OVERWRITEDELETEROFILES;
-		bAskDel=Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0,0) & FCS_DELETE;
+		bAskLOverwrite=bAskROverwrite=GetFarSetting(FSSF_CONFIRMATIONS,L"Copy")?true:false;
+		bAskLReadOnly=bAskRReadOnly=GetFarSetting(FSSF_CONFIRMATIONS,L"RO")?true:false;
+		bAskDel=GetFarSetting(FSSF_CONFIRMATIONS,L"Delete")?true:false;
 		bSkipLReadOnly=bSkipRReadOnly=false;
 
 		hConInp=CreateFileW(L"CONIN$", GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);

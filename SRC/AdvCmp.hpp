@@ -69,6 +69,8 @@ inline int __cdecl Strncmp(const wchar_t *s1, const wchar_t *s2, int n=-1) { ret
  * GUID
  ****************************************************************************/
 
+// {00000000-0000-0000-0000-000000000000}
+DEFINE_GUID(FarGuid,0,0,0,0,0,0,0,0,0,0,0);
 // {ED0C4BD8-D2F0-4b6e-A19F-B0B0137C9B0C}
 DEFINE_GUID(MainGuid,0xed0c4bd8, 0xd2f0, 0x4b6e, 0xa1, 0x9f, 0xb0, 0xb0, 0x13, 0x7c, 0x9b, 0xc);
 // {CF6DF7E7-060C-4dd7-80D8-69E20F96EA38}
@@ -187,7 +189,7 @@ extern struct Options {
 			Dup,
 			DupDel,
 			DupDelRecycleBin,
-			DupListSkipColumn,
+			DupListSmall,
 			BufSize;
 	char *Buf[2];
 	wchar_t *DupPath, *Substr, *WinMergePath;
@@ -301,6 +303,7 @@ const wchar_t *GetMsg(int MsgId);
 void ErrorMsg(DWORD Title, DWORD Body);
 bool YesNoMsg(DWORD Title, DWORD Body);
 int DebugMsg(wchar_t *msg, wchar_t *msg2 = L" ", unsigned int i = 1000);
+__int64 GetFarSetting(FARSETTINGS_SUBFOLDERS Root,const wchar_t* Name);
 
 
 /****************************************************************************

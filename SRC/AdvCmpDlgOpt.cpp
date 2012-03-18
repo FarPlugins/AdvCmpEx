@@ -395,7 +395,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgDUPMUSICDURE,(void*)false);
 				}
 				//------
-				Opt.ScanSymlink=Info.AdvControl(&MainGuid,ACTL_GETSYSTEMSETTINGS,0,0)&FSS_SCANSYMLINK;
+				Opt.ScanSymlink=GetFarSetting(FSSF_SYSTEM,L"ScanJunction")?true:false;
 				Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgSCANSYMLINK,(void*)(Opt.ScanSymlink?BSTATE_CHECKED:BSTATE_UNCHECKED));
 				if (!Opt.Subfolders || Opt.Mode!=MODE_CMP || (LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN))
 				{
@@ -419,7 +419,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgUNDERCURSOR,(void*)false);
 
 				// определим остальные опции...
-				Opt.ProcessHidden=Info.AdvControl(&MainGuid,ACTL_GETPANELSETTINGS,0,0) & FPS_SHOWHIDDENANDSYSTEMFILES;
+				Opt.ProcessHidden=GetFarSetting(FSSF_PANEL,L"ShowHidden")?true:false;
 				Opt.hCustomFilter=INVALID_HANDLE_VALUE;
 
 				return true;
@@ -852,7 +852,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 			{
 				if (Cache.RCI)
 				{
-					if (Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0,0) & FCS_DELETE)
+					if (GetFarSetting(FSSF_CONFIRMATIONS,L"Delete"))
 					{
 						wchar_t buf[100]; FSF.sprintf(buf,GetMsg(MClearCacheItems),Cache.ItemsNumber);
 						const wchar_t *MsgItems[]={ GetMsg(MClearCacheTitle),buf,GetMsg(MClearCacheBody) };

@@ -227,7 +227,7 @@ bool CheckForEsc(void)
 		if ( rec.EventType == KEY_EVENT && rec.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE && rec.Event.KeyEvent.bKeyDown )
 		{
 			// Опциональное подтверждение прерывания по Esc
-			if (Info.AdvControl(&MainGuid, ACTL_GETCONFIRMATIONS,0,0) & FCS_INTERRUPTOPERATION)
+			if (GetFarSetting(FSSF_CONFIRMATIONS,L"Esc"))
 			{
 				if (YesNoMsg(MEscTitle, MEscBody))
 					return (bBrokenByEsc=true);

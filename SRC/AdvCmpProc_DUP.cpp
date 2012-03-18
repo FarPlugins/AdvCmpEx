@@ -91,7 +91,7 @@ int GetDupOpt(dupFileList *pFileList)
 	}
 */
 	Opt.DupDel=ItemsDel;
-	Opt.DupDelRecycleBin=(Opt.DupDel && (Info.AdvControl(&MainGuid,ACTL_GETSYSTEMSETTINGS,0,0) & FSS_DELETETORECYCLEBIN));
+	Opt.DupDelRecycleBin=(Opt.DupDel && GetFarSetting(FSSF_SYSTEM,L"DeleteToRecycleBin"));
 
 	wchar_t buf[80];
 	FSF.sprintf(buf,GetMsg(MDupDel),ItemsDel);
@@ -225,50 +225,39 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 	{
 		dupFile *cur=&pFileList->F[i];
 
-		string strPath(GetPosToName(cur->Dir));
 		FSF.FormatFileSize(cur->nFileSize,7,FFFS_FLOATSIZE|FFFS_SHOWBYTESINDEX|FFFS_ECONOMIC,Size,8);
 
-		if ((cur->dwFlags&RCIF_PIC) || (cur->dwFlags&RCIF_PICERR && cur->PicWidth && cur->PicHeight))
+		if (Opt.DupListSmall)
 		{
-			FSF.itoa(cur->PicWidth,w,10);
-			FSF.itoa(cur->PicHeight,h,10);
-			if (!(Opt.DupListSkipColumn&DLS_PATH))
+			FSF.sprintf(strBuf.get(), L"%*d%c%-7.7s%c%s",digits_count,cur->nGroup,0x2502,Size,0x2551,cur->FileName);
+		}
+		else
+		{
+			string strPath(GetPosToName(cur->Dir));
+
+			if ((cur->dwFlags&RCIF_PIC) || (cur->dwFlags&RCIF_PICERR && cur->PicWidth && cur->PicHeight))
 			{
+				FSF.itoa(cur->PicWidth,w,10);
+				FSF.itoa(cur->PicHeight,h,10);
 				FSF.TruncPathStr(strPath.get(),88);
 				strPath.updsize();
 				FSF.sprintf(MetaData,L"%-88.88s%c%5.5s x %-5.5s",strPath.get(),0x2551,w,h);
 			}
-			else
-				FSF.sprintf(MetaData,L"%5.5s x %-5.5s",w,h);
-		}
-		else if (cur->dwFlags&RCIF_MUSIC)
-		{
-			if (!(Opt.DupListSkipColumn&DLS_PATH))
+			else if (cur->dwFlags&RCIF_MUSIC)
 			{
 				FSF.TruncPathStr(strPath.get(),30);
 				strPath.updsize();
 				FSF.sprintf(MetaData,L"%-30.30s%c%-30.30s %-30.30s %02u:%02u %03u",strPath.get(),0x2551,(cur->dwFlags&RCIF_MUSICART)?cur->MusicArtist:L"",(cur->dwFlags&RCIF_MUSICTIT)?cur->MusicTitle:L"",cur->MusicTime/60,cur->MusicTime%60,cur->MusicBitrate);
 			}
 			else
-				FSF.sprintf(MetaData,L"%-30.30s %-30.30s %02u:%02u %03u",(cur->dwFlags&RCIF_MUSICART)?cur->MusicArtist:L"",(cur->dwFlags&RCIF_MUSICTIT)?cur->MusicTitle:L"",cur->MusicTime/60,cur->MusicTime%60,cur->MusicBitrate);
-		}
-		else
-		{
-			GetStrFileTime(&cur->ftLastWriteTime,Time,true);
-			if (!(Opt.DupListSkipColumn&DLS_PATH))
 			{
+				GetStrFileTime(&cur->ftLastWriteTime,Time,true);
 				FSF.TruncPathStr(strPath.get(),82);
 				strPath.updsize();
 				FSF.sprintf(MetaData,L"%-82.82s%c%-19.19s",strPath.get(),0x2551,Time);
 			}
-			else
-				FSF.sprintf(MetaData,L"%-19.19s",Time);
-		}
-
-		if (Opt.DupListSkipColumn&DLS_PATH)
-			FSF.sprintf(strBuf.get(), L"%*d%c%-71.71s%c%-7.7s%c%s",digits_count,cur->nGroup,0x2502,MetaData,0x2551,Size,0x2551,cur->FileName);
-		else
 			FSF.sprintf(strBuf.get(), L"%*d%c%-102.102s%c%-7.7s%c%s",digits_count,cur->nGroup,0x2502,MetaData,0x2551,Size,0x2551,cur->FileName);
+		}
 		strBuf.updsize();
 
 		struct FarListItem Item;
@@ -734,7 +723,7 @@ GOTOCHANGEMARK:
 					if (vk==0x31) //VK_1
 					{
 						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,false,0);
-						Opt.DupListSkipColumn&DLS_PATH ? Opt.DupListSkipColumn&=~DLS_PATH : Opt.DupListSkipColumn|=DLS_PATH;
+						Opt.DupListSmall ? Opt.DupListSmall=0 : Opt.DupListSmall=1;
 						MakeDupFarList(hDlg,pFileList,true,false);
 						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
 						return true;
@@ -807,13 +796,13 @@ int AdvCmpProc::ShowDupDialog()
 	if (hDlg != INVALID_HANDLE_VALUE)
 	{
 		FarSettingsCreate settings={sizeof(FarSettingsCreate),MainGuid,INVALID_HANDLE_VALUE};
-		Opt.DupListSkipColumn=0;
+		Opt.DupListSmall=0;
 		if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings))
 		{
 			int Root=0; // корень ключа
-			FarSettingsItem item={Root,L"DupListSkipColumn",FST_QWORD};
+			FarSettingsItem item={Root,L"DupListSmall",FST_QWORD};
 			if (Info.SettingsControl(settings.Handle,SCTL_GET,0,&item))
-				Opt.DupListSkipColumn=(int)item.Number;
+				Opt.DupListSmall=(int)item.Number;
 			Info.SettingsControl(settings.Handle,SCTL_FREE,0,0);
 		}
 
@@ -822,8 +811,8 @@ int AdvCmpProc::ShowDupDialog()
 		if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings))
 		{
 			int Root=0; // корень ключа
-			FarSettingsItem item={Root,L"DupListSkipColumn",FST_QWORD};
-			item.Number=Opt.DupListSkipColumn;
+			FarSettingsItem item={Root,L"DupListSmall",FST_QWORD};
+			item.Number=Opt.DupListSmall;
 			Info.SettingsControl(settings.Handle,SCTL_SET,0,&item);
 			Info.SettingsControl(settings.Handle,SCTL_FREE,0,0);
 		}
@@ -1463,8 +1452,8 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 
 	bBrokenByEsc=false;
 	bStartMsg=true;
-	bAskLReadOnly=bAskRReadOnly=Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0,0) & FCS_OVERWRITEDELETEROFILES;
-	bAskDel=Info.AdvControl(&MainGuid,ACTL_GETCONFIRMATIONS,0,0) & FCS_DELETE;
+	bAskLReadOnly=bAskRReadOnly=GetFarSetting(FSSF_CONFIRMATIONS,L"RO")?true:false;
+	bAskDel=GetFarSetting(FSSF_CONFIRMATIONS,L"Delete")?true:false;
 	bSkipLReadOnly=bSkipRReadOnly=false;
 	DWORD dwTicks=GetTickCount();
 

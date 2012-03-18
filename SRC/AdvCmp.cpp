@@ -93,6 +93,23 @@ int DebugMsg(wchar_t *msg, wchar_t *msg2, unsigned int i)
   return (!Info.Message(&MainGuid,&DebugMsgGuid,FMSG_WARNING|FMSG_MB_OKCANCEL,0,MsgItems,sizeof(MsgItems)/sizeof(MsgItems[0]),2));
 }
 
+__int64 GetFarSetting(FARSETTINGS_SUBFOLDERS Root,const wchar_t* Name)
+{
+	__int64 result=0;
+	FarSettingsCreate settings={sizeof(FarSettingsCreate),FarGuid,INVALID_HANDLE_VALUE};
+	HANDLE Settings=Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings)?settings.Handle:0;
+	if (Settings)
+	{
+		FarSettingsItem item={Root,Name,FST_UNKNOWN,{0}};
+		if(Info.SettingsControl(Settings,SCTL_GET,0,&item)&&FST_QWORD==item.Type)
+		{
+			result=item.Number;
+		}
+		Info.SettingsControl(Settings,SCTL_FREE,0,0);
+	}
+	return result;
+}
+
 
 void FreeDirList(struct DirList *pList)
 {
