@@ -179,7 +179,10 @@ void MakeListItemText(wchar_t *buf, cmpFile *cur, wchar_t Mark)
 		FSF.sprintf(buf, L"%*.*s%c%*.*s%c%c%c%s",nSIZE,nSIZE,LSize,0x2551,nSIZE,nSIZE,RSize,0x2551,Mark,0x2502,strDir.get());
 	}
 	else
-		FSF.sprintf(buf, L"%*.*s%c%*.*s%c%*.*s%c%*.*s%c%c%c%s",14,14,LSize,0x2502,17,17,LTime,0x2551,17,17,RTime,0x2502,14,14,RSize,0x2551,Mark,0x2502,cur->FileName);
+	{
+		string strFileName(cur->FileName);
+		FSF.sprintf(buf, L"%*.*s%c%*.*s%c%*.*s%c%*.*s%c%c%c%s",14,14,LSize,0x2502,17,17,LTime,0x2551,17,17,RTime,0x2502,14,14,RSize,0x2551,Mark,0x2502,(Opt.SkipSubstr?CutSubstr(strFileName,Opt.Substr):strFileName.get()));
+	}
 }
 
 /***************************************************************************

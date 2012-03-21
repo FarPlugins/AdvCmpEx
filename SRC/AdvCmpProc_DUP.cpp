@@ -868,7 +868,7 @@ int AdvCmpProc::ScanDir(const wchar_t *DirName, int ScanDepth)
 				ppi.LastAccessTime=wfdFindData.ftLastAccessTime;
 				ppi.LastWriteTime=wfdFindData.ftLastWriteTime;
 				ppi.CreationTime=wfdFindData.ftCreationTime;
-				ppi.FileSize=((__int64)wfdFindData.nFileSizeHigh << 32) | wfdFindData.nFileSizeLow;
+				ppi.FileSize=((unsigned __int64)wfdFindData.nFileSizeHigh << 32) | wfdFindData.nFileSizeLow;
 				ppi.FileName=wfdFindData.cFileName;
 
 				if (Opt.Filter && !Info.FileFilterControl(Opt.hCustomFilter,FFCTL_ISFILEINFILTER,0,&ppi))
