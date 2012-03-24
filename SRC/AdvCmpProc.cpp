@@ -264,6 +264,7 @@ void TruncCopy(wchar_t *Dest, const wchar_t *Src, int TruncLen, const wchar_t *F
 
 int GetArgv(const wchar_t *cmd, wchar_t ***argv)
 {
+	if (!cmd) return 0;
 	int l=wcslen(cmd);
 	// settings for arguments vectors
 	int *pos = (int*) malloc(l * sizeof(*pos) * sizeof(wchar_t));
@@ -271,13 +272,13 @@ int GetArgv(const wchar_t *cmd, wchar_t ***argv)
 	int  i, num=0;
 	for (i=0; i<l;)
 	{
-		while ((cmd[i]==L',' || cmd[i]==L';') && i<l)
+		while (cmd[i]==L';' && i<l)
 			i++;
 		if (i>=l)
 			break;
 		// get argument
 		pos[num]=i;
-		while ((cmd[i]!=L',' || cmd[i]!=L';') && i<l)
+		while (cmd[i]!=L';' && i<l)
 			i++;
 		len[num]=i-pos[num];
 		num++;

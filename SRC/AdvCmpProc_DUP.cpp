@@ -42,6 +42,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ****************************************************************************/
 bool AdvCmpProc::MakeFileList(const wchar_t *Dir,const PluginPanelItem *pPPI)
 {
+	for (int i=0; i<dFList.iCount; i++)
+	{
+		if (!FSF.LStricmp(dFList.F[i].Dir,Dir))
+			if (!FSF.LStricmp(dFList.F[i].FileName,pPPI->FileName))
+				return true;
+	}
+
 	dupFile *New=(dupFile*)realloc(dFList.F,(dFList.iCount+1)*sizeof(dupFile));
 	if (!New)
 	{
@@ -1457,7 +1464,62 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 	bSkipLReadOnly=bSkipRReadOnly=false;
 	DWORD dwTicks=GetTickCount();
 
-	ret=ScanDir(pList->Dir,0);
+	if (Opt.ProcessSelected)
+	{
+		for (int i=0; i<pList->ItemsNumber; i++)
+		{
+			if (pList->PPI[i].Flags&PPIF_SELECTED)
+			{
+				if (pList->PPI[i].FileAttributes&FILE_ATTRIBUTE_DIRECTORY)
+				{
+					string strDir;
+					GetFullFileName(strDir,pList->Dir,pList->PPI[i].FileName);
+					ret=ScanDir(strDir.get(),0);
+				}
+				else
+				{
+					if (Opt.Filter && !Info.FileFilterControl(Opt.hCustomFilter,FFCTL_ISFILEINFILTER,0,&pList->PPI[i]))
+						continue;
+
+					CmpInfo.Count+=1;
+					CmpInfo.CountSize+=pList->PPI[i].FileSize;
+					ShowDupMsg((LPanel.PInfo.Flags&PFLAGS_FOCUS?LPanel.Dir:RPanel.Dir),L"*",false);
+					ret=MakeFileList(pList->Dir,&pList->PPI[i]);
+				}
+				if (!ret) break;
+			}
+		}
+	}
+	else
+	{
+		if (!(ret=ScanDir(pList->Dir,0)))
+			goto END;
+
+		wchar_t **ListPath=NULL;
+		int NumPath=GetArgv(Opt.DupPath, &ListPath);
+		if (NumPath)
+		{
+			for (int i=0; i<NumPath; i++)
+			{
+				if (FSF.LStricmp(GetPosToName(pList->Dir),GetPosToName(ListPath[i])))
+				{
+					int size=FSF.ConvertPath(CPM_NATIVE,ListPath[i],0,0);
+					wchar_t *Dir=(wchar_t*)malloc(size*sizeof(wchar_t));
+					if (Dir)
+					{
+						FSF.ConvertPath(CPM_NATIVE,ListPath[i],Dir,size);
+						if (GetFileAttributesW(Dir)!=INVALID_FILE_ATTRIBUTES)
+							ret=ScanDir(Dir,0);
+						free(Dir);
+					}
+				}
+				if (!ret) break;
+			}
+		}
+		for (int i=0; i<NumPath; i++)
+			free(ListPath[i]);
+		free(ListPath);
+	}
 
 	if (!ret)
 		goto END;
