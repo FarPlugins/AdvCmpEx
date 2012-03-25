@@ -175,6 +175,7 @@ void SetBottom(HANDLE hDlg, dupFileList *pFileList, dupFile *curItem)
 		static wchar_t Title[MAX_PATH];
 		static wchar_t Bottom[MAX_PATH];
 		FarListTitles ListTitle;
+		ListTitle.StructSize=sizeof(FarListTitles);
 		ListTitle.Title=Title;
 		ListTitle.TitleSize=MAX_PATH;
 		ListTitle.Bottom=Bottom;
@@ -203,6 +204,7 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 {
 	// запросим информацию
 	FarListInfo ListInfo;
+	ListInfo.StructSize=sizeof(FarListInfo);
 	Info.SendDlgMessage(hDlg,DM_LISTINFO,0,&ListInfo);
 
 	if (ListInfo.ItemsNumber)
@@ -285,6 +287,7 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 		{
 			// ... то ассоциируем данные с элементом листа
 			struct FarListItemData Data;
+			Data.StructSize=sizeof(FarListItemData);
 			Data.Index=Index++;
 			Data.DataSize=sizeof(cur);
 			Data.Data=&cur;
@@ -308,6 +311,7 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 	if (bSetCurPos)
 	{
 		FarListPos ListPos;
+		ListPos.StructSize=sizeof(FarListPos);
 		ListPos.SelectPos=ListInfo.SelectPos;
 		ListPos.TopPos=ListInfo.TopPos;
 		Info.SendDlgMessage(hDlg,DM_LISTSETCURPOS,0,&ListPos);
@@ -429,6 +433,7 @@ INT_PTR WINAPI ShowDupDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 					&& record->Event.MouseEvent.dwMousePosition.Y>dlgRect.Top && record->Event.MouseEvent.dwMousePosition.Y<dlgRect.Bottom)
 					{
 						FarListPos ListPos;
+						ListPos.StructSize=sizeof(FarListPos);
 						Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, &ListPos);
 						int OldPos=ListPos.SelectPos;
 						ListPos.SelectPos=ListPos.TopPos+(record->Event.MouseEvent.dwMousePosition.Y-1-dlgRect.Top);
@@ -448,11 +453,13 @@ INT_PTR WINAPI ShowDupDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 							if (cur)
 							{
 								struct FarListGetItem FLGI;
+								FLGI.StructSize=sizeof(FarListGetItem);
 								FLGI.ItemIndex=ListPos.SelectPos;
 								if (Info.SendDlgMessage(hDlg,DM_LISTGETITEM,0,&FLGI))
 								{
 									(FLGI.Item.Flags&(LIF_CHECKED|LIF_GRAYED))?(FLGI.Item.Flags&= ~(LIF_CHECKED|LIF_GRAYED)):(FLGI.Item.Flags|=(LIF_CHECKED|LIF_GRAYED));
 									struct FarListUpdate FLU;
+									FLU.StructSize=sizeof(FarListUpdate);
 									FLU.Index=FLGI.ItemIndex;
 									FLU.Item=FLGI.Item;
 									if (Info.SendDlgMessage(hDlg,DM_LISTUPDATE,0,&FLU))
@@ -566,17 +573,20 @@ GOTOCMPFILE:
 					else if (vk==VK_INSERT)
 					{
 						struct FarListPos FLP;
+						FLP.StructSize=sizeof(FarListPos);
 						Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,&FLP);
 						dupFile **tmp=(dupFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)FLP.SelectPos);
 						dupFile *cur=tmp?*tmp:NULL;
 						if (cur)
 						{
 							struct FarListGetItem FLGI;
+							FLGI.StructSize=sizeof(FarListGetItem);
 							FLGI.ItemIndex=FLP.SelectPos;
 							if (Info.SendDlgMessage(hDlg,DM_LISTGETITEM,0,&FLGI))
 							{
 								(FLGI.Item.Flags&(LIF_CHECKED|LIF_GRAYED))?(FLGI.Item.Flags&= ~(LIF_CHECKED|LIF_GRAYED)):(FLGI.Item.Flags|=(LIF_CHECKED|LIF_GRAYED));
 								struct FarListUpdate FLU;
+								FLU.StructSize=sizeof(FarListUpdate);
 								FLU.Index=FLGI.ItemIndex;
 								FLU.Item=FLGI.Item;
 								if (Info.SendDlgMessage(hDlg,DM_LISTUPDATE,0,&FLU))
@@ -612,6 +622,7 @@ GOTOCHANGEMARK:
 						if (cur && !(cur->dwFlags&RCIF_EQUAL) && Opt.Mode==MODE_SYNC)
 						{
 							struct FarListGetItem FLGI;
+							FLGI.StructSize=sizeof(FarListGetItem);
 							FLGI.ItemIndex=Pos;
 							if (Info.SendDlgMessage(hDlg,DM_LISTGETITEM,0,&FLGI))
 							{
@@ -713,6 +724,7 @@ GOTOCHANGEMARK:
 								}
 								MakeListItemText(buf,cur,Mark);
 								struct FarListUpdate FLU;
+								FLU.StructSize=sizeof(FarListUpdate);
 								FLU.Index=FLGI.ItemIndex;
 								FLU.Item=FLGI.Item;
 								FLU.Item.Text=buf;

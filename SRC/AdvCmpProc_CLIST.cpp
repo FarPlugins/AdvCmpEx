@@ -193,6 +193,7 @@ void SetBottom(HANDLE hDlg, cmpFileList *pFileList, wchar_t *CurDir)
 	static wchar_t Title[MAX_PATH];
 	static wchar_t Bottom[MAX_PATH];
 	FarListTitles ListTitle;
+	ListTitle.StructSize=sizeof(FarListTitles);
 	ListTitle.Title=Title;
 	ListTitle.TitleSize=MAX_PATH;
 	ListTitle.Bottom=Bottom;
@@ -220,6 +221,7 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 
 	// запросим информацию
 	FarListInfo ListInfo;
+	ListInfo.StructSize=sizeof(FarListInfo);
 	Info.SendDlgMessage(hDlg,DM_LISTINFO,0,&ListInfo);
 
 	if (ListInfo.ItemsNumber)
@@ -389,6 +391,7 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 			pFileList->Items++;
 			// ... то ассоциируем данные с элементом листа
 			struct FarListItemData Data;
+			Data.StructSize=sizeof(FarListItemData);
 			Data.Index=Index++;
 			Data.DataSize=sizeof(cur);
 			Data.Data=&cur;
@@ -414,6 +417,7 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 	if (bSetCurPos)
 	{
 		FarListPos ListPos;
+		ListPos.StructSize=sizeof(FarListPos);
 		ListPos.SelectPos=ListInfo.SelectPos;
 		ListPos.TopPos=ListInfo.TopPos;
 		Info.SendDlgMessage(hDlg,DM_LISTSETCURPOS,0,&ListPos);
@@ -525,6 +529,7 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 					&& record->Event.MouseEvent.dwMousePosition.Y>dlgRect.Top && record->Event.MouseEvent.dwMousePosition.Y<dlgRect.Bottom)
 					{
 						FarListPos ListPos;
+						ListPos.StructSize=sizeof(FarListPos);
 						Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, &ListPos);
 						int OldPos=ListPos.SelectPos;
 						ListPos.SelectPos=ListPos.TopPos+(record->Event.MouseEvent.dwMousePosition.Y-1-dlgRect.Top);
@@ -734,17 +739,20 @@ GOTOCMPFILE:
 					else if (vk==VK_INSERT)
 					{
 						struct FarListPos FLP;
+						FLP.StructSize=sizeof(FarListPos);
 						Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,&FLP);
 						cmpFile **tmp=(cmpFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)FLP.SelectPos);
 						cmpFile *cur=tmp?*tmp:NULL;
 						if (cur && pFileList->bShowSelect)
 						{
 							struct FarListGetItem FLGI;
+							FLGI.StructSize=sizeof(FarListGetItem);
 							FLGI.ItemIndex=FLP.SelectPos;
 							if (Info.SendDlgMessage(hDlg,DM_LISTGETITEM,0,&FLGI))
 							{
 								(FLGI.Item.Flags&LIF_CHECKED)?(FLGI.Item.Flags&= ~LIF_CHECKED):(FLGI.Item.Flags|=LIF_CHECKED);
 								struct FarListUpdate FLU;
+								FLU.StructSize=sizeof(FarListUpdate);
 								FLU.Index=FLGI.ItemIndex;
 								FLU.Item=FLGI.Item;
 								if (Info.SendDlgMessage(hDlg,DM_LISTUPDATE,0,&FLU))
@@ -779,6 +787,7 @@ GOTOCHANGEMARK:
 						if (cur && !(cur->dwFlags&RCIF_EQUAL) && Opt.Mode==MODE_SYNC)
 						{
 							struct FarListGetItem FLGI;
+							FLGI.StructSize=sizeof(FarListGetItem);
 							FLGI.ItemIndex=Pos;
 							if (Info.SendDlgMessage(hDlg,DM_LISTGETITEM,0,&FLGI))
 							{
@@ -882,6 +891,7 @@ GOTOCHANGEMARK:
 								MakeListItemText(strBuf.get(),cur,Mark);
 								strBuf.updsize();
 								struct FarListUpdate FLU;
+								FLU.StructSize=sizeof(FarListUpdate);
 								FLU.Index=FLGI.ItemIndex;
 								FLU.Item=FLGI.Item;
 								FLU.Item.Text=strBuf.get();
