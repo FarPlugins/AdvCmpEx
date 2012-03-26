@@ -141,19 +141,19 @@ int GetDupOpt(dupFileList *pFileList)
 }
 
 
-int __cdecl dupSortListByName(const void *el1, const void *el2)
+int WINAPI dupSortListByName(const void *el1, const void *el2, void *el3)
 {
 	struct dupFile *Item1=(struct dupFile *)el1, *Item2=(struct dupFile *)el2;
 	return FSF.LStricmp(Item1->FileName,Item2->FileName);
 }
 
-int __cdecl dupSortListByGroup(const void *el1, const void *el2)
+int WINAPI dupSortListByGroup(const void *el1, const void *el2, void *el3)
 {
 	struct dupFile *Item1=(struct dupFile *)el1, *Item2=(struct dupFile *)el2;
 	return Item2->nGroup-Item1->nGroup;
 }
 
-int __cdecl dupSortListByGroupEx(const void *el1, const void *el2)
+int WINAPI dupSortListByGroupEx(const void *el1, const void *el2, void *el3)
 {
 	struct dupFile *Item1=(struct dupFile *)el1, *Item2=(struct dupFile *)el2;
 	int cmp=Item1->nGroup-Item2->nGroup;
@@ -215,7 +215,7 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 
 	// сортируем только при инициализации
 	if (bSort)
-		FSF.qsort(pFileList->F,pFileList->iCount,sizeof(pFileList->F[0]),dupSortListByGroupEx);
+		FSF.qsort(pFileList->F,pFileList->iCount,sizeof(pFileList->F[0]),dupSortListByGroupEx, NULL);
 
 	int Index=0;
 	string strBuf;
@@ -1536,7 +1536,7 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 	if (!ret)
 		goto END;
 
-	FSF.qsort(dFList.F,dFList.iCount,sizeof(dFList.F[0]),dupSortListByName);
+	FSF.qsort(dFList.F,dFList.iCount,sizeof(dFList.F[0]),dupSortListByName, NULL);
 
 	// ищем дубли, первый проход
 	if (Opt.DupName || Opt.DupSize || (Opt.DupContents && !Opt.DupPic && !Opt.DupMusic))
@@ -1805,7 +1805,7 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 		goto END;
 
 	// освободимся от уникальных
-	FSF.qsort(dFList.F,dFList.iCount,sizeof(dFList.F[0]),dupSortListByGroup);
+	FSF.qsort(dFList.F,dFList.iCount,sizeof(dFList.F[0]),dupSortListByGroup, NULL);
 	int Index;
 	for (Index=dFList.iCount-1; Index>=0 && !dFList.F[Index].nGroup; Index--)
 	{

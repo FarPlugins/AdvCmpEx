@@ -416,7 +416,7 @@ void WINAPI GetPluginInfoW(struct PluginInfo *pInfo)
  ****************************************************************************/
 HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 {
-	HANDLE hPanel = INVALID_HANDLE_VALUE;
+	HANDLE hPanel = NULL;
 	struct PanelInfo PInfo; 
 	PInfo.StructSize=sizeof(PanelInfo);
 

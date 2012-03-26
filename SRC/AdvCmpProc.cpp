@@ -604,7 +604,7 @@ void AdvCmpProc::FreeDirList(struct DirList *pList)
  * Функция сравнения имён файлов в двух структурах PluginPanelItem
  * для нужд qsort()
  ****************************************************************************/
-int __cdecl PICompare(const void *el1, const void *el2)
+int WINAPI PICompare(const void *el1, const void *el2, void *el3)
 {
 	const PluginPanelItem *ppi1 = *(const PluginPanelItem **)el1, *ppi2 = *(const PluginPanelItem **)el2;
 
@@ -702,7 +702,7 @@ bool AdvCmpProc::BuildItemsIndex(bool bLeftPanel,const struct DirList *pList,str
 
 	if (pIndex->iCount=j)
 	{
-			FSF.qsort(pIndex->pPPI,j,sizeof(pIndex->pPPI[0]),PICompare);
+			FSF.qsort(pIndex->pPPI,j,sizeof(pIndex->pPPI[0]),PICompare, NULL);
 	}
 	else
 	{
@@ -1585,7 +1585,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 	{
 		while (i<LII.iCount && j<RII.iCount && !bBrokenByEsc)
 		{
-			switch (PICompare(&LII.pPPI[i], &RII.pPPI[j]))
+			switch (PICompare(&LII.pPPI[i], &RII.pPPI[j], NULL))
 			{
 				case 0:
 				{
@@ -1679,7 +1679,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 		bool bNextItem;
 		dwFlag=RCIF_DIFFER;
 
-		switch (PICompare(&LII.pPPI[i], &RII.pPPI[j]))
+		switch (PICompare(&LII.pPPI[i], &RII.pPPI[j], NULL))
 		{
 
 			/******************************************************************************/
@@ -1761,7 +1761,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 						bNextItem=false;
 						for (int k=0; k<RII.iCount; k++)
 						{
-							if (!PICompare(&LII.pPPI[i], &RII.pPPI[k]))
+							if (!PICompare(&LII.pPPI[i], &RII.pPPI[k], NULL))
 							{
 								bNextItem = true;
 								if (CompareFiles(pLList->Dir,LII.pPPI[i],pRList->Dir,RII.pPPI[k],ScanDepth))
@@ -1830,7 +1830,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 						bNextItem=false;
 						for (int k=0; k<LII.iCount; k++)
 						{
-							if (!PICompare(&LII.pPPI[k], &RII.pPPI[j]))
+							if (!PICompare(&LII.pPPI[k], &RII.pPPI[j], NULL))
 							{
 								bNextItem = true;
 								if (CompareFiles(pLList->Dir,LII.pPPI[k],pRList->Dir,RII.pPPI[j],ScanDepth))

@@ -113,7 +113,7 @@ bool AdvCmpProc::MakeFileList(const wchar_t *LDir,const PluginPanelItem *pLPPI,c
 	return true;
 }
 
-int __cdecl cmpSortList(const void *el1, const void *el2)
+int WINAPI cmpSortList(const void *el1, const void *el2, void * el3)
 {
 	struct cmpFile *Item1=(struct cmpFile *)el1, *Item2=(struct cmpFile *)el2;
 
@@ -232,7 +232,7 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 
 	// сортируем только при инициализации
 	if (bSort)
-		FSF.qsort(pFileList->F,pFileList->iCount,sizeof(pFileList->F[0]),cmpSortList);
+		FSF.qsort(pFileList->F,pFileList->iCount,sizeof(pFileList->F[0]),cmpSortList,NULL);
 
 	int Index=0;
 	string strBuf;

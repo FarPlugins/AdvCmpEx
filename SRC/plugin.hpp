@@ -5,7 +5,7 @@
 /*
   plugin.hpp
 
-  Plugin API for Far Manager 3.0 build 2568
+  Plugin API for Far Manager 3.0 build 2573
 */
 
 /*
@@ -43,7 +43,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 2568
+#define FARMANAGERVERSION_BUILD 2573
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -783,6 +783,7 @@ struct FarPanelDirectory
 #define PANEL_NONE    ((HANDLE)(-1))
 #define PANEL_ACTIVE  ((HANDLE)(-1))
 #define PANEL_PASSIVE ((HANDLE)(-2))
+#define PANEL_STOP ((HANDLE)(-1))
 
 enum FILE_CONTROL_COMMANDS
 {
@@ -1297,6 +1298,7 @@ enum SYNCHRO_EVENTS
 };
 
 #define EEREDRAW_ALL    (void*)0
+#define CURRENT_EDITOR -1
 
 enum EDITOR_CONTROL_COMMANDS
 {
@@ -1837,9 +1839,8 @@ typedef int (WINAPIV *FARSTDSPRINTF)(wchar_t *Buffer,const wchar_t *Format,...);
 typedef int (WINAPIV *FARSTDSNPRINTF)(wchar_t *Buffer,size_t Sizebuf,const wchar_t *Format,...);
 typedef int (WINAPIV *FARSTDSSCANF)(const wchar_t *Buffer, const wchar_t *Format,...);
 // </C&C++>
-typedef void (WINAPI *FARSTDQSORT)(void *base, size_t nelem, size_t width, int (__cdecl *fcmp)(const void *, const void *));
-typedef void (WINAPI *FARSTDQSORTEX)(void *base, size_t nelem, size_t width, int (__cdecl *fcmp)(const void *, const void *,void *userparam),void *userparam);
-typedef void   *(WINAPI *FARSTDBSEARCH)(const void *key, const void *base, size_t nelem, size_t width, int (__cdecl *fcmp)(const void *, const void *));
+typedef void (WINAPI *FARSTDQSORT)(void *base, size_t nelem, size_t width, int (WINAPI *fcmp)(const void *, const void *,void *userparam),void *userparam);
+typedef void   *(WINAPI *FARSTDBSEARCH)(const void *key, const void *base, size_t nelem, size_t width, int (WINAPI *fcmp)(const void *, const void *,void *userparam),void *userparam);
 typedef size_t (WINAPI *FARSTDGETFILEOWNER)(const wchar_t *Computer,const wchar_t *Name,wchar_t *Owner,size_t Size);
 typedef size_t (WINAPI *FARSTDGETNUMBEROFLINKS)(const wchar_t *Name);
 typedef int (WINAPI *FARSTDATOI)(const wchar_t *s);
@@ -1973,12 +1974,9 @@ typedef struct FarStandardFunctions
 	// </C&C++>
 	FARSTDQSORT                qsort;
 	FARSTDBSEARCH              bsearch;
-	FARSTDQSORTEX              qsortex;
 	// <C&C++>
 	FARSTDSNPRINTF             snprintf;
 	// </C&C++>
-
-	DWORD_PTR                  Reserved[8];
 
 	FARSTDLOCALISLOWER         LIsLower;
 	FARSTDLOCALISUPPER         LIsUpper;
