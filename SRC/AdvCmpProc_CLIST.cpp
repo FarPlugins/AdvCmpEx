@@ -322,7 +322,7 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 			strVirtDir=GetPosToName(cur->LDir)+wcslen(LPanel.Dir);
 			if (strVirtDir.length()>0 && strVirtDir[(size_t)(strVirtDir.length()-1)]!=L'\\') strVirtDir+=L"\\";
 			struct FarListItem Item;
-			Item.Flags=LIF_DISABLE;
+			Item.Flags=LIF_DISABLE|LIF_CHECKED|0x2b;
 			wchar_t Size[65];
 			strcentr(Size,GetMsg(MFolder),nSIZE,L' ');
 			FSF.sprintf(strBuf.get(), L"%*.*s%c%*.*s%c%c%c%s",nSIZE,nSIZE,Size,0x2551,nSIZE,nSIZE,Size,0x2551,L' ',0x2502,strVirtDir.get());
@@ -404,7 +404,7 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 			strcentr(Size,GetMsg(MFolder),nSIZE,L' ');
 			FSF.sprintf(strBuf.get(), L"%*.*s%c%*.*s%c%c%c%s",nSIZE,nSIZE,Size,0x2551,nSIZE,nSIZE,Size,0x2551,L' ',0x2502,strVirtDir.get());
 			strBuf.updsize();
-			Item.Flags=LIF_DISABLE;
+			Item.Flags=LIF_DISABLE|LIF_CHECKED|0x2b;
 			Item.Text=strBuf.get();
 			List.Items=&Item;
 			Info.SendDlgMessage(hDlg,DM_LISTADD,0,&List);

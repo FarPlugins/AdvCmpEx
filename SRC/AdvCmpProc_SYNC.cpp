@@ -132,7 +132,7 @@ int GetSyncOpt(cmpFileList *pFileList)
 /***************************************************************************
  * Запрос на перезапись файлов
  ***************************************************************************/
-int AdvCmpProc::QueryOverwriteFile(const wchar_t *FileName, FILETIME *srcTime, FILETIME *destTime, __int64 srcSize, __int64 destSize, int direction, bool bReadOnlyType)
+int AdvCmpProc::QueryOverwriteFile(const wchar_t *FileName, FILETIME *srcTime, FILETIME *destTime, unsigned __int64 srcSize, unsigned __int64 destSize, int direction, bool bReadOnlyType)
 {
 	wchar_t Warning[67], Name[67];
 	wchar_t New[67], Existing[67];
@@ -182,7 +182,7 @@ int AdvCmpProc::QueryDelete(const wchar_t *FileName, bool bIsDir, bool bReadOnly
 /***************************************************************************
  * Диалог-прогресс
  ***************************************************************************/
-void ShowSyncMsg(const wchar_t *Name1, const wchar_t *Name2, __int64 Progress, __int64 Max, bool bRedraw)
+void ShowSyncMsg(const wchar_t *Name1, const wchar_t *Name2, unsigned __int64 Progress, unsigned __int64 Max, bool bRedraw)
 {
 	// Для перерисовки не чаще 3-х раз в 1 сек.
 	if (!bRedraw)
@@ -225,7 +225,7 @@ struct SynchronizeFileCopyCallbackData
 DWORD WINAPI SynchronizeFileCopyCallback( LARGE_INTEGER TotalFileSize, LARGE_INTEGER TotalBytesTransferred, LARGE_INTEGER StreamSize, LARGE_INTEGER StreamBytesTransferred,
                                           DWORD dwStreamNumber, DWORD dwCallbackReason, HANDLE hSourceFile, HANDLE hDestinationFile, LPVOID lpData )
 {
-	__int64 progress=TotalBytesTransferred.QuadPart, max=TotalFileSize.QuadPart;
+	unsigned __int64 progress=TotalBytesTransferred.QuadPart, max=TotalFileSize.QuadPart;
 
 	if (lpData)
 	{

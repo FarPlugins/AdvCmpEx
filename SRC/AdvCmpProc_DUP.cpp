@@ -876,8 +876,9 @@ int AdvCmpProc::ScanDir(const wchar_t *DirName, int ScanDepth)
 					break;
 				if (!Opt.Subfolders)
 					continue;
-				GetFullFileName(strDirMask,DirName,wfdFindData.cFileName);
-				ret=ScanDir(strDirMask,ScanDepth+1);
+				string strDir;
+				GetFullFileName(strDir,DirName,wfdFindData.cFileName);
+				ret=ScanDir(strDir.get(),ScanDepth+1);
 			}
 			else
 			{
@@ -1520,7 +1521,7 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 					if (Dir)
 					{
 						FSF.ConvertPath(CPM_NATIVE,ListPath[i],Dir,size);
-						if (GetFileAttributesW(Dir)!=INVALID_FILE_ATTRIBUTES)
+						if (GetFileAttributesW(Dir)==FILE_ATTRIBUTE_DIRECTORY)
 							ret=ScanDir(Dir,0);
 						free(Dir);
 					}

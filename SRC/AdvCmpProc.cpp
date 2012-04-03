@@ -414,7 +414,7 @@ void AdvCmpProc::WFD2PPI(WIN32_FIND_DATA &wfd, PluginPanelItem &ppi)
 	ppi.FileAttributes=wfd.dwFileAttributes;
 	ppi.LastAccessTime=wfd.ftLastAccessTime;
 	ppi.LastWriteTime=wfd.ftLastWriteTime;
-	ppi.FileSize=((__int64)wfd.nFileSizeHigh << 32) | wfd.nFileSizeLow;
+	ppi.FileSize=((unsigned __int64)wfd.nFileSizeHigh << 32) | wfd.nFileSizeLow;
 	ppi.FileName=(wchar_t*)malloc((wcslen(wfd.cFileName)+1)*sizeof(wchar_t));
 	if (ppi.FileName) wcscpy((wchar_t*)ppi.FileName,wfd.cFileName);
 }
@@ -433,7 +433,7 @@ bool AdvCmpProc::CheckScanDepth(const wchar_t *FileName, int ScanDepth)
 /****************************************************************************
  * Перемещение указателя в файле для нужд Opt.ContentsPercent
  ****************************************************************************/
-bool AdvCmpProc::mySetFilePointer(HANDLE hf, __int64 distance, DWORD MoveMethod)
+bool AdvCmpProc::mySetFilePointer(HANDLE hf, unsigned __int64 distance, DWORD MoveMethod)
 {
 	bool bSet = true;
 	LARGE_INTEGER li;
@@ -503,7 +503,6 @@ int AdvCmpProc::GetDirList(const wchar_t *Dir, int ScanDepth, bool OnlyInfo, str
 			wchar_t *buf=strPathMask.get(size); 
 			FSF.ConvertPath(CPM_REAL,Dir,buf,size);
 			strPathMask.updsize();
-
 			// проверка на рекурсию - узнаем, может мы уже отсюда пришли
 			wchar_t RealPrevDir[32768];
 			wcscpy(RealPrevDir,Dir);
@@ -530,7 +529,7 @@ int AdvCmpProc::GetDirList(const wchar_t *Dir, int ScanDepth, bool OnlyInfo, str
 	WIN32_FIND_DATA wfdFindData;
 	HANDLE hFind;
 
-	if ((hFind=FindFirstFileW(strPathMask,&wfdFindData)) != INVALID_HANDLE_VALUE)
+	if ((hFind=FindFirstFileW(strPathMask.get(),&wfdFindData)) != INVALID_HANDLE_VALUE)
 	{
 		do
 		{
@@ -551,8 +550,9 @@ int AdvCmpProc::GetDirList(const wchar_t *Dir, int ScanDepth, bool OnlyInfo, str
 					break;
 				if (!Opt.Subfolders)
 					continue;
-				GetFullFileName(strPathMask,Dir,wfdFindData.cFileName);
-				ret=GetDirList(strPathMask,ScanDepth+1,OnlyInfo,0);
+				string strPath;
+				GetFullFileName(strPath,Dir,wfdFindData.cFileName);
+				ret=GetDirList(strPath.get(),ScanDepth+1,OnlyInfo,0);
 			}
 			else
 			{
@@ -942,7 +942,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 
 			if (!(bLPanelPlug || bRPanelPlug))
 			{
-				if (!GetDirList(strLFullDir,ScanDepth,false,&LList) || !GetDirList(strRFullDir,ScanDepth,false,&RList))
+				if (!GetDirList(strLFullDir.get(),ScanDepth,false,&LList) || !GetDirList(strRFullDir.get(),ScanDepth,false,&RList))
 				{
 					bBrokenByEsc=true; // То ли юзер прервал, то ли ошибка чтения
 					bEqual=false; // Остановим сравнение
@@ -1593,7 +1593,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 					if (LII.pPPI[i]->FileAttributes&FILE_ATTRIBUTE_DIRECTORY && !(LPanel.PInfo.Flags&PFLAGS_PLUGIN))
 					{
 						GetFullFileName(strDir,pLList->Dir,LII.pPPI[i]->FileName);
-						GetDirList(strDir,ScanDepth,true);
+						GetDirList(strDir.get(),ScanDepth,true);
 					}
 					else
 					{
@@ -1606,7 +1606,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 						if (RII.pPPI[j]->FileAttributes&FILE_ATTRIBUTE_DIRECTORY && !(RPanel.PInfo.Flags&PFLAGS_PLUGIN))
 						{
 							GetFullFileName(strDir,pRList->Dir,RII.pPPI[j]->FileName);
-							GetDirList(strDir,ScanDepth,true);
+							GetDirList(strDir.get(),ScanDepth,true);
 						}
 						else
 						{

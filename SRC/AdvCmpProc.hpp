@@ -208,7 +208,7 @@ class AdvCmpProc
 		inline bool IsNewLine(int c) {return (c == '\r' || c == '\n');}
 		inline bool myIsSpace(int c) {return (c == ' ' || c == '\t' || c == '\v' || c == '\f');}
 		inline bool IsWhiteSpace(int c) {return (c == ' ' || c == '\t' || c == '\v' || c == '\f' || c == '\r' || c == '\n');}
-		bool mySetFilePointer(HANDLE hf, __int64 distance, DWORD MoveMethod);
+		bool mySetFilePointer(HANDLE hf, unsigned __int64 distance, DWORD MoveMethod);
 		DWORD ProcessCRC(void *pData, register int iLen, DWORD FileCRC);
 		bool CheckScanDepth(const wchar_t *FileName, int ScanDepth);
 
@@ -225,7 +225,7 @@ class AdvCmpProc
 			// диалог результатов сравнени€
 		bool MakeFileList(const wchar_t *LDir,const PluginPanelItem *pLPPI,const wchar_t *RDir,const PluginPanelItem *pRPPI,DWORD dwFlag);
 			// синхронизаци€
-		int QueryOverwriteFile(const wchar_t *FileName, FILETIME *srcTime, FILETIME *destTime, __int64 srcSize, __int64 destSize, int direction, bool bReadOnlyType);
+		int QueryOverwriteFile(const wchar_t *FileName, FILETIME *srcTime, FILETIME *destTime, unsigned __int64 srcSize, unsigned __int64 destSize, int direction, bool bReadOnlyType);
 		int QueryDelete(const wchar_t *FileName, bool bIsDir, bool bReadOnlyType);
 		int FileExists(const wchar_t *FileName, unsigned __int64 *pSize, FILETIME *pTime, DWORD *pAttrib, int CheckForFilter);
 		int SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName, int direction);
@@ -263,7 +263,7 @@ INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2);
 
 // синхронизаци€
 int GetSyncOpt(cmpFileList *pFileList);
-void ShowSyncMsg(const wchar_t *Name1, const wchar_t *Name2, __int64 Progress, __int64 Max, bool bRedraw);
+void ShowSyncMsg(const wchar_t *Name1, const wchar_t *Name2, unsigned __int64 Progress, unsigned __int64 Max, bool bRedraw);
 
 // полезн€шки
 wchar_t *CutSubstr(string &strSrc, wchar_t *Substr);
