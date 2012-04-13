@@ -75,7 +75,7 @@ rem  ==================== Compile %PlugName%.dll file...========================
 @cd ".."
 @if exist %PlugName%.dll del %PlugName%.dll>nul
 
-@echo !!!!!!!  Compile %PlugName%.dll with MSVCRT.dll ...  !!!!!!!
+@echo !!!!!!!  Compile %PlugName%.dll with MSVCRT100.dll ...  !!!!!!!
 
 @cd %MyDir%
 @rc /l 0x4E4 %PlugName%.rc

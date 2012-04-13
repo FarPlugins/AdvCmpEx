@@ -560,7 +560,7 @@ GOTOCMPFILE:
 						{
 							string strFullFileName;
 							GetFullFileName(strFullFileName,cur->Dir,cur->FileName);
-							if (Info.Viewer(GetPosToName(strFullFileName.get()),NULL,0,0,-1,-1,VF_DISABLEHISTORY,CP_AUTODETECT))
+							if (Info.Viewer(GetPosToName(strFullFileName.get()),NULL,0,0,-1,-1,VF_DISABLEHISTORY,CP_DEFAULT))
 							{
 								SetBottom(hDlg,pFileList,cur); // обходим баг фара: почему-то строка функциональных клавиш не пр€четс€ автоматом!
 								return true;
