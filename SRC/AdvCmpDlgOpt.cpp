@@ -872,13 +872,13 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 			}
 			else if (Param1 == DlgUNDERCURSOR)
 			{
-				for (int i=DlgCMPCASE; i<=DlgIGNORETEMPL; i++)
+				for (int i=DlgMODEBOX; i<=DlgIGNORETEMPL; i++)
 				{
 					if (StoreOpt[i].RegName)
 					{
 						if (i==DlgEPARTLYKB)
 							*StoreOpt[i].Option=FSF.atoi((const wchar_t *)Info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0));
-						else if (i==DlgIGNORETEMPL)
+						else if (i==DlgMODEBOX || i==DlgIGNORETEMPL)
 							*StoreOpt[i].Option=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,i,0);
 						else
 							*StoreOpt[i].Option=Info.SendDlgMessage(hDlg,DM_GETCHECK,i,0);
@@ -888,7 +888,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 				if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings))
 				{
 					int Root=0; // корень ключа
-					for (int i=DlgCMPCASE; i<=DlgIGNORETEMPL; i++)
+					for (int i=DlgMODEBOX; i<=DlgIGNORETEMPL; i++)
 					{
 						if (StoreOpt[i].RegName && Info.SendDlgMessage(hDlg,DM_ENABLE,i,(void*)-1))
 						{
