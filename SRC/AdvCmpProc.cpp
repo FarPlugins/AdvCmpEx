@@ -350,8 +350,8 @@ void AdvCmpProc::Init()
 
 void AdvCmpProc::Close()
 {
-	if (Opt.Buf[0]) free(Opt.Buf[0]);
-	if (Opt.Buf[1]) free(Opt.Buf[1]);
+	if (Opt.Buf[0]) { free(Opt.Buf[0]); Opt.Buf[0]=NULL; }
+	if (Opt.Buf[1]) { free(Opt.Buf[1]); Opt.Buf[1]=NULL; }
 
 	Info.FileFilterControl(LPanel.hFilter,FFCTL_FREEFILEFILTER,0,0);
 	Info.FileFilterControl(RPanel.hFilter,FFCTL_FREEFILEFILTER,0,0);

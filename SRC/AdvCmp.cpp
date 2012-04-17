@@ -110,6 +110,77 @@ __int64 GetFarSetting(FARSETTINGS_SUBFOLDERS Root,const wchar_t* Name)
 	return result;
 }
 
+void GetDirList(FarPanelInfo &CurPanel, DirList &CurList)
+{
+	if (CurPanel.PInfo.ItemsNumber)
+	{
+		CurList.ItemsNumber=CurPanel.PInfo.ItemsNumber;
+		CurList.PPI=(PluginPanelItem*)malloc(CurList.ItemsNumber*sizeof(PluginPanelItem));
+		if (CurList.PPI)
+		{
+			FarGetPluginPanelItem FGPPI;
+			for (int i=0; i<CurList.ItemsNumber; i++)
+			{
+				FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(CurPanel.hPanel,FCTL_GETPANELITEM,i,0));
+				if (FGPPI.Item)
+				{
+					Info.PanelControl(CurPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI);
+					PluginPanelItem &CurrentPluginItem=(CurList.PPI[i]);
+					CurrentPluginItem.FileAttributes=FGPPI.Item->FileAttributes;
+					CurrentPluginItem.LastAccessTime=FGPPI.Item->LastAccessTime;
+					CurrentPluginItem.LastWriteTime=FGPPI.Item->LastWriteTime;
+					CurrentPluginItem.FileSize=FGPPI.Item->FileSize;
+					CurrentPluginItem.CRC32=FGPPI.Item->CRC32;
+					CurrentPluginItem.Flags=FGPPI.Item->Flags;
+					CurrentPluginItem.FileName=(wchar_t*)malloc((wcslen(FGPPI.Item->FileName)+1)*sizeof(wchar_t));
+					if (CurrentPluginItem.FileName) wcscpy((wchar_t*)CurrentPluginItem.FileName,FGPPI.Item->FileName);
+
+					if (!CurPanel.bARC && (CurPanel.PInfo.Flags&PFLAGS_PLUGIN) && FGPPI.Item->CRC32)
+						CurPanel.bARC=true;
+					if (!CurPanel.bTMP && ((CurPanel.PInfo.Flags&PFLAGS_PLUGIN) && (CurPanel.PInfo.Flags&PFLAGS_REALNAMES)) && wcspbrk(FGPPI.Item->FileName,L":\\/"))
+						CurPanel.bTMP=true;
+					if (i==CurPanel.PInfo.CurrentItem && !(FGPPI.Item->FileAttributes&FILE_ATTRIBUTE_DIRECTORY))
+						CurPanel.bCurFile=true;
+					if (!CurPanel.bDir && !CurPanel.bTMP && (FGPPI.Item->FileAttributes&FILE_ATTRIBUTE_DIRECTORY) && !(FGPPI.Item->FileName[1]==L'.' && !FGPPI.Item->FileName[2]))
+						CurPanel.bDir=true;
+
+					free(FGPPI.Item);
+				}
+			}
+		}
+		if (!CurPanel.bARC)
+			CurPanel.bARC=(CurPanel.PInfo.Flags&PFLAGS_USECRC32?true:false);
+	}
+	else
+	{
+		CurList.ItemsNumber=0;
+		CurList.PPI=NULL;
+	}
+
+	int size=Info.PanelControl(CurPanel.hPanel,FCTL_GETPANELDIRECTORY,0,0);
+	if (size)
+	{
+		FarPanelDirectory *buf=(FarPanelDirectory*)malloc(size);
+		if (buf)
+		{
+			buf->StructSize=sizeof(FarPanelDirectory);
+			Info.PanelControl(CurPanel.hPanel,FCTL_GETPANELDIRECTORY,size,buf);
+			wcscpy(CurPanel.Dir,buf->Name);
+			if (!(CurPanel.PInfo.Flags&PFLAGS_PLUGIN))
+			{
+				size=FSF.ConvertPath(CPM_NATIVE,buf->Name,0,0);
+				CurList.Dir=(wchar_t*)malloc(size*sizeof(wchar_t));
+				if (CurList.Dir) FSF.ConvertPath(CPM_NATIVE,buf->Name,CurList.Dir,size);
+			}
+			else
+			{
+				CurList.Dir=(wchar_t*)malloc((wcslen(buf->Name)+1)*sizeof(wchar_t));
+				if (CurList.Dir) wcscpy(CurList.Dir,buf->Name);
+			}
+			free(buf);
+		}
+	}
+}
 
 void FreeDirList(struct DirList *pList)
 {
@@ -117,9 +188,9 @@ void FreeDirList(struct DirList *pList)
 	{
 		for (int i=0; i<pList->ItemsNumber; i++)
 			free((void*)pList->PPI[i].FileName);
-		free(pList->PPI); pList->PPI=0;
+		free(pList->PPI); pList->PPI=NULL;
 	}
-	free(pList->Dir); pList->Dir=0;
+	free(pList->Dir); pList->Dir=NULL;
 	pList->ItemsNumber=0;
 }
 
@@ -420,7 +491,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 	struct PanelInfo PInfo; 
 	PInfo.StructSize=sizeof(PanelInfo);
 
-	// Если не удалось запросить информацию об активной панели...
+	// Если не удалось запросить информацию о активной панели...
 	if (!Info.PanelControl(PANEL_ACTIVE,FCTL_GETPANELINFO,0,&PInfo))
 		return hPanel;
 	if (PInfo.Flags & PFLAGS_PANELLEFT)
@@ -435,7 +506,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		Info.PanelControl(PANEL_ACTIVE,FCTL_GETPANELINFO,0,&RPanel.PInfo);
 		RPanel.hPanel=PANEL_ACTIVE;
 	}
-	// Если не удалось запросить информацию об пассивной панели...
+	// Если не удалось запросить информацию о пассивной панели...
 	if (!Info.PanelControl(PANEL_PASSIVE,FCTL_GETPANELINFO,0,&PInfo))
 		return hPanel;
 	if (PInfo.Flags & PFLAGS_PANELLEFT)
@@ -462,143 +533,8 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 	RPanel.bTMP=RPanel.bARC=RPanel.bCurFile=RPanel.bDir=false;
 	struct DirList LList, RList;
 
-	if (LPanel.PInfo.ItemsNumber)
-	{
-		LList.ItemsNumber=LPanel.PInfo.ItemsNumber;
-		LList.PPI=(PluginPanelItem*)malloc(LList.ItemsNumber*sizeof(PluginPanelItem));
-		if (LList.PPI)
-		{
-			FarGetPluginPanelItem FGPPI;
-			for (int i=0; i<LList.ItemsNumber; i++)
-			{
-				FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,0));
-				if (FGPPI.Item)
-				{
-					Info.PanelControl(LPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI);
-					LList.PPI[i].FileAttributes=FGPPI.Item->FileAttributes;
-					LList.PPI[i].LastAccessTime=FGPPI.Item->LastAccessTime;
-					LList.PPI[i].LastWriteTime=FGPPI.Item->LastWriteTime;
-					LList.PPI[i].FileSize=FGPPI.Item->FileSize;
-					LList.PPI[i].CRC32=FGPPI.Item->CRC32;
-					LList.PPI[i].Flags=FGPPI.Item->Flags;
-					LList.PPI[i].FileName=(wchar_t*)malloc((wcslen(FGPPI.Item->FileName)+1)*sizeof(wchar_t));
-					if (LList.PPI[i].FileName) wcscpy((wchar_t*)LList.PPI[i].FileName,FGPPI.Item->FileName);
-					{
-						if (!LPanel.bARC && (LPanel.PInfo.Flags&PFLAGS_PLUGIN) && FGPPI.Item->CRC32)
-							LPanel.bARC=true;
-						if (!LPanel.bTMP && ((LPanel.PInfo.Flags&PFLAGS_PLUGIN) && (LPanel.PInfo.Flags&PFLAGS_REALNAMES)) && wcspbrk(FGPPI.Item->FileName,L":\\/"))
-							LPanel.bTMP=true;
-						if (i==LPanel.PInfo.CurrentItem && !(FGPPI.Item->FileAttributes&FILE_ATTRIBUTE_DIRECTORY))
-							LPanel.bCurFile=true;
-						if (!LPanel.bDir && !LPanel.bTMP && (FGPPI.Item->FileAttributes&FILE_ATTRIBUTE_DIRECTORY) && !(FGPPI.Item->FileName[1]==L'.' && !FGPPI.Item->FileName[2]))
-							LPanel.bDir=true;
-					}
-					free(FGPPI.Item);
-				}
-			}
-		}
-		if (!LPanel.bARC)
-			LPanel.bARC=(LPanel.PInfo.Flags&PFLAGS_USECRC32?true:false);
-	}
-	else
-	{
-		LList.ItemsNumber=0;
-		LList.PPI=NULL;
-	}
-	{
-		int size=Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIRECTORY,0,0);
-		if (size)
-		{
-			FarPanelDirectory *buf=(FarPanelDirectory*)malloc(size);
-			if (buf)
-			{
-				buf->StructSize=sizeof(FarPanelDirectory);
-				Info.PanelControl(LPanel.hPanel,FCTL_GETPANELDIRECTORY,size,buf);
-				wcscpy(LPanel.Dir,buf->Name);
-				if (!(LPanel.PInfo.Flags&PFLAGS_PLUGIN))
-				{
-					size=FSF.ConvertPath(CPM_NATIVE,buf->Name,0,0);
-					LList.Dir=(wchar_t*)malloc(size*sizeof(wchar_t));
-					if (LList.Dir) FSF.ConvertPath(CPM_NATIVE,buf->Name,LList.Dir,size);
-				}
-				else
-				{
-					LList.Dir=(wchar_t*)malloc((wcslen(buf->Name)+1)*sizeof(wchar_t));
-					if (LList.Dir) wcscpy(LList.Dir,buf->Name);
-				}
-				free(buf);
-			}
-		}
-	}
-
-	if (RPanel.PInfo.ItemsNumber)
-	{
-		RList.ItemsNumber=RPanel.PInfo.ItemsNumber;
-		RList.PPI=(PluginPanelItem*)malloc(RList.ItemsNumber*sizeof(PluginPanelItem));
-		if (RList.PPI)
-		{
-			FarGetPluginPanelItem FGPPI;
-			for (int i=0; i<RList.ItemsNumber; i++)
-			{
-				FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,0));
-				if (FGPPI.Item)
-				{
-					Info.PanelControl(RPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI);
-					RList.PPI[i].FileAttributes=FGPPI.Item->FileAttributes;
-					RList.PPI[i].LastAccessTime=FGPPI.Item->LastAccessTime;
-					RList.PPI[i].LastWriteTime=FGPPI.Item->LastWriteTime;
-					RList.PPI[i].FileSize=FGPPI.Item->FileSize;
-					RList.PPI[i].CRC32=FGPPI.Item->CRC32;
-					RList.PPI[i].Flags=FGPPI.Item->Flags;
-					RList.PPI[i].FileName=(wchar_t*)malloc((wcslen(FGPPI.Item->FileName)+1)*sizeof(wchar_t));
-					if (RList.PPI[i].FileName) wcscpy((wchar_t*)RList.PPI[i].FileName,FGPPI.Item->FileName);
-					{
-						if (!RPanel.bARC && (RPanel.PInfo.Flags&PFLAGS_PLUGIN) && FGPPI.Item->CRC32)
-							RPanel.bARC=true;
-						if (!RPanel.bTMP && ((RPanel.PInfo.Flags&PFLAGS_PLUGIN) && (RPanel.PInfo.Flags&PFLAGS_REALNAMES)) && wcspbrk(FGPPI.Item->FileName,L":\\/"))
-							RPanel.bTMP=true;
-						if (i==RPanel.PInfo.CurrentItem && !(FGPPI.Item->FileAttributes&FILE_ATTRIBUTE_DIRECTORY))
-							RPanel.bCurFile=true;
-						if (!RPanel.bDir && !RPanel.bTMP && (FGPPI.Item->FileAttributes&FILE_ATTRIBUTE_DIRECTORY) && !(FGPPI.Item->FileName[1]==L'.' && !FGPPI.Item->FileName[2]))
-							RPanel.bDir=true;
-					}
-					free(FGPPI.Item);
-				}
-			}
-		}
-		if (!RPanel.bARC)
-			RPanel.bARC=(RPanel.PInfo.Flags&PFLAGS_USECRC32?true:false);
-	}
-	else
-	{
-		RList.ItemsNumber=0;
-		RList.PPI=NULL;
-	}
-	{
-		int size=Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIRECTORY,0,0);
-		if (size)
-		{
-			FarPanelDirectory *buf=(FarPanelDirectory*)malloc(size);
-			if (buf)
-			{
-				buf->StructSize=sizeof(FarPanelDirectory);
-				Info.PanelControl(RPanel.hPanel,FCTL_GETPANELDIRECTORY,size,buf);
-				wcscpy(RPanel.Dir,buf->Name);
-				if (!(RPanel.PInfo.Flags&PFLAGS_PLUGIN))
-				{
-					size=FSF.ConvertPath(CPM_NATIVE,buf->Name,0,0);
-					RList.Dir=(wchar_t*)malloc(size*sizeof(wchar_t));
-					if (RList.Dir) FSF.ConvertPath(CPM_NATIVE,buf->Name,RList.Dir,size);
-				}
-				else
-				{
-					RList.Dir=(wchar_t*)malloc((wcslen(buf->Name)+1)*sizeof(wchar_t));
-					if (RList.Dir) wcscpy(RList.Dir,buf->Name);
-				}
-				free(buf);
-			}
-		}
-	}
+	GetDirList(LPanel, LList);
+	GetDirList(RPanel, RList);
 
 	WinInfo.hFarWindow=(HWND)Info.AdvControl(&MainGuid,ACTL_GETFARHWND,0,0);
 	GetClientRect(WinInfo.hFarWindow,&WinInfo.Win);
@@ -692,9 +628,9 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 	}
 
 	// определены из диалога опций
-	if (Opt.Substr) free(Opt.Substr);
-	if (Opt.WinMergePath) free(Opt.WinMergePath);
-	if (Opt.DupPath) free(Opt.DupPath);
+	if (Opt.Substr) { free(Opt.Substr); Opt.Substr=NULL; }
+	if (Opt.WinMergePath) { free(Opt.WinMergePath); Opt.WinMergePath=NULL; }
+	if (Opt.DupPath) { free(Opt.DupPath); Opt.DupPath=NULL; }
 	Info.FileFilterControl(Opt.hCustomFilter,FFCTL_FREEFILEFILTER,0,0);
 
 	FreeDirList(&LList);
@@ -711,7 +647,7 @@ void WINAPI ExitFARW(const struct ExitInfo *pInfo)
 	//Освободим память в случае выгрузки плагина
 	if (Cache.RCI)
 		free(Cache.RCI);
-	Cache.RCI=0;
+	Cache.RCI=NULL;
 	Cache.ItemsNumber=0;
 
 	UnLoadGfl();
