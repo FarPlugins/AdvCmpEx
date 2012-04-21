@@ -179,6 +179,15 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProcThunk(HANDLE hDlg, int Msg, int Pa
 	return Class->ShowOptDialogProc(hDlg,Msg,Param1,Param2);
 }
 
+void AdvCmpDlgOpt::Close()
+{
+	// определены из диалога опций
+	if (Opt.Substr) { free(Opt.Substr); Opt.Substr=NULL; }
+	if (Opt.WinMergePath) { free(Opt.WinMergePath); Opt.WinMergePath=NULL; }
+	if (Opt.DupPath) { free(Opt.DupPath); Opt.DupPath=NULL; }
+	Info.FileFilterControl(Opt.hCustomFilter,FFCTL_FREEFILEFILTER,0,0);
+}
+
 INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1, void *Param2)
 {
 

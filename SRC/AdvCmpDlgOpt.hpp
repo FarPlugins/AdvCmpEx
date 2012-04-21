@@ -41,5 +41,7 @@ class AdvCmpDlgOpt
 	public:
 		AdvCmpDlgOpt() { }
 		~AdvCmpDlgOpt() { }
+
 		int ShowOptDialog();
+		void Close();
 };

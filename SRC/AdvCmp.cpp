@@ -627,11 +627,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		AdvCmp.Close();
 	}
 
-	// определены из диалога опций
-	if (Opt.Substr) { free(Opt.Substr); Opt.Substr=NULL; }
-	if (Opt.WinMergePath) { free(Opt.WinMergePath); Opt.WinMergePath=NULL; }
-	if (Opt.DupPath) { free(Opt.DupPath); Opt.DupPath=NULL; }
-	Info.FileFilterControl(Opt.hCustomFilter,FFCTL_FREEFILEFILTER,0,0);
+	AdvCmpOpt.Close();
 
 	FreeDirList(&LList);
 	FreeDirList(&RList);
