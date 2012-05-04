@@ -181,6 +181,7 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProcThunk(HANDLE hDlg, int Msg, int Pa
 
 void AdvCmpDlgOpt::Close()
 {
+	bSkipSaveOpt=false;
 	// определены из диалога опций
 	if (Opt.Substr) { free(Opt.Substr); Opt.Substr=NULL; }
 	if (Opt.WinMergePath) { free(Opt.WinMergePath); Opt.WinMergePath=NULL; }
@@ -430,6 +431,8 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 				// определим остальные опции...
 				Opt.ProcessHidden=GetFarSetting(FSSF_PANEL,L"ShowHidden")?true:false;
 				Opt.hCustomFilter=INVALID_HANDLE_VALUE;
+
+				bSkipSaveOpt=false;
 
 				return true;
 			}
@@ -842,6 +845,11 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 					else if (vk == VK_F2 && Info.SendDlgMessage(hDlg,DM_ENABLE,DlgUNDERCURSOR,(void*)-1))
 						Info.SendDlgMessage(hDlg,DM_CLOSE,DlgUNDERCURSOR,0);
 				}
+				else if (IsCtrl(record) && vk==VK_RETURN)
+				{
+					bSkipSaveOpt=true;
+					Info.SendDlgMessage(hDlg,DM_CLOSE,DlgOK,0);
+				}
 			}
 		}
 		break;
@@ -955,20 +963,23 @@ INT_PTR WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1,
 				if (Opt.Filter && Opt.hCustomFilter == INVALID_HANDLE_VALUE)
 					Opt.Filter=Info.FileFilterControl(PANEL_NONE,FFCTL_CREATEFILEFILTER,FFT_CUSTOM,&Opt.hCustomFilter);
 
-				FarSettingsCreate settings={sizeof(FarSettingsCreate),MainGuid,INVALID_HANDLE_VALUE};
-				if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings))
+				if (!bSkipSaveOpt)
 				{
-					int Root=0; // корень ключа
-					for (int i=DlgMODEBOX; i<sizeof(StoreOpt)/sizeof(StoreOpt[0]); i++)
+					FarSettingsCreate settings={sizeof(FarSettingsCreate),MainGuid,INVALID_HANDLE_VALUE};
+					if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings))
 					{
-						if (StoreOpt[i].RegName && Info.SendDlgMessage(hDlg,DM_ENABLE,i,(void*)-1))
+						int Root=0; // корень ключа
+						for (int i=DlgMODEBOX; i<sizeof(StoreOpt)/sizeof(StoreOpt[0]); i++)
 						{
-							FarSettingsItem item={Root,StoreOpt[i].RegName,FST_QWORD};
-							item.Number=*StoreOpt[i].Option;
-							Info.SettingsControl(settings.Handle,SCTL_SET,0,&item);
+							if (StoreOpt[i].RegName && Info.SendDlgMessage(hDlg,DM_ENABLE,i,(void*)-1))
+							{
+								FarSettingsItem item={Root,StoreOpt[i].RegName,FST_QWORD};
+								item.Number=*StoreOpt[i].Option;
+								Info.SettingsControl(settings.Handle,SCTL_SET,0,&item);
+							}
 						}
+						Info.SettingsControl(settings.Handle,SCTL_FREE,0,0);
 					}
-					Info.SettingsControl(settings.Handle,SCTL_FREE,0,0);
 				}
 				return true;
 			}
