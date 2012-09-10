@@ -1860,7 +1860,7 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 				FSF.FormatFileSize(CmpInfo.ProcSize,7,FFFS_FLOATSIZE|FFFS_SHOWBYTESINDEX|FFFS_ECONOMIC,size,8);
 				FSF.sprintf(buf,GetMsg(MDupDelItems), size, CmpInfo.Proc);
 				const wchar_t *MsgItems[] = { GetMsg(MDupTitle), buf, GetMsg(MOK) };
-				Info.Message(&MainGuid,&NoDiffMsgGuid,0,0,MsgItems,sizeof(MsgItems) / sizeof(MsgItems[0]),1);
+				Info.Message(&MainGuid,&DupDelItemsMsgGuid,0,0,MsgItems,sizeof(MsgItems) / sizeof(MsgItems[0]),1);
 			}
 		}
 	}
