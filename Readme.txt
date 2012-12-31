@@ -37,9 +37,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
   Создайте подпапку в каталоге ...\Far\Plugins, скопируйте туда
 содержимое текущего архива.
-  Для работы плагина требуется библиотека MSVCR100.dll - входит в 
-"Распространяемый пакет Microsoft Visual C++ 2010 (x86)", скачать
-можно с странички плагина или сайта Майкрософта.
+
+  Для работы плагина требуется библиотека MSVCR100.dll, входит в 
+"Распространяемый пакет Microsoft Visual C++ 2010", скачать и
+установить можно с сайта Майкрософта:
+- для х86 версии http://www.microsoft.com/ru-ru/download/details.aspx?id=5555
+- для х64 версии http://www.microsoft.com/ru-ru/download/details.aspx?id=14632
 
 
 Использование
