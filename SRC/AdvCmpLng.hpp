@@ -90,14 +90,15 @@ enum {
 	MSubfolders,
 	MMaxScanDepth,
 	MScanSymlink,
+	MSkipSubstr,
+	MStopDiffDup,
 	MFilter,
 	MFilterBotton,
-	MTillFirstDiff,
-	MSkipSubstr,
 	MProcessSelected,
 	MSelectedNew,
 	MSyncOnlyRight,
 	MIgnoreMissing,
+	MLightSync,
 	MShowMsg,
 	MSound,
 	MDialog,
@@ -159,9 +160,14 @@ enum {
 
 	MSyncSelTitle,
 	MSyncSelDiff,
-	MSyncSelDiffToRight,
-	MSyncSelDiffToLeft,
-	MSyncSelDiffNew,
+	MSyncSelLNew,
+	MSyncSelRNew,
+	MSyncSelToSkip,
+	MSyncSelToRight,
+	MSyncSelToLeft,
+	MSyncSelIfNew,
+	MSyncSelToNon,
+	MSyncSelToDel,
 
 	MWarning,
 	MFileIsReadOnly,
@@ -197,6 +203,7 @@ enum {
 	MAskDel,
 	MDelete,
 
+	MMethod,
 	MDefault,
 	MWinMerge,
 	MVisCmp,
@@ -212,5 +219,8 @@ enum {
 	MDupEdit,
 
 	MDupDelItems,
+
+	MDelLeft,
+	MDelRight,
 };
 

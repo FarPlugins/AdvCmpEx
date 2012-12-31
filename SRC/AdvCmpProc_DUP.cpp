@@ -44,8 +44,8 @@ bool AdvCmpProc::MakeFileList(const wchar_t *Dir,const PluginPanelItem *pPPI)
 {
 	for (int i=0; i<dFList.iCount; i++)
 	{
-		if (!FSF.LStricmp(dFList.F[i].Dir,Dir))
-			if (!FSF.LStricmp(dFList.F[i].FileName,pPPI->FileName))
+		if (!FSF.LStricmp(dFList.F[i].fi.Dir,Dir))
+			if (!FSF.LStricmp(dFList.F[i].fi.FileName,pPPI->FileName))
 				return true;
 	}
 
@@ -57,14 +57,14 @@ bool AdvCmpProc::MakeFileList(const wchar_t *Dir,const PluginPanelItem *pPPI)
 	}
 	dFList.F=New;
 
-	dFList.F[dFList.iCount].FileName=(wchar_t*)malloc((wcslen(pPPI->FileName)+1)*sizeof(wchar_t));
-	if (dFList.F[dFList.iCount].FileName) wcscpy(dFList.F[dFList.iCount].FileName,pPPI->FileName);
-	dFList.F[dFList.iCount].Dir=(wchar_t*)malloc((wcslen(Dir)+1)*sizeof(wchar_t));
-	if (dFList.F[dFList.iCount].Dir) wcscpy(dFList.F[dFList.iCount].Dir,Dir);
-	dFList.F[dFList.iCount].ftLastWriteTime.dwLowDateTime=pPPI->LastWriteTime.dwLowDateTime;
-	dFList.F[dFList.iCount].ftLastWriteTime.dwHighDateTime=pPPI->LastWriteTime.dwHighDateTime;
-	dFList.F[dFList.iCount].nFileSize=pPPI->FileSize;
-	dFList.F[dFList.iCount].dwAttributes=pPPI->FileAttributes;
+	dFList.F[dFList.iCount].fi.FileName=(wchar_t*)malloc((wcslen(pPPI->FileName)+1)*sizeof(wchar_t));
+	if (dFList.F[dFList.iCount].fi.FileName) wcscpy(dFList.F[dFList.iCount].fi.FileName,pPPI->FileName);
+	dFList.F[dFList.iCount].fi.Dir=(wchar_t*)malloc((wcslen(Dir)+1)*sizeof(wchar_t));
+	if (dFList.F[dFList.iCount].fi.Dir) wcscpy(dFList.F[dFList.iCount].fi.Dir,Dir);
+	dFList.F[dFList.iCount].fi.ftLastWriteTime.dwLowDateTime=pPPI->LastWriteTime.dwLowDateTime;
+	dFList.F[dFList.iCount].fi.ftLastWriteTime.dwHighDateTime=pPPI->LastWriteTime.dwHighDateTime;
+	dFList.F[dFList.iCount].fi.nFileSize=pPPI->FileSize;
+	dFList.F[dFList.iCount].fi.dwAttributes=pPPI->FileAttributes;
 
 	dFList.iCount++;
 	return true;
@@ -118,7 +118,7 @@ int GetDupOpt(dupFileList *pFileList)
 
 	if (hDlg != INVALID_HANDLE_VALUE)
 	{
-		ret=Info.DialogRun(hDlg);
+		ret=(int)Info.DialogRun(hDlg);
 		if (ret==4)
 		{
 			Opt.DupDel=Info.SendDlgMessage(hDlg,DM_GETCHECK,1,0);
@@ -144,23 +144,23 @@ int GetDupOpt(dupFileList *pFileList)
 int WINAPI dupSortListByName(const void *el1, const void *el2, void *el3)
 {
 	struct dupFile *Item1=(struct dupFile *)el1, *Item2=(struct dupFile *)el2;
-	return FSF.LStricmp(Item1->FileName,Item2->FileName);
+	return FSF.LStricmp(Item1->fi.FileName,Item2->fi.FileName);
 }
 
 int WINAPI dupSortListByGroup(const void *el1, const void *el2, void *el3)
 {
 	struct dupFile *Item1=(struct dupFile *)el1, *Item2=(struct dupFile *)el2;
-	return Item2->nGroup-Item1->nGroup;
+	return Item2->nDupGroup-Item1->nDupGroup;
 }
 
 int WINAPI dupSortListByGroupEx(const void *el1, const void *el2, void *el3)
 {
 	struct dupFile *Item1=(struct dupFile *)el1, *Item2=(struct dupFile *)el2;
-	int cmp=Item1->nGroup-Item2->nGroup;
+	int cmp=Item1->nDupGroup-Item2->nDupGroup;
 	if (!cmp)
-		cmp=FSF.LStricmp(Item1->FileName,Item2->FileName);
+		cmp=FSF.LStricmp(Item1->fi.FileName,Item2->fi.FileName);
 	if (!cmp)
-		cmp=FSF.LStricmp(Item1->Dir,Item2->Dir);
+		cmp=FSF.LStricmp(Item1->fi.Dir,Item2->fi.Dir);
 	return cmp;
 }
 
@@ -174,24 +174,23 @@ void SetBottom(HANDLE hDlg, dupFileList *pFileList, dupFile *curItem)
 	{
 		static wchar_t Title[MAX_PATH];
 		static wchar_t Bottom[MAX_PATH];
-		FarListTitles ListTitle;
-		ListTitle.StructSize=sizeof(FarListTitles);
+		FarListTitles ListTitle={sizeof(FarListTitles)};
 		ListTitle.Title=Title;
 		ListTitle.TitleSize=MAX_PATH;
 		ListTitle.Bottom=Bottom;
 		ListTitle.BottomSize=MAX_PATH;
 		Info.SendDlgMessage(hDlg,DM_LISTGETTITLES,0,&ListTitle);
 
-		string strDir(GetPosToName(curItem->Dir));
+		string strDir(GetPosToName(curItem->fi.Dir));
 		FSF.TruncPathStr(strDir.get(),WinInfo.TruncLen);
 		strDir.updsize();
 		wcscpy(Title,strDir.get());
 
 		wchar_t Time[20];
 		wchar_t Size[65];
-		GetStrFileTime(&curItem->ftLastWriteTime,Time,false);
-		itoaa(curItem->nFileSize,Size);
-		FSF.sprintf(Bottom,GetMsg(MDupListBottom),14,14,Size,Time,pFileList->GroupCount,pFileList->iCount,pFileList->Del);
+		GetStrFileTime(&curItem->fi.ftLastWriteTime,Time,false);
+		itoaa(curItem->fi.nFileSize,Size);
+		FSF.sprintf(Bottom,GetMsg(MDupListBottom),14,14,Size,Time,pFileList->GroupItems,pFileList->iCount,pFileList->Del);
 
 		Info.SendDlgMessage(hDlg,DM_LISTSETTITLES,0,&ListTitle);
 	}
@@ -203,8 +202,7 @@ void SetBottom(HANDLE hDlg, dupFileList *pFileList, dupFile *curItem)
 bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool bSort)
 {
 	// запросим информацию
-	FarListInfo ListInfo;
-	ListInfo.StructSize=sizeof(FarListInfo);
+	FarListInfo ListInfo={sizeof(FarListInfo)};
 	Info.SendDlgMessage(hDlg,DM_LISTINFO,0,&ListInfo);
 
 	if (ListInfo.ItemsNumber)
@@ -224,7 +222,7 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 	wchar_t MetaData[160];
 
 	int digits_count=1, m=10;
-	while (m <= pFileList->GroupCount)
+	while (m <= pFileList->GroupItems)
 	{
 		m *= 10;
 		digits_count++;
@@ -234,16 +232,28 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 	{
 		dupFile *cur=&pFileList->F[i];
 
-		FSF.FormatFileSize(cur->nFileSize,7,FFFS_FLOATSIZE|FFFS_SHOWBYTESINDEX|FFFS_ECONOMIC,Size,8);
+		FSF.FormatFileSize(cur->fi.nFileSize,7,FFFS_FLOATSIZE|FFFS_SHOWBYTESINDEX|FFFS_ECONOMIC,Size,8);
 
 		if (Opt.DupListSmall)
 		{
-			FSF.sprintf(strBuf.get(), L"%*d%c%-7.7s%c%s",digits_count,cur->nGroup,0x2502,Size,0x2551,cur->FileName);
+			FSF.sprintf(strBuf.get(), L"%*d%c%-7.7s%c%s",digits_count,cur->nDupGroup,0x2502,Size,0x2551,cur->fi.FileName);
 		}
 		else
 		{
-			string strPath(GetPosToName(cur->Dir));
-
+			string strPath(GetPosToName(cur->fi.Dir));
+/*
+			string strSubstr;
+			wchar_t *p=LPanel.PInfo.Flags&PFLAGS_FOCUS?LPanel.Dir:RPanel.Dir;
+			while (*p) // для экранирования спецсимволов в регэкспах
+			{
+				if (*p==L'\\' || *p==L'[' || *p==L']' || *p==L'+' || *p==L'{' || *p==L'}')
+					strSubstr+=L"\\";
+				strSubstr+=*p++;
+			}
+			// вырежем все из имени файла до текущей папки (и сама папка) нам не нужна
+			CutSubstr(strPath,strSubstr.get());
+			strPath+=L"\\";
+*/
 			if ((cur->dwFlags&RCIF_PIC) || (cur->dwFlags&RCIF_PICERR && cur->PicWidth && cur->PicHeight))
 			{
 				FSF.itoa(cur->PicWidth,w,10);
@@ -260,25 +270,23 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 			}
 			else
 			{
-				GetStrFileTime(&cur->ftLastWriteTime,Time,true);
+				GetStrFileTime(&cur->fi.ftLastWriteTime,Time,true);
 				FSF.TruncPathStr(strPath.get(),82);
 				strPath.updsize();
 				FSF.sprintf(MetaData,L"%-82.82s%c%-19.19s",strPath.get(),0x2551,Time);
 			}
-			FSF.sprintf(strBuf.get(), L"%*d%c%-102.102s%c%-7.7s%c%s",digits_count,cur->nGroup,0x2502,MetaData,0x2551,Size,0x2551,cur->FileName);
+			FSF.sprintf(strBuf.get(), L"%*d%c%-102.102s%c%-7.7s%c%s",digits_count,cur->nDupGroup,0x2502,MetaData,0x2551,Size,0x2551,cur->fi.FileName);
 		}
 		strBuf.updsize();
 
-		struct FarListItem Item;
-		Item.Flags=0;
+		struct FarListItem Item={};
 		if (cur->dwFlags&RCIF_USERDEL)
 		{
 			Item.Flags|=(LIF_CHECKED|LIF_GRAYED);
 			pFileList->Del++;
 		}
 		Item.Text=strBuf.get();
-		Item.Reserved[0]=Item.Reserved[1]=Item.Reserved[2]=0;
-		struct FarList List;
+		struct FarList List={sizeof(FarList)};
 		List.ItemsNumber=1;
 		List.Items=&Item;
 
@@ -286,8 +294,7 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 		if (Info.SendDlgMessage(hDlg,DM_LISTADD,0,&List))
 		{
 			// ... то ассоциируем данные с элементом листа
-			struct FarListItemData Data;
-			Data.StructSize=sizeof(FarListItemData);
+			struct FarListItemData Data={sizeof(FarListItemData)};
 			Data.Index=Index++;
 			Data.DataSize=sizeof(cur);
 			Data.Data=&cur;
@@ -296,7 +303,7 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 
 		// сепаратор
 		int j=i+1;
-		if (j<pFileList->iCount && cur->nGroup!=pFileList->F[j].nGroup)
+		if (j<pFileList->iCount && cur->nDupGroup!=pFileList->F[j].nDupGroup)
 		{
 			Item.Flags=LIF_SEPARATOR;
 			Item.Text=NULL;
@@ -310,8 +317,7 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 
 	if (bSetCurPos)
 	{
-		FarListPos ListPos;
-		ListPos.StructSize=sizeof(FarListPos);
+		FarListPos ListPos={sizeof(FarListPos)};
 		ListPos.SelectPos=ListInfo.SelectPos;
 		ListPos.TopPos=ListInfo.TopPos;
 		Info.SendDlgMessage(hDlg,DM_LISTSETCURPOS,0,&ListPos);
@@ -323,7 +329,7 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 /***************************************************************************
  * Обработчик диалога
  ***************************************************************************/
-INT_PTR WINAPI ShowDupDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
+intptr_t WINAPI ShowDupDialogProc(HANDLE hDlg,intptr_t Msg,intptr_t Param1,void *Param2)
 {
 	dupFileList *pFileList=(dupFileList *)Info.SendDlgMessage(hDlg,DM_GETDLGDATA,0,0);
 	switch(Msg)
@@ -432,8 +438,7 @@ INT_PTR WINAPI ShowDupDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 					if (record->Event.MouseEvent.dwMousePosition.X>dlgRect.Left && record->Event.MouseEvent.dwMousePosition.X<dlgRect.Right
 					&& record->Event.MouseEvent.dwMousePosition.Y>dlgRect.Top && record->Event.MouseEvent.dwMousePosition.Y<dlgRect.Bottom)
 					{
-						FarListPos ListPos;
-						ListPos.StructSize=sizeof(FarListPos);
+						FarListPos ListPos={sizeof(FarListPos)};
 						Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, &ListPos);
 						int OldPos=ListPos.SelectPos;
 						ListPos.SelectPos=ListPos.TopPos+(record->Event.MouseEvent.dwMousePosition.Y-1-dlgRect.Top);
@@ -452,14 +457,12 @@ INT_PTR WINAPI ShowDupDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 							dupFile *cur=(tmp && *tmp)?*tmp:NULL;
 							if (cur)
 							{
-								struct FarListGetItem FLGI;
-								FLGI.StructSize=sizeof(FarListGetItem);
+								struct FarListGetItem FLGI={sizeof(FarListGetItem)};
 								FLGI.ItemIndex=ListPos.SelectPos;
 								if (Info.SendDlgMessage(hDlg,DM_LISTGETITEM,0,&FLGI))
 								{
 									(FLGI.Item.Flags&(LIF_CHECKED|LIF_GRAYED))?(FLGI.Item.Flags&= ~(LIF_CHECKED|LIF_GRAYED)):(FLGI.Item.Flags|=(LIF_CHECKED|LIF_GRAYED));
-									struct FarListUpdate FLU;
-									FLU.StructSize=sizeof(FarListUpdate);
+									struct FarListUpdate FLU={sizeof(FarListUpdate)};
 									FLU.Index=FLGI.ItemIndex;
 									FLU.Item=FLGI.Item;
 									if (Info.SendDlgMessage(hDlg,DM_LISTUPDATE,0,&FLU))
@@ -497,60 +500,6 @@ INT_PTR WINAPI ShowDupDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 
 				if (IsNone(record))
 				{
-/*
-					{
-GOTOCMPFILE:
-						int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
-						cmpFile **tmp=(cmpFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
-						cmpFile *cur=(tmp && *tmp)?*tmp:NULL;
-						if (cur)
-						{
-							if ((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN) ||
-									(cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY) || (cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY) ||
-									(cur->dwFlags&RCIF_LUNIQ) || (cur->dwFlags&RCIF_RUNIQ))
-							{
-								MessageBeep(MB_OK);
-								return true;
-							}
-							string strLFullFileName, strRFullFileName;
-							GetFullFileName(strLFullFileName,cur->LDir,cur->FileName);
-							GetFullFileName(strRFullFileName,cur->RDir,cur->FileName);
-
-							if (pCompareFiles)
-							{
-								pCompareFiles(strLFullFileName.get(),strRFullFileName.get(),0);
-							}
-							else
-							{
-								WIN32_FIND_DATA wfdFindData;
-								HANDLE hFind;
-								wchar_t DiffProgram[MAX_PATH];
-								ExpandEnvironmentStringsW(Opt.WinMergePath,DiffProgram,(sizeof(DiffProgram)/sizeof(DiffProgram[0])));
-								bool bFindDiffProg=((hFind=FindFirstFileW(DiffProgram,&wfdFindData)) != INVALID_HANDLE_VALUE);
-								if (!bFindDiffProg)
-								{
-									ExpandEnvironmentStringsW(L"%ProgramFiles%\\WinMerge\\WinMergeU.exe",DiffProgram,(sizeof(DiffProgram)/sizeof(DiffProgram[0])));
-									bFindDiffProg=((hFind=FindFirstFileW(DiffProgram,&wfdFindData)) != INVALID_HANDLE_VALUE);
-								}
-								if (bFindDiffProg)
-								{
-									FindClose(hFind);
-									STARTUPINFO si;
-									PROCESS_INFORMATION pi;
-									memset(&si, 0, sizeof(si));
-									si.cb = sizeof(si);
-									wchar_t Command[32768];
-									FSF.sprintf(Command, L"\"%s\" -e \"%s\" \"%s\"", DiffProgram,GetPosToName(strLFullFileName.get()),GetPosToName(strRFullFileName.get()));
-									CreateProcess(0,Command,0,0,false,0,0,0,&si,&pi);
-								}
-								else
-									MessageBeep(MB_ICONASTERISK);
-							}
-						}
-						return true;
-					}
-					else 
-*/
 					if (vk==VK_F3)
 					{
 						int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
@@ -559,7 +508,7 @@ GOTOCMPFILE:
 						if (cur)
 						{
 							string strFullFileName;
-							GetFullFileName(strFullFileName,cur->Dir,cur->FileName);
+							GetFullFileName(strFullFileName,cur->fi.Dir,cur->fi.FileName);
 							if (Info.Viewer(GetPosToName(strFullFileName.get()),NULL,0,0,-1,-1,VF_DISABLEHISTORY,CP_DEFAULT))
 							{
 								SetBottom(hDlg,pFileList,cur); // обходим баг фара: почему-то строка функциональных клавиш не прячется автоматом!
@@ -572,21 +521,18 @@ GOTOCMPFILE:
 					}
 					else if (vk==VK_INSERT)
 					{
-						struct FarListPos FLP;
-						FLP.StructSize=sizeof(FarListPos);
+						struct FarListPos FLP={sizeof(FarListPos)};
 						Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,&FLP);
 						dupFile **tmp=(dupFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)FLP.SelectPos);
 						dupFile *cur=tmp?*tmp:NULL;
 						if (cur)
 						{
-							struct FarListGetItem FLGI;
-							FLGI.StructSize=sizeof(FarListGetItem);
+							struct FarListGetItem FLGI={sizeof(FarListGetItem)};
 							FLGI.ItemIndex=FLP.SelectPos;
 							if (Info.SendDlgMessage(hDlg,DM_LISTGETITEM,0,&FLGI))
 							{
 								(FLGI.Item.Flags&(LIF_CHECKED|LIF_GRAYED))?(FLGI.Item.Flags&= ~(LIF_CHECKED|LIF_GRAYED)):(FLGI.Item.Flags|=(LIF_CHECKED|LIF_GRAYED));
-								struct FarListUpdate FLU;
-								FLU.StructSize=sizeof(FarListUpdate);
+								struct FarListUpdate FLU={sizeof(FarListUpdate)};
 								FLU.Index=FLGI.ItemIndex;
 								FLU.Item=FLGI.Item;
 								if (Info.SendDlgMessage(hDlg,DM_LISTUPDATE,0,&FLU))
@@ -756,36 +702,57 @@ GOTOCHANGEMARK:
 						{
 							Opt.Mode=MODE_CMP; //скидываем!!!
 
-							PanelRedrawInfo RInfo={0,0};
+							PanelRedrawInfo RInfo={sizeof(PanelRedrawInfo),0,0};
 							bool bLeft=(LPanel.PInfo.Flags&PFLAGS_FOCUS?true:false);
-							if (FSF.LStricmp(bLeft?LPanel.Dir:RPanel.Dir,GetPosToName(cur->Dir)))
+							if (FSF.LStricmp(bLeft?LPanel.Dir:RPanel.Dir,GetPosToName(cur->fi.Dir)))
 							{
-								FarPanelDirectory dirInfo={sizeof(FarPanelDirectory),GetPosToName(cur->Dir),NULL,{0},NULL};
+								FarPanelDirectory dirInfo={sizeof(FarPanelDirectory),GetPosToName(cur->fi.Dir),NULL,{0},NULL};
 								Info.PanelControl(bLeft?LPanel.hPanel:RPanel.hPanel,FCTL_SETPANELDIRECTORY,0,&dirInfo);
 							}
-							PanelInfo PInfo;
-							PInfo.StructSize=sizeof(PanelInfo);
+							PanelInfo PInfo={sizeof(PanelInfo)};
 							Info.PanelControl(bLeft?LPanel.hPanel:RPanel.hPanel,FCTL_GETPANELINFO,0,&PInfo);
-							FarGetPluginPanelItem FGPPI;
 
 							for (unsigned i=0; i<PInfo.ItemsNumber; i++)
 							{
-								FGPPI.Size=0; FGPPI.Item=0;
-								FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(bLeft?LPanel.hPanel:RPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI));
-								if (FGPPI.Item)
+								size_t size=Info.PanelControl(bLeft?LPanel.hPanel:RPanel.hPanel,FCTL_GETPANELITEM,i,0);
+								PluginPanelItem *PPI=(PluginPanelItem*)malloc(size);
+								if (PPI)
 								{
+									FarGetPluginPanelItem FGPPI={sizeof(FarGetPluginPanelItem),size,PPI};
 									Info.PanelControl(bLeft?LPanel.hPanel:RPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI);
-									if (!FSF.LStricmp(cur->FileName,FGPPI.Item->FileName))
+									if (!FSF.LStricmp(cur->fi.FileName,FGPPI.Item->FileName))
 									{
 										RInfo.CurrentItem=i;
-										free(FGPPI.Item);
+										free(PPI);
 										break;
 									}
-									free(FGPPI.Item);
+									free(PPI);
 								}
 							}
 							Info.PanelControl(bLeft?LPanel.hPanel:RPanel.hPanel,FCTL_REDRAWPANEL,0,&RInfo);
 							Info.SendDlgMessage(hDlg,DM_CLOSE,0,0);
+						}
+						return true;
+					}
+				}
+				else if (IsShift(record))
+				{
+					if (vk==VK_RETURN)
+					{
+						int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
+						dupFile **tmp=(dupFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
+						dupFile *cur=tmp?*tmp:NULL;
+						if (cur)
+						{
+							string strFullFileName;
+							GetFullFileName(strFullFileName,cur->fi.Dir,cur->fi.FileName,false);
+							SHELLEXECUTEINFOW info;
+							memset(&info,0,sizeof(info));
+							info.cbSize=sizeof(info);
+							info.fMask=SEE_MASK_UNICODE|SEE_MASK_NOCLOSEPROCESS;
+							info.lpFile=strFullFileName.get();
+							info.nShow=SW_SHOWNORMAL;
+							ShellExecuteExW(&info);
 						}
 						return true;
 					}
@@ -818,8 +785,8 @@ int AdvCmpProc::ShowDupDialog()
 		Opt.DupListSmall=0;
 		if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings))
 		{
-			int Root=0; // корень ключа
-			FarSettingsItem item={Root,L"DupListSmall",FST_QWORD};
+			size_t Root=0; // корень ключа
+			FarSettingsItem item={sizeof(FarSettingsItem),Root,L"DupListSmall",FST_QWORD};
 			if (Info.SettingsControl(settings.Handle,SCTL_GET,0,&item))
 				Opt.DupListSmall=(int)item.Number;
 			Info.SettingsControl(settings.Handle,SCTL_FREE,0,0);
@@ -829,8 +796,8 @@ int AdvCmpProc::ShowDupDialog()
 
 		if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings))
 		{
-			int Root=0; // корень ключа
-			FarSettingsItem item={Root,L"DupListSmall",FST_QWORD};
+			size_t Root=0; // корень ключа
+			FarSettingsItem item={sizeof(FarSettingsItem),Root,L"DupListSmall",FST_QWORD};
 			item.Number=Opt.DupListSmall;
 			Info.SettingsControl(settings.Handle,SCTL_SET,0,&item);
 			Info.SettingsControl(settings.Handle,SCTL_FREE,0,0);
@@ -882,8 +849,8 @@ int AdvCmpProc::ScanDir(const wchar_t *DirName, int ScanDepth)
 			}
 			else
 			{
-				PluginPanelItem ppi;
-				memset(&ppi,0,sizeof(ppi));
+				PluginPanelItem ppi={};
+//				memset(&ppi,0,sizeof(ppi));
 				ppi.FileAttributes=wfdFindData.dwFileAttributes;
 				ppi.LastAccessTime=wfdFindData.ftLastAccessTime;
 				ppi.LastWriteTime=wfdFindData.ftLastWriteTime;
@@ -912,18 +879,18 @@ int AdvCmpProc::ScanDir(const wchar_t *DirName, int ScanDepth)
 DWORD AdvCmpProc::GetCRC(const dupFile *cur)
 {
 	string strFullFileName;
-	GetFullFileName(strFullFileName,cur->Dir,cur->FileName);
+	GetFullFileName(strFullFileName,cur->fi.Dir,cur->fi.FileName);
 
 	HANDLE hFile;
 	if ((hFile=CreateFileW(strFullFileName, GENERIC_READ, FILE_SHARE_READ, 0,
                            OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, 0)) == INVALID_HANDLE_VALUE)
 	{
-		CmpInfo.ProcSize+=cur->nFileSize;
+		CmpInfo.ProcSize+=cur->fi.nFileSize;
 		CmpInfo.Errors++;
 		return 0;
 	}
 
-	ShowDupMsg(GetPosToName(cur->Dir),cur->FileName,true);
+	ShowDupMsg(GetPosToName(cur->fi.Dir),cur->fi.FileName,true);
 
 	const DWORD ReadBlock=65536;
 	char *Buf=(char*)malloc(ReadBlock*sizeof(char));
@@ -943,7 +910,7 @@ DWORD AdvCmpProc::GetCRC(const dupFile *cur)
 		CmpInfo.ProcSize+=ReadSize;
 		dwFileCRC=ProcessCRC(Buf,ReadBlock,dwFileCRC);
 
-		ShowDupMsg(GetPosToName(cur->Dir),cur->FileName,false);
+		ShowDupMsg(GetPosToName(cur->fi.Dir),cur->fi.FileName,false);
 
 		if (ReadSize<ReadBlock)
 			break;
@@ -1073,230 +1040,255 @@ bool ID3V23_ReadFrame(int nFlag, char *pRaw, unsigned nFrameSize, wchar_t *pszBu
 }
 
 
-int AdvCmpProc::GetMp3(dupFile *cur)
+int AdvCmpProc::GetMp3(dupFile *cur, int GetInfo)   //GetInfo=0-только битрейт и время,  1-хеш аудиопотока, 2-теги
 {
 	int ret=0;
-
-	if (cur->dwFlags&RCIF_MUSIC)
-		return 1;
 
 	if (CheckForEsc())
 		return ret;
 
-	HSTREAM stream=NULL;
+	string strFullFileName;
+	GetFullFileName(strFullFileName,cur->fi.Dir,cur->fi.FileName);
+	HSTREAM stream=pBASS_StreamCreateFile(FALSE,strFullFileName.get(),0,0,BASS_STREAM_DECODE|BASS_UNICODE);
 
-	if (FSF.ProcessName(L"*.mp3",cur->FileName,0,PN_CMPNAME))
+	if (!(cur->dwFlags&RCIF_MUSIC) && FSF.ProcessName(L"*.mp3",cur->fi.FileName,0,PN_CMPNAME))
 	{
-		string strFullFileName;
-		GetFullFileName(strFullFileName,cur->Dir,cur->FileName);
 		BASS_CHANNELINFO info;
-		if (stream=pBASS_StreamCreateFile(FALSE,strFullFileName.get(),0,0,BASS_STREAM_DECODE|BASS_UNICODE))
-			if (pBASS_ChannelGetInfo(stream,&info))
-				if (info.ctype==BASS_CTYPE_STREAM_MP3 || info.ctype==BASS_CTYPE_STREAM_MP2)
-					cur->dwFlags|=RCIF_MUSIC;
+		if (stream && pBASS_ChannelGetInfo(stream,&info))
+			if (info.ctype==BASS_CTYPE_STREAM_MP3 || info.ctype==BASS_CTYPE_STREAM_MP2)
+				cur->dwFlags|=RCIF_MUSIC;
 	}
 
-	if (!(cur->dwFlags&RCIF_MUSIC))
+	if (!(cur->dwFlags&RCIF_MUSIC) || !stream)
 	{
 		ret=0;
 		goto END;
 	}
 
-	const unsigned int nSize=256;
-	cur->MusicArtist=(wchar_t*)malloc(nSize*sizeof(wchar_t));
-	cur->MusicTitle=(wchar_t*)malloc(nSize*sizeof(wchar_t));
-
-	if (!cur->MusicArtist || !cur->MusicTitle)
+	if (!GetInfo && (!cur->MusicBitrate || !cur->MusicTime))
 	{
-		ret=0;
-		goto END;
-	}
-
-	ShowDupMsg(GetPosToName(cur->Dir),cur->FileName,true);
-
-	cur->MusicBitrate=(DWORD)(pBASS_StreamGetFilePosition(stream,BASS_FILEPOS_END)/
+		cur->MusicBitrate=(DWORD)(pBASS_StreamGetFilePosition(stream,BASS_FILEPOS_END)/
 														(125*pBASS_ChannelBytes2Seconds(stream,pBASS_ChannelGetLength(stream,BASS_POS_BYTE)))+0.5); // bitrate (Kbps)
-	cur->MusicTime=(DWORD)pBASS_ChannelBytes2Seconds(stream,pBASS_ChannelGetLength(stream,BASS_POS_BYTE));
-
-	char *p=(char *)pBASS_ChannelGetTags(stream,BASS_TAG_ID3V2);
-	if (p && p[0]=='I' && p[1]=='D' && p[2]=='3')
+		cur->MusicTime=(DWORD)pBASS_ChannelBytes2Seconds(stream,pBASS_ChannelGetLength(stream,BASS_POS_BYTE));
+		ret=1;
+	}
+	else if ((GetInfo==1 || GetInfo==3) && !cur->dwCRC)
 	{
-		unsigned nVersion = ((*(p + 3)) << 8) | (*(p + 4));
-		unsigned nFlag = *(p + 5);
-		unsigned nTagSize = GetSyncSafeInt((unsigned char*)p + 6);
-		char szFrameID[5];
-		unsigned nFrameSize;
-		unsigned nTotal=0;
-		char *pUnsync=NULL;
-
-		if ((nFlag&0x80) && (nVersion<=0x300))
-			p = pUnsync = Unsync(p+10,0,nTagSize,&nTagSize);
-		else
-			p += 10;
-		if (p)
+		ShowDupMsg(GetPosToName(cur->fi.Dir),cur->fi.FileName,true);
+		DWORD dwCRC=0;
+		short Buf[10000];
+		int i=15;
+		while (i && pBASS_ChannelIsActive(stream)==BASS_ACTIVE_PLAYING)
 		{
-			if (nVersion>=0x300)
+			if (CheckForEsc())
 			{
-				if (nFlag & 0x40)
-					nTotal += (nVersion==0x300) ? (4+GetNonSyncSafeInt23((unsigned char*)p+nTotal)) : GetSyncSafeInt((unsigned char*)p+nTotal);
+				ret=0;
+				goto END;
+			}
+			pBASS_ChannelGetData(stream,Buf,20000);
+			dwCRC=ProcessCRC(Buf,10000,dwCRC);
+			i--;
+		}
 
-				while(nTotal<nTagSize)
+//DebugMsg(L"pBASS_StreamGetFilePosition(stream,BASS_FILEPOS_START)",cur->FileName,(DWORD)pBASS_StreamGetFilePosition(stream,BASS_FILEPOS_START));
+//DebugMsg(L"pBASS_StreamGetFilePosition(stream,BASS_FILEPOS_END)",cur->FileName,(DWORD)pBASS_StreamGetFilePosition(stream,BASS_FILEPOS_END));
+		cur->dwCRC=dwCRC;
+		ret=1;
+	}
+	if ((GetInfo==2 || GetInfo==3) && (!cur->MusicArtist || !cur->MusicTitle))
+	{
+		const unsigned int nSize=256;
+		cur->MusicArtist=(wchar_t*)malloc(nSize*sizeof(wchar_t));
+		cur->MusicTitle=(wchar_t*)malloc(nSize*sizeof(wchar_t));
+
+		if (!cur->MusicArtist || !cur->MusicTitle)
+		{
+			ret=0;
+			goto END;
+		}
+
+		ShowDupMsg(GetPosToName(cur->fi.Dir),cur->fi.FileName,true);
+
+		char *p=(char *)pBASS_ChannelGetTags(stream,BASS_TAG_ID3V2);
+		if (p && p[0]=='I' && p[1]=='D' && p[2]=='3')
+		{
+			unsigned nVersion = ((*(p + 3)) << 8) | (*(p + 4));
+			unsigned nFlag = *(p + 5);
+			unsigned nTagSize = GetSyncSafeInt((unsigned char*)p + 6);
+			char szFrameID[5];
+			unsigned nFrameSize;
+			unsigned nTotal=0;
+			char *pUnsync=NULL;
+
+			if ((nFlag&0x80) && (nVersion<=0x300))
+				p = pUnsync = Unsync(p+10,0,nTagSize,&nTagSize);
+			else
+				p += 10;
+			if (p)
+			{
+				if (nVersion>=0x300)
 				{
-					int nFrameFlag=0;
-					// Ver.2.3
-					lstrcpynA(szFrameID,(p+nTotal),5);
-					if (nVersion== 0x300)
-						nFrameSize=GetNonSyncSafeInt23((unsigned char*)p+nTotal+4);
-					else
-						nFrameSize=GetSyncSafeInt((unsigned char*)p+nTotal+4);
-					int nLenID=lstrlenA(szFrameID);
-					if (nLenID>0 && nLenID<4 && nTotal>4)
+					if (nFlag & 0x40)
+						nTotal += (nVersion==0x300) ? (4+GetNonSyncSafeInt23((unsigned char*)p+nTotal)) : GetSyncSafeInt((unsigned char*)p+nTotal);
+
+					while(nTotal<nTagSize)
 					{
-						/* broken tag */
-						lstrcpynA(szFrameID,(p+nTotal-4+nLenID),5);
-						if (lstrlenA(szFrameID)==4)
+						int nFrameFlag=0;
+						// Ver.2.3
+						lstrcpynA(szFrameID,(p+nTotal),5);
+						if (nVersion== 0x300)
+							nFrameSize=GetNonSyncSafeInt23((unsigned char*)p+nTotal+4);
+						else
+							nFrameSize=GetSyncSafeInt((unsigned char*)p+nTotal+4);
+						int nLenID=lstrlenA(szFrameID);
+						if (nLenID>0 && nLenID<4 && nTotal>4)
 						{
-							nTotal += -4+nLenID;
-							continue;
+							/* broken tag */
+							lstrcpynA(szFrameID,(p+nTotal-4+nLenID),5);
+							if (lstrlenA(szFrameID)==4)
+							{
+								nTotal += -4+nLenID;
+								continue;
+							}
 						}
+						if (nLenID!=4)
+							break;
+						if (nVersion!=0x300)
+							nFrameFlag = (p[nTotal+9] & 3) | ((nFlag & 0x80) ? 2 : 0);
+
+						if(!lstrcmpA(szFrameID, "TPE1"))
+							ID3V23_ReadFrame(nFrameFlag, p+nTotal+10,nFrameSize,cur->MusicArtist,nSize);
+						else if(!lstrcmpA(szFrameID, "TIT2"))
+							ID3V23_ReadFrame(nFrameFlag, p+nTotal+10,nFrameSize,cur->MusicTitle,nSize);
+						nTotal += nFrameSize+10;
 					}
-					if (nLenID!=4)
+				}
+				else
+				{
+					while(nTotal<nTagSize)
+					{
+						int nFrameFlag=0;
+						// Ver.2.2
+						lstrcpynA(szFrameID,(p+nTotal),4);
+						nFrameSize=GetNonSyncSafeInt22((unsigned char*)p+nTotal+3);
+						if (lstrlenA(szFrameID)!=3)
+							break;
+
+						if(!lstrcmpA(szFrameID, "TP1"))
+							ID3V23_ReadFrame(nFrameFlag, p+nTotal+6,nFrameSize,cur->MusicArtist,nSize);
+						else if(!lstrcmpA(szFrameID, "TT2"))
+							ID3V23_ReadFrame(nFrameFlag, p+nTotal+6, nFrameSize,cur->MusicTitle,nSize);
+						nTotal += nFrameSize+6;
+					}
+				}
+			}
+			if (pUnsync) free(pUnsync);
+		}
+		if (*cur->MusicArtist)
+		{
+	//DebugMsg(L"cur->MusicArtist-2",cur->MusicArtist);
+			ret=1;
+			cur->dwFlags|=RCIF_MUSICART;
+		}
+		if (*cur->MusicTitle)
+		{
+	//DebugMsg(L"cur->MusicTitle-2",cur->MusicTitle);
+			ret=1;
+			cur->dwFlags|=RCIF_MUSICTIT;
+		}
+
+		TAG_ID3 *id3=(TAG_ID3*)pBASS_ChannelGetTags(stream,BASS_TAG_ID3);
+		if (id3)
+		{
+			int nFrameSize=30;
+			if (!(cur->dwFlags&RCIF_MUSICART))
+			{
+				while (nFrameSize>0 && id3->artist[nFrameSize-1] == 0x20) nFrameSize--;
+				MultiByteToWideChar(CP_ACP,0,id3->artist,nFrameSize,cur->MusicArtist,nSize);
+				FSF.RTrim(cur->MusicArtist);
+				if (*cur->MusicArtist)
+				{
+	//DebugMsg(L"cur->MusicArtist-1",cur->MusicArtist);
+					ret=1;
+					cur->dwFlags|=RCIF_MUSICART;
+				}
+			}
+			nFrameSize=30;
+			if (!(cur->dwFlags&RCIF_MUSICTIT))
+			{
+				while (nFrameSize>0 && id3->title[nFrameSize-1] == 0x20) nFrameSize--;
+				MultiByteToWideChar(CP_ACP,0,id3->title,nFrameSize,cur->MusicTitle,nSize);
+				FSF.RTrim(cur->MusicTitle);
+				if (*cur->MusicTitle)
+				{
+	//DebugMsg(L"cur->MusicTitle-1",cur->MusicTitle);
+					ret=1;
+					cur->dwFlags|=RCIF_MUSICTIT;
+				}
+			}
+		}
+
+		if (!(cur->dwFlags&RCIF_MUSICART) || !(cur->dwFlags&RCIF_MUSICTIT))
+		{
+			wchar_t *Name=cur->fi.FileName;
+			int lenName=wcslen(Name)-4; //за минусом расширения
+			int Ptr=lenName;
+			for (int i=0; i<lenName; i++)
+			{
+				if (!Strncmp(Name+i, L" - ", 3) || !Strncmp(Name+i, L"_-_", 3))
+				{
+					if (i>0 && FSF.LIsAlphanum((wchar_t)Name[i-1]))
+					{
+						Ptr=i;
 						break;
-					if (nVersion!=0x300)
-						nFrameFlag = (p[nTotal+9] & 3) | ((nFlag & 0x80) ? 2 : 0);
-
-					if(!lstrcmpA(szFrameID, "TPE1"))
-						ID3V23_ReadFrame(nFrameFlag, p+nTotal+10,nFrameSize,cur->MusicArtist,nSize);
-					else if(!lstrcmpA(szFrameID, "TIT2"))
-						ID3V23_ReadFrame(nFrameFlag, p+nTotal+10,nFrameSize,cur->MusicTitle,nSize);
-					nTotal += nFrameSize+10;
+					}
 				}
 			}
-			else
+
+			if (!(cur->dwFlags&RCIF_MUSICART) && Ptr!=lenName)
 			{
-				while(nTotal<nTagSize)
+				bool bNum=true;
+				for (int i=0,j=0; Name[j] && j<Ptr && i<nSize; j++)
 				{
-					int nFrameFlag=0;
-					// Ver.2.2
-					lstrcpynA(szFrameID,(p+nTotal),4);
-					nFrameSize=GetNonSyncSafeInt22((unsigned char*)p+nTotal+3);
-					if (lstrlenA(szFrameID)!=3)
-						break;
-
-					if(!lstrcmpA(szFrameID, "TP1"))
-						ID3V23_ReadFrame(nFrameFlag, p+nTotal+6,nFrameSize,cur->MusicArtist,nSize);
-					else if(!lstrcmpA(szFrameID, "TT2"))
-						ID3V23_ReadFrame(nFrameFlag, p+nTotal+6, nFrameSize,cur->MusicTitle,nSize);
-					nTotal += nFrameSize+6;
+					if (bNum)
+					{
+						if (Name[j]>=L'0' && Name[j]<=L'9')
+							continue;
+						else
+							bNum=false;
+					}
+					cur->MusicArtist[i++]=Name[j];
 				}
-			}
-		}
-		if (pUnsync) free(pUnsync);
-	}
-	if (*cur->MusicArtist)
-	{
-//DebugMsg(L"cur->MusicArtist-2",cur->MusicArtist);
-		ret=1;
-		cur->dwFlags|=RCIF_MUSICART;
-	}
-	if (*cur->MusicTitle)
-	{
-//DebugMsg(L"cur->MusicTitle-2",cur->MusicTitle);
-		ret=1;
-		cur->dwFlags|=RCIF_MUSICTIT;
-	}
-
-	TAG_ID3 *id3=(TAG_ID3*)pBASS_ChannelGetTags(stream,BASS_TAG_ID3);
-	if (id3)
-	{
-		int nFrameSize=30;
-		if (!(cur->dwFlags&RCIF_MUSICART))
-		{
-			while (nFrameSize>0 && id3->artist[nFrameSize-1] == 0x20) nFrameSize--;
-			MultiByteToWideChar(CP_ACP,0,id3->artist,nFrameSize,cur->MusicArtist,nSize);
-			FSF.RTrim(cur->MusicArtist);
-			if (*cur->MusicArtist)
-			{
-//DebugMsg(L"cur->MusicArtist-1",cur->MusicArtist);
-				ret=1;
-				cur->dwFlags|=RCIF_MUSICART;
-			}
-		}
-		nFrameSize=30;
-		if (!(cur->dwFlags&RCIF_MUSICTIT))
-		{
-			while (nFrameSize>0 && id3->title[nFrameSize-1] == 0x20) nFrameSize--;
-			MultiByteToWideChar(CP_ACP,0,id3->title,nFrameSize,cur->MusicTitle,nSize);
-			FSF.RTrim(cur->MusicTitle);
-			if (*cur->MusicTitle)
-			{
-//DebugMsg(L"cur->MusicTitle-1",cur->MusicTitle);
-				ret=1;
-				cur->dwFlags|=RCIF_MUSICTIT;
-			}
-		}
-	}
-
-	if (!(cur->dwFlags&RCIF_MUSICART) || !(cur->dwFlags&RCIF_MUSICTIT))
-	{
-		wchar_t *Name=cur->FileName;
-		int lenName=wcslen(Name)-4; //за минусом расширения
-		int Ptr=lenName;
-		for (int i=0; i<lenName; i++)
-		{
-			if (!Strncmp(Name+i, L" - ", 3) || !Strncmp(Name+i, L"_-_", 3))
-			{
-				if (i>0 && FSF.LIsAlphanum((wchar_t)Name[i-1]))
+				//!!! память обнулена - cur->MusicArtist[i]=0 не делаем !!!
+				FSF.RTrim(cur->MusicArtist);
+				FSF.LTrim(cur->MusicArtist);
+				if (*cur->MusicArtist)
 				{
-					Ptr=i;
-					break;
+	//DebugMsg(L"cur->MusicArtist-0",cur->MusicArtist);
+					ret=1;
 				}
 			}
-		}
 
-		if (!(cur->dwFlags&RCIF_MUSICART) && Ptr!=lenName)
-		{
-			bool bNum=true;
-			for (int i=0,j=0; Name[j] && j<Ptr && i<nSize; j++)
+			if (!(cur->dwFlags&RCIF_MUSICTIT))
 			{
-				if (bNum)
+				if (Ptr!=lenName)
 				{
-					if (Name[j]>=L'0' && Name[j]<=L'9')
-						continue;
-					else
-						bNum=false;
+					for (int i=0,j=Ptr+3; j<lenName && i<nSize; i++,j++)
+						cur->MusicTitle[i]=Name[j];
 				}
-				cur->MusicArtist[i++]=Name[j];
-			}
-			//!!! память обнулена - cur->MusicArtist[i]=0 не делаем !!!
-			FSF.RTrim(cur->MusicArtist);
-			FSF.LTrim(cur->MusicArtist);
-			if (*cur->MusicArtist)
-			{
-//DebugMsg(L"cur->MusicArtist-0",cur->MusicArtist);
-				ret=1;
-			}
-		}
-
-		if (!(cur->dwFlags&RCIF_MUSICTIT))
-		{
-			if (Ptr!=lenName)
-			{
-				for (int i=0,j=Ptr+3; j<lenName && i<nSize; i++,j++)
-					cur->MusicTitle[i]=Name[j];
-			}
-			else
-			{
-				for (int i=0; Name[i] && i<lenName && i<nSize; i++)
-					cur->MusicTitle[i]=Name[i];
-			}
-			//!!! память обнулена, cur->MusicTitle[i]=0 не делаем !!!
-			FSF.RTrim(cur->MusicTitle);
-			FSF.LTrim(cur->MusicTitle);
-			if (*cur->MusicTitle)
-			{
-//DebugMsg(L"cur->MusicTitle-0",cur->MusicTitle);
-				ret=1;
+				else
+				{
+					for (int i=0; Name[i] && i<lenName && i<nSize; i++)
+						cur->MusicTitle[i]=Name[i];
+				}
+				//!!! память обнулена, cur->MusicTitle[i]=0 не делаем !!!
+				FSF.RTrim(cur->MusicTitle);
+				FSF.LTrim(cur->MusicTitle);
+				if (*cur->MusicTitle)
+				{
+	//DebugMsg(L"cur->MusicTitle-0",cur->MusicTitle);
+					ret=1;
+				}
 			}
 		}
 	}
@@ -1308,100 +1300,101 @@ END:
 }
 
 
-int AdvCmpProc::GetPic(dupFile *cur)
+int AdvCmpProc::GetPic(dupFile *cur, int GetInfo)
 {
 	int ret=0;
-
-	if (cur->dwFlags&RCIF_PIC)
-		return 1;
 
 	if (CheckForEsc())
 		return ret;
 
-	if (FSF.ProcessName(L"*.jpg,*.jpeg,*.jpe,*.jfif,*.jiff,*.jif,*.j,*.jng,*.jff",cur->FileName,0,PN_CMPNAMELIST))
-		cur->dwFlags|=(RCIF_PICJPG|RCIF_PIC);
-	else if (FSF.ProcessName(L"*.bmp,*.dib,*.rle",cur->FileName,0,PN_CMPNAMELIST))
-		cur->dwFlags|=(RCIF_PICBMP|RCIF_PIC);
-	else if (FSF.ProcessName(L"*.gif",cur->FileName,0,PN_CMPNAME))
-		cur->dwFlags|=(RCIF_PICGIF|RCIF_PIC);
-	else if (FSF.ProcessName(L"*.png",cur->FileName,0,PN_CMPNAME))
-		cur->dwFlags|=(RCIF_PICPNG|RCIF_PIC);
-	else if (FSF.ProcessName(L"*.tif,*.tiff",cur->FileName,0,PN_CMPNAMELIST))
-		cur->dwFlags|=(RCIF_PICTIF|RCIF_PIC);
-	else if (FSF.ProcessName(L"*.ico,*.icon,*.icn",cur->FileName,0,PN_CMPNAMELIST))
-		cur->dwFlags|=(RCIF_PICICO|RCIF_PIC);
-	else
-		return ret;
-
-	ShowDupMsg(GetPosToName(cur->Dir),cur->FileName,true);
-
-	string strFullFileName;
-	GetFullFileName(strFullFileName,cur->Dir,cur->FileName);
-
-	GFL_BITMAP *pBitmap=NULL;
-	GFL_LOAD_PARAMS load_params;
-
-	pGflGetDefaultLoadParams(&load_params);
-	load_params.Flags|=GFL_LOAD_SKIP_ALPHA;
-	load_params.Origin=GFL_BOTTOM_LEFT;
-	load_params.LinePadding=4;
-
-	GFL_ERROR res=pGflLoadBitmapW(strFullFileName.get(),&pBitmap,&load_params,NULL);
-	if (res)
+	if (!(cur->dwFlags&RCIF_PIC))
 	{
-		cur->dwFlags|=RCIF_PICERR;
-		pBitmap=NULL;
-		load_params.Flags|=GFL_LOAD_IGNORE_READ_ERROR;
-		res=pGflLoadBitmapW(strFullFileName.get(),&pBitmap,&load_params,NULL);
-		if (res)
-		{
-			pBitmap=NULL;
-			CmpInfo.Errors++;
+		if (FSF.ProcessName(L"*.jpg,*.jpeg,*.jpe,*.jfif,*.jiff,*.jif,*.j,*.jng,*.jff",cur->fi.FileName,0,PN_CMPNAMELIST))
+			cur->dwFlags|=(RCIF_PICJPG|RCIF_PIC);
+		else if (FSF.ProcessName(L"*.bmp,*.dib,*.rle",cur->fi.FileName,0,PN_CMPNAMELIST))
+			cur->dwFlags|=(RCIF_PICBMP|RCIF_PIC);
+		else if (FSF.ProcessName(L"*.gif",cur->fi.FileName,0,PN_CMPNAME))
+			cur->dwFlags|=(RCIF_PICGIF|RCIF_PIC);
+		else if (FSF.ProcessName(L"*.png",cur->fi.FileName,0,PN_CMPNAME))
+			cur->dwFlags|=(RCIF_PICPNG|RCIF_PIC);
+		else if (FSF.ProcessName(L"*.tif,*.tiff",cur->fi.FileName,0,PN_CMPNAMELIST))
+			cur->dwFlags|=(RCIF_PICTIF|RCIF_PIC);
+		else if (FSF.ProcessName(L"*.ico,*.icon,*.icn",cur->fi.FileName,0,PN_CMPNAMELIST))
+			cur->dwFlags|=(RCIF_PICICO|RCIF_PIC);
+		else
 			return ret;
-		}
 	}
 
-	if (pBitmap)
+	if (GetInfo)
 	{
-		if (pBitmap->Width<=0 || pBitmap->Height<=0)
+		ShowDupMsg(GetPosToName(cur->fi.Dir),cur->fi.FileName,true);
+
+		string strFullFileName;
+		GetFullFileName(strFullFileName,cur->fi.Dir,cur->fi.FileName);
+
+		GFL_BITMAP *pBitmap=NULL;
+		GFL_LOAD_PARAMS load_params;
+
+		pGflGetDefaultLoadParams(&load_params);
+		load_params.Flags|=GFL_LOAD_SKIP_ALPHA;
+		load_params.Origin=GFL_BOTTOM_LEFT;
+		load_params.LinePadding=4;
+
+		GFL_ERROR res=pGflLoadBitmapW(strFullFileName.get(),&pBitmap,&load_params,NULL);
+		if (res)
 		{
 			cur->dwFlags|=RCIF_PICERR;
-			pGflFreeBitmap(pBitmap);
-			CmpInfo.Errors++;
-			return ret;
-		}
-		cur->PicWidth=pBitmap->Width;
-		cur->PicHeight=pBitmap->Height;
-		cur->PicRatio=(cur->PicWidth>cur->PicHeight?(cur->PicHeight*PIXELS_SIZE/cur->PicWidth-PIXELS_SIZE):(cur->PicWidth*PIXELS_SIZE/cur->PicHeight-PIXELS_SIZE));
-		cur->PicPix=(unsigned char*)malloc(PIXELS_SIZE*PIXELS_SIZE*sizeof(unsigned char));
-		if (cur->PicPix)
-		{
-			for (int i_x=0; i_x<PIXELS_SIZE; i_x++)
+			pBitmap=NULL;
+			load_params.Flags|=GFL_LOAD_IGNORE_READ_ERROR;
+			res=pGflLoadBitmapW(strFullFileName.get(),&pBitmap,&load_params,NULL);
+			if (res)
 			{
-				int b_x=i_x*pBitmap->Width/PIXELS_SIZE;
-				for (int i_y=0; i_y<PIXELS_SIZE; i_y++)
+				pBitmap=NULL;
+				CmpInfo.Errors++;
+				return ret;
+			}
+		}
+
+		if (pBitmap)
+		{
+			if (pBitmap->Width<=0 || pBitmap->Height<=0)
+			{
+				cur->dwFlags|=RCIF_PICERR;
+				pGflFreeBitmap(pBitmap);
+				CmpInfo.Errors++;
+				return ret;
+			}
+			cur->PicWidth=pBitmap->Width;
+			cur->PicHeight=pBitmap->Height;
+			cur->PicPix=(unsigned char*)malloc(PIXELS_SIZE*PIXELS_SIZE*sizeof(unsigned char));
+			if (cur->PicPix)
+			{
+				for (int i_x=0; i_x<PIXELS_SIZE; i_x++)
 				{
-					int b_y=i_y*pBitmap->Height/PIXELS_SIZE;
-					GFL_COLOR Color;
-					if (!pGflGetColorAt(pBitmap,b_x,b_y,&Color))
+					int b_x=i_x*pBitmap->Width/PIXELS_SIZE;
+					for (int i_y=0; i_y<PIXELS_SIZE; i_y++)
 					{
-						float fGray=(Color.Red+Color.Green+Color.Blue)/3+0.5;
-						cur->PicPix[i_x*PIXELS_SIZE + i_y]=(unsigned char)fGray;
+						int b_y=i_y*pBitmap->Height/PIXELS_SIZE;
+						GFL_COLOR Color;
+						if (!pGflGetColorAt(pBitmap,b_x,b_y,&Color))
+						{
+							float fGray=(Color.Red+Color.Green+Color.Blue)/3+0.5;
+							cur->PicPix[i_x*PIXELS_SIZE + i_y]=(unsigned char)fGray;
+						}
 					}
 				}
 			}
-		}
-		else
-		{
-			cur->dwFlags|=RCIF_PICERR;
+			else
+			{
+				cur->dwFlags|=RCIF_PICERR;
+				pGflFreeBitmap(pBitmap);
+				CmpInfo.Errors++;
+				return ret;
+			}
 			pGflFreeBitmap(pBitmap);
-			CmpInfo.Errors++;
-			return ret;
+			ret=1;
 		}
-		pGflFreeBitmap(pBitmap);
-		ret=1;
 	}
-
 	return ret;
 }
 
@@ -1539,15 +1532,31 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 
 	FSF.qsort(dFList.F,dFList.iCount,sizeof(dFList.F[0]),dupSortListByName, NULL);
 
-	// ищем дубли, первый проход
-	if (Opt.DupName || Opt.DupSize || (Opt.DupContents && !Opt.DupPic && !Opt.DupMusic))
+	if (Opt.DupContents)
+	{
+		if ((Opt.DupMusic && bBASSLoaded) || (Opt.DupPic && bGflLoaded))
+			for (int i=0; i<dFList.iCount && !bBrokenByEsc; i++)
+			{
+				ShowDupMsg(GetPosToName(pList->Dir),L"*",false);
+				dupFile *cur=&dFList.F[i];
+				// предпроход для сбора первичной инфы о композиции. для ускорения поиска дублей!
+				if (Opt.DupMusic)
+					GetMp3(cur,0);
+				// а теперь предпроход для рисунков
+				if (Opt.DupPic)
+					GetPic(cur,0);
+			}
+	}
+
+	// ищем дубли, первый проход - ускоренный
+	if (Opt.DupName || Opt.DupSize || (Opt.DupContents && !Opt.DupPic))
 	{
 		for (int i=0, IndexGroup=1; i<dFList.iCount && !bBrokenByEsc; i++)
 		{
 			ShowDupMsg(GetPosToName(pList->Dir),L"*",false);
 			if (CheckForEsc())
 				break;
-			bool bSetGroupCount=false;
+			bool bSetGroupItems=false;
 
 			for (int j=0; j<dFList.iCount && !bBrokenByEsc; j++)
 			{
@@ -1555,41 +1564,66 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 					continue;
 				dupFile *src=&dFList.F[i];
 				dupFile *cur=&dFList.F[j];
-				if (!cur->nGroup)
+				if (!cur->nDupGroup)
 				{
 					if (Opt.DupName)
 					{
 						if (Opt.DupName==2)
 						{
-							if (!CmpNameEx(src->FileName,cur->FileName))
+							if (!CmpNameEx(src->fi.FileName,cur->fi.FileName))
 								continue;   // разные, сразу переходим к следующему
 						}
 						else
 						{
-							if (FSF.LStricmp(src->FileName,cur->FileName))
+							if (FSF.LStricmp(src->fi.FileName,cur->fi.FileName))
 								continue;   // разные, сразу переходим к следующему
 						}
 					}
-					if (Opt.DupSize || (Opt.DupContents && !Opt.DupPic && !Opt.DupMusic))
+					if (Opt.DupSize)
 					{
-						if (src->nFileSize!=cur->nFileSize)
+						if (src->fi.nFileSize!=cur->fi.nFileSize)
 							continue;   // разные, сразу переходим к следующему
 					}
-					bSetGroupCount=true;
-					src->nGroup=IndexGroup;
+					if (Opt.DupContents && !Opt.DupPic && !Opt.DupMusic)
+					{
+						if (src->fi.nFileSize!=cur->fi.nFileSize)
+							continue;   // разные, сразу переходим к следующему
+					}
+					if (Opt.DupContents && !Opt.DupPic && Opt.DupMusic)
+					{
+						if ((src->dwFlags&RCIF_MUSIC) && (cur->dwFlags&RCIF_MUSIC))
+						{
+							if (src->MusicTime!=cur->MusicTime)
+								continue;
+						}
+						else
+						{
+							continue;   // разные, сразу переходим к следующему
+						}
+					}
+					bSetGroupItems=true;
+					src->nDupGroup=IndexGroup;
 					src->dwFlags|=RCIF_EQUAL;
-					cur->nGroup=IndexGroup;
+					cur->nDupGroup=IndexGroup;
 					cur->dwFlags|=RCIF_EQUAL;
+/*
+					if (Opt.StopDiffDup)
+					{
+						bCompareAll=!YesNoMsg(MFirstDiffTitle, MFirstDiffBody);
+						Opt.StopDiffDup=0;
+					}
+*/
+//DebugMsg(cur->FileName,src->FileName,IndexGroup);
 				}
 			}
-			if (bSetGroupCount) // есть группа
+			if (bSetGroupItems) // есть группа
 			{
-				dFList.GroupCount=IndexGroup;
+				dFList.GroupItems=IndexGroup;
 				IndexGroup++;
 			}
 			if (!Opt.DupContents)  // там свой индикатор!
 			{
-				CmpInfo.ProcSize+=dFList.F[i].nFileSize;
+				CmpInfo.ProcSize+=dFList.F[i].fi.nFileSize;
 				CmpInfo.Proc=i+1;
 			}
 		}
@@ -1603,40 +1637,53 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 			if (CheckForEsc())
 				break;
 			dupFile *cur=&dFList.F[i];
-			cur->nGroup=0; // скинем, проверять будем флаг RCIF_EQUAL
+			cur->nDupGroup=0; // скинем, проверять будем флаг RCIF_EQUAL
 
-			ShowDupMsg(GetPosToName(cur->Dir),cur->FileName,false);
-
+			ShowDupMsg(GetPosToName(cur->fi.Dir),cur->fi.FileName,false);
+/*
+if (cur->dwFlags&RCIF_EQUAL)
+  DebugMsg(cur->FileName,L"RCIF_EQUAL",i);
+else
+  DebugMsg(cur->FileName,L"RCIF_DIFF",i);
+*/
 			if ((Opt.DupName || Opt.DupSize || (Opt.DupContents && !Opt.DupPic && !Opt.DupMusic)) && !(cur->dwFlags&RCIF_EQUAL))
 			{
-				CmpInfo.ProcSize+=cur->nFileSize;
+//DebugMsg(cur->FileName,L"tut1",i);
+				CmpInfo.ProcSize+=cur->fi.nFileSize;
 				CmpInfo.Proc=i+1;
 				continue;   // обрабатывали, переходим к следующему
 			}
-			if (cur->nFileSize==0)
+			if (cur->fi.nFileSize==0)
 			{
 				CmpInfo.Proc=i+1;
 				continue;   // пустой, переходим к следующему
 			}
-			if (Opt.DupPic && bGflLoaded && GetPic(cur))
+			if (Opt.DupPic && bGflLoaded && GetPic(cur,1))
 			{
-				CmpInfo.ProcSize+=cur->nFileSize;
+				CmpInfo.ProcSize+=cur->fi.nFileSize;
 				CmpInfo.Proc=i+1;
 				continue;   // обработали, переходим к следующему
 			}
-			if (Opt.DupMusic && bBASSLoaded && GetMp3(cur))
+			if (Opt.DupMusic && (cur->dwFlags&RCIF_MUSIC) && (cur->dwFlags&RCIF_EQUAL) && !(Opt.DupMusicArtist || Opt.DupMusicTitle) && GetMp3(cur,3))  // анализируем поток
 			{
-				CmpInfo.ProcSize+=cur->nFileSize;
+//DebugMsg(cur->FileName,L"tut2",i);
+				CmpInfo.ProcSize+=cur->fi.nFileSize;
 				CmpInfo.Proc=i+1;
 				continue;   // обработали, переходим к следующему
 			}
-			if (!cur->dwCRC)
+			if (Opt.DupMusic && (cur->dwFlags&RCIF_MUSIC) && (Opt.DupMusicArtist || Opt.DupMusicTitle) && GetMp3(cur,2))  // теги
+			{
+				CmpInfo.ProcSize+=cur->fi.nFileSize;
+				CmpInfo.Proc=i+1;
+				continue;   // обработали, переходим к следующему
+			}
+			if (Opt.DupContents && !(Opt.DupPic==1 || Opt.DupMusic==1) && !cur->dwCRC)
 			{
 				cur->dwCRC=GetCRC(cur);
 				CmpInfo.Proc=i+1;
 				continue;   // обработали, переходим к следующему
 			}
-			CmpInfo.ProcSize+=cur->nFileSize;
+			CmpInfo.ProcSize+=cur->fi.nFileSize;
 			CmpInfo.Proc=i+1;
 		}
 
@@ -1645,7 +1692,7 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 		{
 			if (CheckForEsc())
 				break;
-			bool bSetGroupCount=false;
+			bool bSetGroupItems=false;
 
 			for (int j=0; j<dFList.iCount && !bBrokenByEsc; j++)
 			{
@@ -1654,9 +1701,9 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 				dupFile *src=&dFList.F[i];
 				dupFile *cur=&dFList.F[j];
 
-				ShowDupMsg(GetPosToName(src->Dir),src->FileName,false);
+				ShowDupMsg(GetPosToName(src->fi.Dir),src->fi.FileName,false);
 
-				if (!cur->nGroup)
+				if (!cur->nDupGroup)
 				{
 					if ((Opt.DupName || Opt.DupSize || (Opt.DupContents && !Opt.DupPic && !Opt.DupMusic)) && !(cur->dwFlags&RCIF_EQUAL))
 						continue;   // обрабатывали -они разные, переходим к следующему
@@ -1686,7 +1733,10 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 							int nCmpDiff   = Opt.DupPicDiff*8;
 							int nMaxFastSum = PIXELS_SIZE*nCmpDiff*nCmpDiff;
 							int nMaxSlowSum = PIXELS_SIZE*PIXELS_SIZE*nCmpDiff*nCmpDiff;
-							int nRatioDiff  = cur->PicRatio-src->PicRatio;
+
+							int nRatioDiff  = (cur->PicWidth>cur->PicHeight?(cur->PicHeight*PIXELS_SIZE/cur->PicWidth-PIXELS_SIZE):(cur->PicWidth*PIXELS_SIZE/cur->PicHeight-PIXELS_SIZE))
+																- (src->PicWidth>src->PicHeight?(src->PicHeight*PIXELS_SIZE/src->PicWidth-PIXELS_SIZE):(src->PicWidth*PIXELS_SIZE/src->PicHeight-PIXELS_SIZE));
+
 							int nMaxRatDiff = Opt.DupPicDiff;
 
 							if (nRatioDiff>nMaxRatDiff || nRatioDiff<-nMaxRatDiff)
@@ -1781,22 +1831,24 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 									continue;
 							}
 						}
+						if ((!src->dwCRC || !cur->dwCRC || src->dwCRC!=cur->dwCRC))   // CRC аудиопотока
+							continue;
 					}
 					else
 					{
-						if (src->nFileSize!=cur->nFileSize)
+						if (src->fi.nFileSize!=cur->fi.nFileSize)
 							continue;
-						if (src->nFileSize && cur->nFileSize && (!src->dwCRC || !cur->dwCRC || src->dwCRC!=cur->dwCRC))
+						if (src->fi.nFileSize && cur->fi.nFileSize && (!src->dwCRC || !cur->dwCRC || src->dwCRC!=cur->dwCRC))
 							continue;
 					}
-					bSetGroupCount=true;
-					src->nGroup=IndexGroup;
-					cur->nGroup=IndexGroup;
+					bSetGroupItems=true;
+					src->nDupGroup=IndexGroup;
+					cur->nDupGroup=IndexGroup;
 				}
 			}
-			if (bSetGroupCount)
+			if (bSetGroupItems)
 			{
-				dFList.GroupCount=IndexGroup;
+				dFList.GroupItems=IndexGroup;
 				IndexGroup++;
 			}
 		}
@@ -1808,12 +1860,12 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 	// освободимся от уникальных
 	FSF.qsort(dFList.F,dFList.iCount,sizeof(dFList.F[0]),dupSortListByGroup, NULL);
 	int Index;
-	for (Index=dFList.iCount-1; Index>=0 && !dFList.F[Index].nGroup; Index--)
+	for (Index=dFList.iCount-1; Index>=0 && !dFList.F[Index].nDupGroup; Index--)
 	{
-		free(dFList.F[Index].FileName);
-		dFList.F[Index].FileName=NULL;
-		free(dFList.F[Index].Dir);
-		dFList.F[Index].Dir=NULL;
+		free(dFList.F[Index].fi.FileName);
+		dFList.F[Index].fi.FileName=NULL;
+		free(dFList.F[Index].fi.Dir);
+		dFList.F[Index].fi.Dir=NULL;
 		free(dFList.F[Index].PicPix);
 		dFList.F[Index].PicPix=NULL;
 		free(dFList.F[Index].MusicArtist);
@@ -1827,6 +1879,7 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 	if (hConInp!=INVALID_HANDLE_VALUE) CloseHandle(hConInp);
 	Info.PanelControl(LPanel.hPanel,FCTL_REDRAWPANEL,0,0);
 	Info.PanelControl(RPanel.hPanel,FCTL_REDRAWPANEL,0,0);
+	if (TitleSaved) SetConsoleTitle(strFarTitle);
 
 	ShowDupDialog();
 
@@ -1840,7 +1893,7 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 			if (cur->dwFlags&RCIF_USERDEL)
 			{
 				string strName;
-				GetFullFileName(strName,cur->Dir,cur->FileName);
+				GetFullFileName(strName,cur->fi.Dir,cur->fi.FileName);
 				if (!(ret=DelFile(strName.get())))
 					break;
 			}

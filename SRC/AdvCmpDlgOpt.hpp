@@ -37,8 +37,8 @@ class AdvCmpDlgOpt
 {
 		bool bSkipSaveOpt;
 
-		static INT_PTR WINAPI ShowOptDialogProcThunk(HANDLE hDlg, int Msg, int Param1, void *Param2);
-		INT_PTR WINAPI ShowOptDialogProc(HANDLE hDlg, int Msg, int Param1, void *Param2);
+		static intptr_t WINAPI ShowOptDialogProcThunk(HANDLE hDlg, intptr_t Msg, intptr_t Param1, void *Param2);
+		intptr_t WINAPI ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, void *Param2);
 
 	public:
 		AdvCmpDlgOpt() { }

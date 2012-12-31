@@ -172,26 +172,43 @@ extern struct Options {
 			MaxScanDepth,
 			ScanSymlink,
 			Filter,
-			TillFirstDiff,
+			StopDiffDup,
 			SkipSubstr,
 			ProcessSelected,
 			SelectedNew,
 			SyncOnlyRight,
+			LightSync,
 			IgnoreMissing,
 			ShowMsg,
 			Sound,
 			Dialog,
 			TotalProgress,
 			Sync,
+			// что показывать в листе
+			ShowListSelect,
+			ShowListIdentical,
+			ShowListDifferent,
+			ShowListLNew,
+			ShowListRNew,
+			// отметка элементов в листе
+			SyncFlagClearUser,
+			SyncFlagCopy,   // <0 - налево, =0 - нет, >0 - направо
+			SyncFlagIfNew,
+			SyncFlagLCopy,  // уникальный слева: <0 - налево, =0 - нет, >0 - направо
+			SyncFlagRCopy,  // уникальный справа: <0 - налево/удалить, =0 - нет, >0 - направо
+			// копирование/удаление
 			SyncLPanel,
 			SyncRPanel,
 			SyncDel,
 			SyncUseDelFilter,
-			ProcessHidden,
+
 			Dup,
+			DupListSmall,
+			// удаление
 			DupDel,
 			DupDelRecycleBin,
-			DupListSmall,
+
+			ProcessHidden,
 			BufSize;
 	char *Buf[2];
 	wchar_t *DupPath, *Substr, *WinMergePath;
@@ -252,37 +269,46 @@ struct DirList {
 
 // флаги результата сравнени€
 enum ResultCmpItemFlag {
-	RCIF_NONE   = 0,
-	RCIF_EQUAL  = 0x1,      // одинаковые   |=|
-	RCIF_DIFFER = 0x2,      // разные       |?|
-	RCIF_LNEW   = 0x4,      // слева новый  |>|
-	RCIF_RNEW   = 0x8,      // справа новый |<|
+	RCIF_NONE       = 0x00000000,
+	RCIF_EQUAL      = 0x00000001, // одинаковые   |=|
+	RCIF_DIFFER     = 0x00000002, // разные       |?|
+	RCIF_LNEW       = 0x00000004, // слева новый  |>|
+	RCIF_RNEW       = 0x00000008, // справа новый |<|
 
 	// пользовательские флаги, дл€ итогового диалога:
-	RCIF_USER       = 0x1F0,
-	RCIF_USERSELECT = 0x010, // элемент выделен
-	RCIF_USERNONE   = 0x020, // скинут флаг отличи€
-	RCIF_USERLNEW   = 0x040, // установлен флаг "слева новый"
-	RCIF_USERRNEW   = 0x080, // установлен флаг "справа новый"
-	RCIF_USERDEL    = 0x100, // удалить файл
+	RCIF_USER       = 0x000001F0,
+	RCIF_USERSELECT = 0x00000010, // элемент выделен
+	RCIF_USERNONE   = 0x00000020, // скинут флаг отличи€
+	RCIF_USERLNEW   = 0x00000040, // установлен флаг "слева новый"
+	RCIF_USERRNEW   = 0x00000080, // установлен флаг "справа новый"
+	RCIF_USERDEL    = 0x00000100, // удалить файл
 
-	// дополнительные флаги, дл€ итогового диалога:
-	RCIF_LUNIQ  = 0x400,    // слева уникальный
-	RCIF_RUNIQ  = 0x800,    // справа уникальный
+	// дополнительные флаги
+	RCIF_NAME       = 0x00000200, // одинаковые регистром имен
+	RCIF_SIZE       = 0x00000400, // одинаковые размером
+	RCIF_TIME       = 0x00000800, // одинаковые временем
+	RCIF_CONT       = 0x00001000, // одинаковые содержимым
+	RCIF_NAMEDIFF   = 0x00002000, // различаютс€ регистром имен
+	RCIF_SIZEDIFF   = 0x00004000, // различаютс€ размером
+	RCIF_TIMEDIFF   = 0x00008000, // различаютс€ временем
+	RCIF_CONTDIFF   = 0x00010000, // различаютс€ содержимым
+
+	RCIF_LUNIQ      = 0x00040000, // слева уникальный
+	RCIF_RUNIQ      = 0x00080000, // справа уникальный
 
 	// дл€ дубликатов
-	RCIF_PIC    = 0x01000,  // картинка
-	RCIF_PICERR = 0x02000,  // бита€ картинка
-	RCIF_PICJPG = 0x04000,  // jpg-картинка
-	RCIF_PICBMP = 0x08000,  // bmp-картинка
-	RCIF_PICGIF = 0x10000,  // gif-картинка
-	RCIF_PICTIF = 0x20000,  // tif-картинка
-	RCIF_PICPNG = 0x40000,  // png-картинка
-	RCIF_PICICO = 0x80000,  // png-картинка
+	RCIF_PIC        = 0x00100000, // картинка
+	RCIF_PICERR     = 0x00200000, // бита€ картинка
+	RCIF_PICJPG     = 0x00400000, // jpg-картинка
+	RCIF_PICBMP     = 0x00800000, // bmp-картинка
+	RCIF_PICGIF     = 0x01000000, // gif-картинка
+	RCIF_PICTIF     = 0x02000000, // tif-картинка
+	RCIF_PICPNG     = 0x04000000, // png-картинка
+	RCIF_PICICO     = 0x08000000, // ico-картинка
 
-	RCIF_MUSIC    = 0x100000,   // mp3-файл
-	RCIF_MUSICART = 0x200000,   // у mp3-файла заполнен јртист
-	RCIF_MUSICTIT = 0x400000,   // заполнено название
+	RCIF_MUSIC      = 0x10000000, // mp3-файл
+	RCIF_MUSICART   = 0x20000000, // у mp3-файла заполнен јртист
+	RCIF_MUSICTIT   = 0x40000000, // заполнено Ќазвание
 };
 
 /****************************************************************************
@@ -364,6 +390,8 @@ typedef QWORD		(WINAPI *PBASS_STREAMGETFILEPOSITION)(HSTREAM handle, DWORD mode)
 typedef BOOL		(WINAPI *PBASS_CHANNELGETINFO)(DWORD handle, BASS_CHANNELINFO *info);
 typedef const char*	(WINAPI *PBASS_CHANNELGETTAGS)(DWORD handle, DWORD tags);
 typedef BOOL 		(WINAPI *PBASS_GETDEVICEINFO)(DWORD device, BASS_DEVICEINFO *info);
+typedef DWORD 	(WINAPI *PBASS_CHANNELISACTIVE)(DWORD handle);
+typedef DWORD 	(WINAPI *PBASS_CHANNELGETDATA)(DWORD handle, void *buffer, DWORD length);
 
 extern PBASS_GETVERSION pBASS_GetVersion;
 extern PBASS_SETCONFIG pBASS_SetConfig;
@@ -377,3 +405,6 @@ extern PBASS_CHANNELGETINFO pBASS_ChannelGetInfo;
 extern PBASS_CHANNELGETTAGS pBASS_ChannelGetTags;
 extern PBASS_STREAMGETFILEPOSITION pBASS_StreamGetFilePosition;
 extern PBASS_GETDEVICEINFO pBASS_GetDeviceInfo;
+extern PBASS_CHANNELISACTIVE pBASS_ChannelIsActive;
+extern PBASS_CHANNELGETDATA pBASS_ChannelGetData;
+

@@ -100,7 +100,7 @@ __int64 GetFarSetting(FARSETTINGS_SUBFOLDERS Root,const wchar_t* Name)
 	HANDLE Settings=Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings)?settings.Handle:0;
 	if (Settings)
 	{
-		FarSettingsItem item={Root,Name,FST_UNKNOWN,{0}};
+		FarSettingsItem item={sizeof(FarSettingsItem),Root,Name,FST_UNKNOWN,{0}};
 		if(Info.SettingsControl(Settings,SCTL_GET,0,&item)&&FST_QWORD==item.Type)
 		{
 			result=item.Number;
@@ -118,12 +118,13 @@ void GetDirList(FarPanelInfo &CurPanel, DirList &CurList)
 		CurList.PPI=(PluginPanelItem*)malloc(CurList.ItemsNumber*sizeof(PluginPanelItem));
 		if (CurList.PPI)
 		{
-			FarGetPluginPanelItem FGPPI;
 			for (int i=0; i<CurList.ItemsNumber; i++)
 			{
-				FGPPI.Item=(PluginPanelItem*)malloc(FGPPI.Size=Info.PanelControl(CurPanel.hPanel,FCTL_GETPANELITEM,i,0));
-				if (FGPPI.Item)
+				size_t size=Info.PanelControl(CurPanel.hPanel,FCTL_GETPANELITEM,i,0);
+				PluginPanelItem *PPI=(PluginPanelItem*)malloc(size);
+				if (PPI)
 				{
+					FarGetPluginPanelItem FGPPI={sizeof(FarGetPluginPanelItem),size,PPI};
 					Info.PanelControl(CurPanel.hPanel,FCTL_GETPANELITEM,i,&FGPPI);
 					PluginPanelItem &CurrentPluginItem=(CurList.PPI[i]);
 					CurrentPluginItem.FileAttributes=FGPPI.Item->FileAttributes;
@@ -144,7 +145,7 @@ void GetDirList(FarPanelInfo &CurPanel, DirList &CurList)
 					if (!CurPanel.bDir && !CurPanel.bTMP && (FGPPI.Item->FileAttributes&FILE_ATTRIBUTE_DIRECTORY) && !(FGPPI.Item->FileName[1]==L'.' && !FGPPI.Item->FileName[2]))
 						CurPanel.bDir=true;
 
-					free(FGPPI.Item);
+					free(PPI);
 				}
 			}
 		}
@@ -230,7 +231,8 @@ PBASS_CHANNELGETINFO pBASS_ChannelGetInfo=NULL;
 PBASS_CHANNELGETTAGS pBASS_ChannelGetTags=NULL;
 PBASS_STREAMGETFILEPOSITION pBASS_StreamGetFilePosition=NULL;
 PBASS_GETDEVICEINFO pBASS_GetDeviceInfo=NULL;
-
+PBASS_CHANNELISACTIVE pBASS_ChannelIsActive=NULL;
+PBASS_CHANNELGETDATA pBASS_ChannelGetData=NULL;
 
 bool FindFile(wchar_t *Dir, wchar_t *Pattern, string &strFileName)
 {
@@ -405,9 +407,14 @@ bool LoadBASS(wchar_t *PlugPath)
 			pBASS_StreamGetFilePosition=(PBASS_STREAMGETFILEPOSITION)GetProcAddress(BASSHandle,"BASS_StreamGetFilePosition");
 		if (!pBASS_GetDeviceInfo)
 			pBASS_GetDeviceInfo=(PBASS_GETDEVICEINFO)GetProcAddress(BASSHandle,"BASS_GetDeviceInfo");
+		if (!pBASS_ChannelIsActive)
+			pBASS_ChannelIsActive=(PBASS_CHANNELISACTIVE)GetProcAddress(BASSHandle,"BASS_ChannelIsActive");
+		if (!pBASS_ChannelGetData)
+			pBASS_ChannelGetData=(PBASS_CHANNELGETDATA)GetProcAddress(BASSHandle,"BASS_ChannelGetData");
 
 		if (!pBASS_GetVersion || !pBASS_SetConfig || !pBASS_Init || !pBASS_Free || !pBASS_StreamCreateFile || !pBASS_StreamFree || !pBASS_GetDeviceInfo ||
-				!pBASS_ChannelGetLength || !pBASS_ChannelBytes2Seconds || !pBASS_ChannelGetInfo || !pBASS_ChannelGetTags || !pBASS_StreamGetFilePosition)
+				!pBASS_ChannelGetLength || !pBASS_ChannelBytes2Seconds || !pBASS_ChannelGetInfo || !pBASS_ChannelGetTags || !pBASS_StreamGetFilePosition || 
+				!pBASS_ChannelIsActive || !pBASS_ChannelGetData)
 		{
 			FreeLibrary(BASSHandle);
 			return false;
@@ -416,11 +423,13 @@ bool LoadBASS(wchar_t *PlugPath)
 
 		if (HIWORD(pBASS_GetVersion())!=BASSVERSION)
 			UnLoadBASS();
+
 		if (bBASSLoaded)
 		{
-			if (!pBASS_Init(0,44100,0,0,NULL))
+			if (!pBASS_Init(0,44100,BASS_DEVICE_MONO,0,NULL))
 				UnLoadBASS();
 		}
+
 	}
 	return bBASSLoaded;
 }
@@ -440,8 +449,8 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *pInfo)
 	pInfo->MinFarVersion=FARMANAGERVERSION;
 	pInfo->Version=MAKEFARVERSION(3,0,0,34,VS_RC);
 	pInfo->Guid=MainGuid;
-	pInfo->Title=L"Advanced compare 2";
-	pInfo->Description=L"Advanced compare 2 plugin for Far Manager v3.0";
+	pInfo->Title=L"AdvCmp";
+	pInfo->Description=L"Advanced compare files plugin for Far Manager v3.0";
 	pInfo->Author=L"Alexey Samlyukov";
 }
 
@@ -488,8 +497,7 @@ void WINAPI GetPluginInfoW(struct PluginInfo *pInfo)
 HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 {
 	HANDLE hPanel = NULL;
-	struct PanelInfo PInfo;
-	PInfo.StructSize=sizeof(PanelInfo);
+	struct PanelInfo PInfo={sizeof(PanelInfo)};
 
 	// Если не удалось запросить информацию о активной панели...
 	if (!Info.PanelControl(PANEL_ACTIVE,FCTL_GETPANELINFO,0,&PInfo))
@@ -560,14 +568,14 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		BASS_DEVICEINFO info;
 		pBASS_GetDeviceInfo(0,&info);
 		if (!(info.flags&BASS_DEVICE_INIT))
-			if (!pBASS_Init(0,44100,0,0,NULL))
+			if (!pBASS_Init(0,44100,BASS_DEVICE_MONO,0,NULL))
 				UnLoadBASS();
 	}
 
 	class AdvCmpDlgOpt AdvCmpOpt;
 	int ret=AdvCmpOpt.ShowOptDialog();
 
-	if (ret==54 || ret==55) // DlgOK || DlgUNDERCURSOR
+	if (ret==55 || ret==56) // DlgOK || DlgUNDERCURSOR
 	{
 		DWORD dwTicks=GetTickCount();
 		// откроем, для проверок на Esc
@@ -576,13 +584,14 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		class AdvCmpProc AdvCmp;
 		AdvCmp.Init();
 
-		if (ret==54)
+		if (ret==55)
 		{
 			if (Opt.Mode!=MODE_DUP)
 			{
 			bool bDifferenceNotFound=AdvCmp.CompareDirs(&LList,&RList,true,0);
 
 			if (hConInp!=INVALID_HANDLE_VALUE) CloseHandle(hConInp);
+			if (AdvCmp.TitleSaved) SetConsoleTitle(AdvCmp.strFarTitle);
 
 			// Отмечаем файлы и перерисовываем панели. Если нужно показываем сообщение...
 			if (!bBrokenByEsc)

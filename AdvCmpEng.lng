@@ -1,6 +1,6 @@
 ﻿.Language=English,English
 
-"Advanced compare 2"
+"Advanced compare files"
 
 "Ok"
 "Cancel"
@@ -50,14 +50,15 @@
 "Sub&folders,"
 "ma&ximum folder depth"
 "Scan symbolic links"
-"&Use file filter"
-"F4-Filter"
-"Compare till the first differe&nce"
 "Skip in filename&:"
+"Stop o&n diff./duplicate"
+"&Use file filter"
+"F4"
 "&Process only selected items"
 "Select new files"
 "Only in right panel"
 "Ignore missing items"
+"Light synchronization"
 "Display messages"
 "Sound notification"
 "Show &results dialog"
@@ -114,10 +115,15 @@
 "&Edit"
 
 "Отметка элементов для копирования"
-"Различающиеся элементы:"
-"Копировать направо"
-"Копировать налево"
+" Различающиеся элементы: "
+" Новые элементы слева: "
+" Новые элементы справа: "
+"Различается"
+"Направо"
+"Налево"
 "Если новее"
+"Скинуть"
+"Удалить"
 
 "Warning"
 "The file is read only"
@@ -153,6 +159,7 @@
 "Do you wish to delete it?"
 "&Delete"
 
+"Method"
 "Default"
 "Texts (WinMerge)"
 "Texts (VisualCompare)"
@@ -168,3 +175,6 @@
 "&Edit"
 
 "Removed %s (%u files)"
+
+"Delete left - &S"
+"Delete right - &D"

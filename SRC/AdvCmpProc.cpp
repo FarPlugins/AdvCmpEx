@@ -32,7 +32,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma hdrstop
 #include "AdvCmpProc.hpp"
 
-extern "C" int _fltused=0;
 
 /****************************************************************************
  *
@@ -312,18 +311,20 @@ void AdvCmpProc::Init()
 	cFList.Different=0;
 	cFList.LNew=0;
 	cFList.RNew=0;
-	cFList.bShowSelect=true;
-	cFList.bShowIdentical=true;
-	cFList.bShowDifferent=true;
-	cFList.bShowLNew=true;
-	cFList.bShowRNew=true;
-	cFList.bClearUserFlags=false;
-	cFList.Copy=0;
-	cFList.bCopyNew=false;
+
+	Opt.ShowListSelect=1;
+	Opt.ShowListIdentical=1;
+	Opt.ShowListDifferent=1;
+	Opt.ShowListLNew=1;
+	Opt.ShowListRNew=1;
+	Opt.SyncFlagClearUser=0;
+	Opt.SyncFlagCopy=Opt.SyncFlagIfNew=0;
+	Opt.SyncFlagLCopy=1;
+	Opt.SyncFlagRCopy=-1;
 
 	dFList.F=NULL;
 	dFList.iCount=0;
-	dFList.GroupCount=0;
+	dFList.GroupItems=0;
 	dFList.Del=0;
 
 	Opt.BufSize=65536<<4;
@@ -342,6 +343,7 @@ void AdvCmpProc::Init()
 	Info.FileFilterControl(RPanel.hPanel,FFCTL_CREATEFILEFILTER,FFT_PANEL,&RPanel.hFilter);
 	Info.FileFilterControl(LPanel.hFilter,FFCTL_STARTINGTOFILTER,0,0);
 	Info.FileFilterControl(RPanel.hFilter,FFCTL_STARTINGTOFILTER,0,0);
+	Info.FileFilterControl(Opt.hCustomFilter,FFCTL_STARTINGTOFILTER,0,0);
 
 	// На время сравнения изменим заголовок консоли ФАРа...
 	TitleSaved=GetFarTitle(strFarTitle);
@@ -362,17 +364,18 @@ void AdvCmpProc::Close()
 
 	for (int i=0; i<cFList.iCount; i++)
 	{
-		if (cFList.F[i].FileName) free(cFList.F[i].FileName);
-		if (cFList.F[i].LDir) free(cFList.F[i].LDir);
-		if (cFList.F[i].RDir) free(cFList.F[i].RDir);
+		if (cFList.F[i].L.FileName) free(cFList.F[i].L.FileName);
+		if (cFList.F[i].R.FileName) free(cFList.F[i].R.FileName);
+		if (cFList.F[i].L.Dir) free(cFList.F[i].L.Dir);
+		if (cFList.F[i].R.Dir) free(cFList.F[i].R.Dir);
 	}
 	if (cFList.F) free (cFList.F); cFList.F=NULL;
 	cFList.iCount=0;
 
 	for (int i=0; i<dFList.iCount; i++)
 	{
-		if (dFList.F[i].FileName) free(dFList.F[i].FileName);
-		if (dFList.F[i].Dir) free(dFList.F[i].Dir);
+		if (dFList.F[i].fi.FileName) free(dFList.F[i].fi.FileName);
+		if (dFList.F[i].fi.Dir) free(dFList.F[i].fi.Dir);
 		if (dFList.F[i].PicPix) free(dFList.F[i].PicPix);
 		if (dFList.F[i].MusicArtist) free(dFList.F[i].MusicArtist);
 		if (dFList.F[i].MusicTitle) free(dFList.F[i].MusicTitle);
@@ -431,7 +434,7 @@ bool AdvCmpProc::CheckScanDepth(const wchar_t *FileName, int ScanDepth)
 }
 
 /****************************************************************************
- * Перемещение указателя в файле для нужд Opt.ContentsPercent
+ * Перемещение указателя в файле для нужд Opt.Contents
  ****************************************************************************/
 bool AdvCmpProc::mySetFilePointer(HANDLE hf, unsigned __int64 distance, DWORD MoveMethod)
 {
@@ -917,7 +920,7 @@ void AdvCmpProc::ShowDupMsg(const wchar_t *Dir, const wchar_t *Name, bool bRedra
  * подкаталогов).
  * Возвращает true, если они совпадают.
  ****************************************************************************/
-bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI, const wchar_t *RDir, const PluginPanelItem *pRPPI, int ScanDepth)
+bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI, const wchar_t *RDir, const PluginPanelItem *pRPPI, int ScanDepth, DWORD *dwFlag)
 {
 	if (pLPPI->FileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 	{
@@ -1005,8 +1008,8 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 			{
 				free(LList.Dir);
 				free(RList.Dir);
-				if (bLPanelPlug) Info.FreePluginDirList(LList.PPI,LList.ItemsNumber);
-				if (bRPanelPlug) Info.FreePluginDirList(RList.PPI,RList.ItemsNumber);
+				if (bLPanelPlug) Info.FreePluginDirList(LPanel.hPanel,LList.PPI,LList.ItemsNumber);
+				if (bRPanelPlug) Info.FreePluginDirList(RPanel.hPanel,RList.PPI,RList.ItemsNumber);
 				if (!bLPanelPlug) Info.FreeDirList(LList.PPI,LList.ItemsNumber);
 				if (!bRPanelPlug) Info.FreeDirList(RList.PPI,RList.ItemsNumber);
 			}
@@ -1020,10 +1023,13 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 		CmpInfo.CurCountSize=pLPPI->FileSize+pRPPI->FileSize;
 		CmpInfo.CurProcSize=0;
 
+		bool bFullCmp=(Opt.Mode==MODE_CMP||Opt.LightSync?false:true);
+
 		// покажем "работу" на прогрессе :)
 		if (!Opt.CmpContents)  // содержимое - особый случай...
 			CmpInfo.ProcSize+=CmpInfo.CurCountSize;
 
+		//===========================================================================
 		// регистр имен
 		if (Opt.CmpCase)
 		{
@@ -1032,13 +1038,22 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 
 			if (Strncmp(Opt.SkipSubstr?CutSubstr(strLFileName,Opt.Substr):strLFileName.get(),
 									Opt.SkipSubstr?CutSubstr(strRFileName,Opt.Substr):strRFileName.get()))
-				return false;
+			{
+				if (bFullCmp) *dwFlag|=RCIF_NAMEDIFF;
+				else return false;
+			}
+			else if (bFullCmp) *dwFlag|=RCIF_NAME;
 		}
 		//===========================================================================
 		// размер
-		if (Opt.CmpSize && (pLPPI->FileSize != pRPPI->FileSize))
+		if (Opt.CmpSize)
 		{
-			return false;
+			if (pLPPI->FileSize != pRPPI->FileSize)
+			{
+				if (bFullCmp) *dwFlag|=RCIF_SIZEDIFF;
+				else return false;
+			}
+			else if (bFullCmp) *dwFlag|=RCIF_SIZE;
 		}
 		//===========================================================================
 		// время
@@ -1120,25 +1135,34 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 				if ( Precision.hilo.hi < TimeDelta.hilo.hi ||
 						(Precision.hilo.hi == TimeDelta.hilo.hi && Precision.hilo.lo < TimeDelta.hilo.lo))
 				{
-					return false;
+					if (bFullCmp) *dwFlag|=RCIF_TIMEDIFF;
+					else return false;
 				}
+				else if (bFullCmp) *dwFlag|=RCIF_TIME;
 			}
 			else if (pLPPI->LastWriteTime.dwLowDateTime != pRPPI->LastWriteTime.dwLowDateTime ||
 							 pLPPI->LastWriteTime.dwHighDateTime != pRPPI->LastWriteTime.dwHighDateTime)
 			{
-				return false;
+				if (bFullCmp) *dwFlag|=RCIF_TIMEDIFF;
+				else return false;
 			}
+			else if (bFullCmp) *dwFlag|=RCIF_TIME;
 		}
 		//===========================================================================
 		// содержимое
 		if (Opt.CmpContents)
 		{
+			bool bEqual=true;
+			string strLFullFileName, strRFullFileName;
 
 			// экспресс-сравнение: сравним размер файлов
 			if (!Opt.Ignore && (pLPPI->FileSize != pRPPI->FileSize))
 			{
 				CmpInfo.ProcSize+=CmpInfo.CurCountSize;
-				return false;
+//				if (bFullCmp) *dwFlag|=RCIF_CONTDIFF;
+//				return false;
+				bEqual=false;
+				goto End;
 			}
 
 			// экспресс-сравнение: время совпало - скажем "одинаковые"
@@ -1148,7 +1172,10 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 					)
 			{
 				CmpInfo.ProcSize+=CmpInfo.CurCountSize;
-				return true;
+//				if (bFullCmp) *dwFlag|=RCIF_CONT;
+				bEqual=true;
+//				return true;
+				goto End;
 			}
 
 			// сравним 2-е архивные панели
@@ -1158,11 +1185,11 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 //        wchar_t buf[40];
 //        FSF.sprintf(buf, L"L - %X R- %X", pLPPI->CRC32,pRPPI->CRC32);
 //        DebugMsg(buf, L"");
-				if (pLPPI->CRC32 == pRPPI->CRC32) return true;
-				else return false;
+				if (pLPPI->CRC32 == pRPPI->CRC32) bEqual=true; //return true;
+				else bEqual=false; //return false;
+				goto End;
 			}
 
-			string strLFullFileName, strRFullFileName;
 			GetFullFileName(strLFullFileName,LDir,pLPPI->FileName);
 			GetFullFileName(strRFullFileName,RDir,pRPPI->FileName);
 
@@ -1200,12 +1227,18 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 					if (Result == RCIF_EQUAL)
 					{
 						CmpInfo.ProcSize+=CmpInfo.CurCountSize;
-						return true;
+//						if (bFullCmp) *dwFlag|=RCIF_CONT;
+						bEqual=true;
+//						return true;
+						goto End;
 					}
 					else if (Result == RCIF_DIFFER)
 					{
 						CmpInfo.ProcSize+=CmpInfo.CurCountSize;
-						return false;
+//						if (bFullCmp) *dwFlag|=RCIF_CONTDIFF;
+						bEqual=false;
+//						return false;
+						goto End;
 					}
 				}
 			}
@@ -1222,7 +1255,10 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 				{
 					CmpInfo.ProcSize+=CmpInfo.CurCountSize;
 					CmpInfo.Errors++;
-					return false;
+//					if (bFullCmp) *dwFlag|=RCIF_CONTDIFF;
+					bEqual=false;
+//				return false;
+					goto End;
 				}
 				bOkLFileInfo=GetFileInformationByHandle(hLFile,&LFileInfo);
 				// Сохраним время последнего доступа к файлу
@@ -1237,7 +1273,10 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 					if (hLFile) CloseHandle(hLFile);
 					CmpInfo.ProcSize+=CmpInfo.CurCountSize;
 					CmpInfo.Errors++;
-					return false;
+//					if (bFullCmp) *dwFlag|=RCIF_CONTDIFF;
+					bEqual=false;
+//						return false;
+					goto End;
 				}
 				bOkRFileInfo=GetFileInformationByHandle(hRFile,&RFileInfo);
 				RAccess=pRPPI->LastAccessTime;
@@ -1255,14 +1294,16 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 				CloseHandle(hLFile);
 				CloseHandle(hRFile);
 				CmpInfo.ProcSize+=CmpInfo.CurCountSize;
-				return true;
+//				if (bFullCmp) *dwFlag|=RCIF_CONT;
+				bEqual=true;
+//				return true;
+				goto End;
 			}
 
 			DWORD LReadSize=1, RReadSize=1;
 			DWORD LBufPos=1, RBufPos=1;     // позиция в Opt.Buf
 			const DWORD ReadBlock=65536;
 			__int64 LFilePos=0, RFilePos=0;  // позиция в файле
-			bool bEqual=true;
 
 			{
 				char *LPtr=Opt.Buf[0]+LBufPos, *RPtr=Opt.Buf[1]+RBufPos;
@@ -1301,7 +1342,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 					{
 						if (!mySetFilePointer(hLFile,Opt.BufSize,FILE_CURRENT) || !mySetFilePointer(hRFile,Opt.BufSize,FILE_CURRENT))
 						{
-							bEqual = false;
+							bEqual=false;
 							break;
 						}
 //						else 	DebugMsg(L"skip",L"",Opt.BufSize);
@@ -1383,7 +1424,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 							if (!LPanel.bARC && RPanel.bARC && dwFileCRC != pRPPI->CRC32)
 								bEqual=false;
 							else if (LPanel.bARC && !RPanel.bARC && dwFileCRC != pLPPI->CRC32)
-								bEqual = false;
+								bEqual=false;
 //              wchar_t buf[40];
 //              FSF.sprintf(buf, L"L - %X R- %X", LPanel.bARC?pLPPI->CRC32:dwFileCRC, RPanel.bARC?pRPPI->CRC32:dwFileCRC);
 //							if ((LPanel.bARC?pLPPI->CRC32:dwFileCRC)!=(RPanel.bARC?pRPPI->CRC32:dwFileCRC))
@@ -1453,7 +1494,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 							{
 								if (*LPtr != *RPtr)
 								{
-									bEqual = false;
+									bEqual=false;
 									break;
 								}
 								++LPtr;
@@ -1548,9 +1589,22 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 			if (!bEqual)
 			{
 				CmpInfo.ProcSize+=CmpInfo.CurCountSize-CmpInfo.CurProcSize;
-				return false;
+//				if (bFullCmp) *dwFlag|=RCIF_CONTDIFF;
+//				return false;
 			}
+
+End:
+			if (!bEqual)
+			{
+				if (bFullCmp) *dwFlag|=RCIF_CONTDIFF;
+				else return false;
+			}
+			else if (bFullCmp) *dwFlag|=RCIF_CONT;
 		}
+		//===========================================================================
+		// если полное сравнение, то суммируем результаты сравнения
+		if (bFullCmp && ((*dwFlag&RCIF_NAMEDIFF) || (*dwFlag&RCIF_TIMEDIFF) || (*dwFlag&RCIF_SIZEDIFF) || (*dwFlag&RCIF_CONTDIFF)))
+			return false;
 	}
 	return true;
 }
@@ -1690,20 +1744,24 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 //FSF.sprintf(buf,L"Left: %s Right: %s, %d + %d", LII.pPPI[i]->FindData.lpwszFileName, RII.pPPI[j]->FindData.lpwszFileName, i,j);
 //			 DebugMsg(buf,L"case 0",bDifferenceNotFound);
 
-				if (CompareFiles(pLList->Dir,LII.pPPI[i],pRList->Dir,RII.pPPI[j],ScanDepth))
+				if (CompareFiles(pLList->Dir,LII.pPPI[i],pRList->Dir,RII.pPPI[j],ScanDepth,&dwFlag))
 				{// И остальное совпало
 					i++; j++;
-					dwFlag=RCIF_EQUAL;
+					dwFlag=RCIF_EQUAL;  // просто установим
 				}
 				else
 				{
 					bDifferenceNotFound=false;
 					// узнаем, новый кто?
+					__int64 Delta=(((__int64)LII.pPPI[i]->LastWriteTime.dwHighDateTime << 32) | LII.pPPI[i]->LastWriteTime.dwLowDateTime) -
+												(((__int64)RII.pPPI[j]->LastWriteTime.dwHighDateTime << 32) | RII.pPPI[j]->LastWriteTime.dwLowDateTime);
+					if (Opt.CmpTime)
+					{
+						if (Delta>0) { dwFlag &= ~RCIF_DIFFER; dwFlag|=RCIF_LNEW; }
+						else if (Delta<0) { dwFlag &= ~RCIF_DIFFER; dwFlag|=RCIF_RNEW; }
+					}
 					if (Opt.SelectedNew)
 					{
-						__int64 Delta=(((__int64)LII.pPPI[i]->LastWriteTime.dwHighDateTime << 32) | LII.pPPI[i]->LastWriteTime.dwLowDateTime) -
-													(((__int64)RII.pPPI[j]->LastWriteTime.dwHighDateTime << 32) | RII.pPPI[j]->LastWriteTime.dwLowDateTime);
-
 						if (Delta>0)
 						{
 							LII.pPPI[i]->Flags |= PPIF_SELECTED;
@@ -1725,11 +1783,11 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 					}
 					i++; j++;
 					CmpInfo.LDiff++; CmpInfo.RDiff++;
-					dwFlag=RCIF_DIFFER;
-					if (Opt.TillFirstDiff && !bBrokenByEsc)
+//					dwFlag=RCIF_DIFFER;
+					if (Opt.StopDiffDup && !bBrokenByEsc)
 					{     // нужно ли продолжать сравнивать
 						bCompareAll=(Opt.ShowMsg && !YesNoMsg(MFirstDiffTitle, MFirstDiffBody));
-						Opt.TillFirstDiff=0;
+						Opt.StopDiffDup=0;
 					}
 				}
 				CmpInfo.Proc+=2;
@@ -1764,7 +1822,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 							if (!PICompare(&LII.pPPI[i], &RII.pPPI[k], NULL))
 							{
 								bNextItem = true;
-								if (CompareFiles(pLList->Dir,LII.pPPI[i],pRList->Dir,RII.pPPI[k],ScanDepth))
+								if (CompareFiles(pLList->Dir,LII.pPPI[i],pRList->Dir,RII.pPPI[k],ScanDepth,&dwFlag))
 								{
 									i++;
 									break;
@@ -1774,17 +1832,17 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 								{
 									bDifferenceNotFound=false;
 									LII.pPPI[i]->Flags |= PPIF_SELECTED;
-									dwFlag=RCIF_LNEW;
+									dwFlag=(RCIF_LNEW|RCIF_LUNIQ);  // просто установим
 									i++; CmpInfo.LDiff++;
 									if (LPanel.bTMP && k<RII.iCount)
 									{
 										RII.pPPI[k]->Flags |= PPIF_SELECTED;
 										CmpInfo.RDiff++;
 									}
-									if (Opt.TillFirstDiff && !bBrokenByEsc)
+									if (Opt.StopDiffDup && !bBrokenByEsc)
 									{
 										bCompareAll=(Opt.ShowMsg && !YesNoMsg(MFirstDiffTitle, MFirstDiffBody));
-										Opt.TillFirstDiff=0;
+										Opt.StopDiffDup=0;
 									}
 									break;
 								}
@@ -1833,7 +1891,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 							if (!PICompare(&LII.pPPI[k], &RII.pPPI[j], NULL))
 							{
 								bNextItem = true;
-								if (CompareFiles(pLList->Dir,LII.pPPI[k],pRList->Dir,RII.pPPI[j],ScanDepth))
+								if (CompareFiles(pLList->Dir,LII.pPPI[k],pRList->Dir,RII.pPPI[j],ScanDepth,&dwFlag))
 								{
 									j++;
 									break;
@@ -1843,17 +1901,17 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 								{
 									bDifferenceNotFound=false;
 									RII.pPPI[j]->Flags |= PPIF_SELECTED;
-									dwFlag=RCIF_RNEW;
+									dwFlag=(RCIF_RNEW|RCIF_RUNIQ);  // просто установим
 									j++; CmpInfo.RDiff++;
 									if (RPanel.bTMP && k<LII.iCount)
 									{
 										LII.pPPI[k]->Flags |= PPIF_SELECTED;
 										CmpInfo.LDiff++;
 									}
-									if (Opt.TillFirstDiff && !bBrokenByEsc)
+									if (Opt.StopDiffDup && !bBrokenByEsc)
 									{
 										bCompareAll=(Opt.ShowMsg && !YesNoMsg(MFirstDiffTitle, MFirstDiffBody));
-										Opt.TillFirstDiff=0;
+										Opt.StopDiffDup=0;
 									}
 									break;
 								}
@@ -2036,7 +2094,7 @@ void FreeImage(PicData *data)
 		pGflFreeFileInformation(data->pic_info);
 	}
 }
-
+#if 0
 void UpdateInfoText(HANDLE hDlg, PicData *data, bool left)
 {
 	wchar_t str[64], str2[4096];
@@ -2051,7 +2109,7 @@ void UpdateInfoText(HANDLE hDlg, PicData *data, bool left)
 }
 
 
-INT_PTR WINAPI ShowCmpCurDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
+intptr_t WINAPI ShowCmpCurDialogProc(HANDLE hDlg,intptr_t Msg,intptr_t Param1,void *Param2)
 {
 	cmpPicFile *pPics=(cmpPicFile *)Info.SendDlgMessage(hDlg,DM_GETDLGDATA,0,0);
 	switch(Msg)
@@ -2187,143 +2245,75 @@ INT_PTR WINAPI ShowCmpCurDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2)
 }
 
 
-int AdvCmpProc::ShowCmpCurDialog(const PluginPanelItem *pLPPI,const PluginPanelItem *pRPPI)
+int AdvCmpProc::ShowCmpCurDialog(const PluginPanelItem *pLPPI,const PluginPanelItem *pRPPI, bool bShowImage)
 {
-	FarDialogItem DialogItems[9];
-	memset(DialogItems,0,sizeof(DialogItems));
+	const unsigned int dW = WinInfo.Con.Right;   // ширина
+	const unsigned int dH = bShowImage?WinInfo.Con.Bottom-WinInfo.Con.Top:11;   // высота
 
-	DialogItems[0].Type=DI_USERCONTROL;
-	DialogItems[0].X1=1; DialogItems[0].X2=WinInfo.Con.Right-1;
-	DialogItems[0].Y1=1; DialogItems[0].Y2=WinInfo.Con.Bottom-WinInfo.Con.Top-3;
+	wchar_t LTime[20]={0}, RTime[20]={0};
+	wchar_t LSize[65]={0}, RSize[65]={0};
 
-	DialogItems[1].Type=DI_DOUBLEBOX;
-	DialogItems[1].X1=0; DialogItems[1].X2=WinInfo.Con.Right/2;
-	DialogItems[1].Y1=0; DialogItems[1].Y2=WinInfo.Con.Bottom-WinInfo.Con.Top;
-	DialogItems[1].Data=pLPPI->FileName;
+	struct FarDialogItem DialogItems[] = {
+	//			Type	X1	Y1	X2	Y2				Selected	History	Mask	Flags	Data	MaxLen	UserParam
+	/* 0*/{DI_USERCONTROL,   1,    1, dW-1,dH-11, 0, 0, 0,                0,0,0,0},
+	/* 1*/{DI_VTEXT,      dW/2,    0, dW/2,dH-10, 0, 0, 0,   DIF_SEPARATOR2,0,0,0},
+	/* 2*/{DI_TEXT,         -1,dH-10,    0,    0, 0, 0, 0,   DIF_SEPARATOR2,0,0,0},
+	/* 3*/{DI_DOUBLEBOX,     0,    0,   dW,   dH, 0, 0, 0,                0,0,0,0},
+	// инфо
+	/* 4*/{DI_TEXT,          0, dH-9,    0,    0, 0, 0, 0,                0,pLPPI->AlternateFileName,0,0},
+	/* 5*/{DI_TEXT,          0, dH-8,    0,    0, 0, 0, 0,                0,0,0,0},  // mp3-трек
+	/* 6*/{DI_TEXT,          0, dH-7,   18,    0, 0, 0, 0,                0,itoaa(pLPPI->FileSize,LSize),0,0},
+	/* 7*/{DI_TEXT,         19, dH-7,   38,    0, 0, 0, 0,                0,GetStrFileTime(&pLPPI->LastWriteTime,LTime),0,0},
+	/* 8*/{DI_TEXT,         39, dH-7, dW-1,    0, 0, 0, 0,                0,0,0,0},  // разрешение/длительность/...
+	/* 9*/{DI_TEXT,         -1, dH-6,    0,    0, 0, 0, 0,    DIF_SEPARATOR,0,0,0},
+	// инфо
+	/*10*/{DI_TEXT,          0, dH-5,   18,    0, 0, 0, 0,                0,itoaa(pRPPI->FileSize,RSize),0,0},
+	/*11*/{DI_TEXT,         19, dH-5,   38,    0, 0, 0, 0,                0,GetStrFileTime(&pRPPI->LastWriteTime,RTime),0,0},
+	/*12*/{DI_TEXT,         39, dH-5, dW-1,    0, 0, 0, 0,                0,0,0,0},  // разрешение/длительность/...
+	/*13*/{DI_TEXT,          0, dH-4,    0,    0, 0, 0, 0,                0,0,0,0},  // mp3-трек
+	/*14*/{DI_TEXT,          0, dH-3,    0,    0, 0, 0, 0,                0,pRPPI->AlternateFileName,0,0},
+	/*15*/{DI_TEXT,         -1, dH-2,    0,    0, 0, 0, 0,    DIF_SEPARATOR,0,0,0},
 
-	DialogItems[2].Type=DI_DOUBLEBOX;
-	DialogItems[2].X1=WinInfo.Con.Right/2+1; DialogItems[2].X2=WinInfo.Con.Right;
-	DialogItems[2].Y1=0; DialogItems[2].Y2=WinInfo.Con.Bottom-WinInfo.Con.Top;
-	DialogItems[2].Data=pRPPI->FileName;
-// инфо
-	DialogItems[3].Type=DI_TEXT;
-	DialogItems[3].X1=1; DialogItems[3].X2=WinInfo.Con.Right/2-1;
-	DialogItems[3].Y1=WinInfo.Con.Bottom-WinInfo.Con.Top-3;
-
-	DialogItems[4].Type=DI_TEXT;
-	DialogItems[4].X1=WinInfo.Con.Right/2+2; DialogItems[4].X2=WinInfo.Con.Right-1;
-	DialogItems[4].Y1=WinInfo.Con.Bottom-WinInfo.Con.Top-3;
-// размер
-	DialogItems[5].Type=DI_TEXT;
-	DialogItems[5].X1=1; DialogItems[5].X2=WinInfo.Con.Right/2-1;
-	DialogItems[5].Y1=WinInfo.Con.Bottom-WinInfo.Con.Top-2;
-
-	DialogItems[6].Type=DI_TEXT;
-	DialogItems[6].X1=WinInfo.Con.Right/2+2; DialogItems[6].X2=WinInfo.Con.Right-1;
-	DialogItems[6].Y1=WinInfo.Con.Bottom-WinInfo.Con.Top-2;
-// дата
-	DialogItems[7].Type=DI_TEXT;
-	DialogItems[7].X1=1; DialogItems[7].X2=WinInfo.Con.Right/2-1;
-	DialogItems[7].Y1=WinInfo.Con.Bottom-WinInfo.Con.Top-1;
-
-	DialogItems[8].Type=DI_TEXT;
-	DialogItems[8].X1=WinInfo.Con.Right/2+2; DialogItems[8].X2=WinInfo.Con.Right-1;
-	DialogItems[8].Y1=WinInfo.Con.Bottom-WinInfo.Con.Top-1;
-
-	SYSTEMTIME LModificTime, RModificTime;
-	FILETIME local;
-	FileTimeToLocalFileTime(&(pLPPI->LastWriteTime), &local);
-	FileTimeToSystemTime(&local, &LModificTime);
-	FileTimeToLocalFileTime(&(pRPPI->LastWriteTime), &local);
-	FileTimeToSystemTime(&local, &RModificTime);
-
-	const wchar_t LAttributes[]=
-	{
-		pLPPI->FileAttributes&FILE_ATTRIBUTE_READONLY?L'R':L' ',
-		pLPPI->FileAttributes&FILE_ATTRIBUTE_SYSTEM?L'S':L' ',
-		pLPPI->FileAttributes&FILE_ATTRIBUTE_HIDDEN?L'H':L' ',
-		pLPPI->FileAttributes&FILE_ATTRIBUTE_ARCHIVE?L'A':L' ',
-		pLPPI->FileAttributes&FILE_ATTRIBUTE_REPARSE_POINT?L'L':pLPPI->FileAttributes&FILE_ATTRIBUTE_SPARSE_FILE?L'$':L' ',
-		pLPPI->FileAttributes&FILE_ATTRIBUTE_COMPRESSED?L'C':pLPPI->FileAttributes&FILE_ATTRIBUTE_ENCRYPTED?L'E':L' ',
-		pLPPI->FileAttributes&FILE_ATTRIBUTE_TEMPORARY?L'T':L' ',
-		pLPPI->FileAttributes&FILE_ATTRIBUTE_NOT_CONTENT_INDEXED?L'I':L' ',
-		pLPPI->FileAttributes&FILE_ATTRIBUTE_OFFLINE?L'O':L' ',
-		pLPPI->FileAttributes&FILE_ATTRIBUTE_VIRTUAL?L'V':L' ',
-		0
+	/*16*/{DI_BUTTON,        0, dH-1,    0,    0, 0, 0, 0, DIF_DEFAULTBUTTON|DIF_CENTERGROUP,GetMsg(MSkip),0,0},
+	/*17*/{DI_BUTTON,        0, dH-1,    0,    0, 0, 0, 0,  DIF_CENTERGROUP,GetMsg(MDelLeft),0,0},
+	/*18*/{DI_BUTTON,        0, dH-1,    0,    0, 0, 0, 0,  DIF_CENTERGROUP,GetMsg(MDelRight),0,0},
+	/*19*/{DI_BUTTON,        0, dH-1,    0,    0, 0, 0, 0,  DIF_CENTERGROUP,GetMsg(MCancel),0,0}
 	};
 
-	const wchar_t RAttributes[]=
+	FAR_CHAR_INFO *VirtualBuffer=NULL;
+
+	if (bShowImage)
 	{
-		pRPPI->FileAttributes&FILE_ATTRIBUTE_READONLY?L'R':L' ',
-		pRPPI->FileAttributes&FILE_ATTRIBUTE_SYSTEM?L'S':L' ',
-		pRPPI->FileAttributes&FILE_ATTRIBUTE_HIDDEN?L'H':L' ',
-		pRPPI->FileAttributes&FILE_ATTRIBUTE_ARCHIVE?L'A':L' ',
-		pRPPI->FileAttributes&FILE_ATTRIBUTE_REPARSE_POINT?L'L':pRPPI->FileAttributes&FILE_ATTRIBUTE_SPARSE_FILE?L'$':L' ',
-		pRPPI->FileAttributes&FILE_ATTRIBUTE_COMPRESSED?L'C':pRPPI->FileAttributes&FILE_ATTRIBUTE_ENCRYPTED?L'E':L' ',
-		pRPPI->FileAttributes&FILE_ATTRIBUTE_TEMPORARY?L'T':L' ',
-		pRPPI->FileAttributes&FILE_ATTRIBUTE_NOT_CONTENT_INDEXED?L'I':L' ',
-		pRPPI->FileAttributes&FILE_ATTRIBUTE_OFFLINE?L'O':L' ',
-		pRPPI->FileAttributes&FILE_ATTRIBUTE_VIRTUAL?L'V':L' ',
-		0
-	};
+		FarColor Color;
+		Info.AdvControl(&MainGuid,ACTL_GETCOLOR,COL_PANELTEXT,&Color);
 
-	wchar_t Buf1[65], Buf2[65];
-	string strBuf1, strBuf2, strBuf3;
-	strBuf1.get(WinInfo.Con.Right/2);
-	strBuf2.get(WinInfo.Con.Right/2);
-	strBuf3.get(WinInfo.Con.Right/2);
-
-	itoaa(pLPPI->FileSize,Buf1);
-	itoaa(CmpPic.L.MemSize,Buf2);
-	FSF.sprintf(strBuf2.get(), L"(%s) %s",Buf2,Buf1);
-	strBuf2.updsize();
-	FSF.sprintf(strBuf1.get(), L"%*.*s",DialogItems[5].X2,DialogItems[5].X2,strBuf2.get());
-	strBuf1.updsize();
-	DialogItems[5].Data=strBuf1.get();
-
-	itoaa(pRPPI->FileSize,Buf1);
-	itoaa(CmpPic.R.MemSize,Buf2);
-	FSF.sprintf(strBuf2.get(), L"%s (%s)",Buf1,Buf2);
-	strBuf2.updsize();
-	DialogItems[6].Data=strBuf2.get();
-
-	FSF.sprintf(Buf2, L"%-*.*s  %02d.%02d.%04d  %02d:%02d:%02d", 
-							10,10,LAttributes,LModificTime.wDay,LModificTime.wMonth,LModificTime.wYear,LModificTime.wHour,LModificTime.wMinute,LModificTime.wSecond);
-	FSF.sprintf(strBuf3.get(), L"%*.*s",DialogItems[7].X2,DialogItems[7].X2,Buf2);
-	strBuf3.updsize();
-	DialogItems[7].Data=strBuf3.get();
-
-	FSF.sprintf(Buf2, L"%02d:%02d:%02d  %02d.%02d.%04d  %-*.*s",
-							RModificTime.wHour,RModificTime.wMinute,RModificTime.wSecond,RModificTime.wDay,RModificTime.wMonth,RModificTime.wYear,10,10,RAttributes);
-	DialogItems[8].Data=Buf2;
-
-	FarColor Color;
-	Info.AdvControl(&MainGuid,ACTL_GETCOLOR,COL_PANELTEXT,&Color);
-
-	unsigned int VBufSize=(WinInfo.Con.Right-WinInfo.Con.Left)*(WinInfo.Con.Bottom-WinInfo.Con.Top-2-1);
-	FAR_CHAR_INFO *VirtualBuffer=(FAR_CHAR_INFO *)malloc(VBufSize*sizeof(FAR_CHAR_INFO));
-	if (VirtualBuffer)
-	{
-		DialogItems[0].VBuf=VirtualBuffer;
-		for(unsigned int i=0;i<VBufSize;i++)
+		unsigned int VBufSize=(dW-1)*(dH-11);
+		VirtualBuffer=(FAR_CHAR_INFO *)malloc(VBufSize*sizeof(FAR_CHAR_INFO));
+		if (VirtualBuffer)
 		{
-			VirtualBuffer[i].Char=L' ';
-			VirtualBuffer[i].Attributes=Color;
+			DialogItems[0].VBuf=VirtualBuffer;
+			for(int i=0;i<VBufSize;i++)
+			{
+				VirtualBuffer[i].Char=L' ';
+				VirtualBuffer[i].Attributes=Color;
+			}
 		}
-
-		HANDLE hDlg=Info.DialogInit(&MainGuid,&CurDlgGuid,0,0,WinInfo.Con.Right,WinInfo.Con.Bottom-WinInfo.Con.Top,NULL,DialogItems,
-																sizeof(DialogItems)/sizeof(DialogItems[0]),0,FDLG_SMALLDIALOG|FDLG_NODRAWSHADOW,ShowCmpCurDialogProc,&CmpPic);
-		if (hDlg != INVALID_HANDLE_VALUE)
-		{
-			Info.DialogRun(hDlg);
-			Info.DialogFree(hDlg);
-		}
-
-		free(VirtualBuffer);
 	}
+
+	HANDLE hDlg=Info.DialogInit(&MainGuid,&CurDlgGuid,-1,-1,dW,dH,NULL,DialogItems,
+																sizeof(DialogItems)/sizeof(DialogItems[0]),0,FDLG_SMALLDIALOG|FDLG_NODRAWSHADOW,ShowCmpCurDialogProc,&CmpPic);
+	if (hDlg != INVALID_HANDLE_VALUE)
+	{
+		Info.DialogRun(hDlg);
+		Info.DialogFree(hDlg);
+	}
+
+	if (VirtualBuffer) 
+		free(VirtualBuffer);
 
 	return true;
 }
+#endif
 
 bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, const wchar_t *RDir, const wchar_t *RFileName, int Method)
 {
@@ -2331,14 +2321,12 @@ bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, c
 	GetFullFileName(strLFullFileName,LDir,LFileName);
 	GetFullFileName(strRFullFileName,RDir,RFileName);
 
-	PluginPanelItem LPPI, RPPI;
-	memset(&LPPI,0,sizeof(PluginPanelItem));
-	memset(&RPPI,0,sizeof(PluginPanelItem));
-	if (!FileExists(strLFullFileName.get(),&LPPI.FileSize,&LPPI.LastWriteTime,&LPPI.FileAttributes,0) ||
-			!FileExists(strRFullFileName.get(),&RPPI.FileSize,&RPPI.LastWriteTime,&RPPI.FileAttributes,0))
+	WIN32_FIND_DATA LWFD,RWFD;
+	if (!FileExists(strLFullFileName.get(),LWFD,0) || !FileExists(strRFullFileName.get(),RWFD,0))
 		return false;
-	LPPI.FileName=LFileName;
-	RPPI.FileName=RFileName;
+	PluginPanelItem LPPI={}, RPPI={};
+	WFD2PPI(LWFD,LPPI);
+	WFD2PPI(RWFD,RPPI);
 
 	string strCommand;
 	strCommand.get(32768);
@@ -2404,7 +2392,7 @@ bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, c
 		if (!bImage) MenuItems[2].Flags|=MIF_GRAYED;
 		if (bImage) MenuItems[2].Flags|=MIF_SELECTED;
 		else if (pCompareFiles) MenuItems[3].Flags|=MIF_SELECTED;
-		int MenuCode=Info.Menu(&MainGuid,&CmpMethodMenuGuid,-1,-1,0,FMENU_AUTOHIGHLIGHT|FMENU_WRAPMODE,L"Method",NULL,L"Contents",NULL,NULL,MenuItems,sizeof(MenuItems)/sizeof(MenuItems[0]));
+		int MenuCode=Info.Menu(&MainGuid,&CmpMethodMenuGuid,-1,-1,0,FMENU_AUTOHIGHLIGHT|FMENU_WRAPMODE,GetMsg(MMethod),NULL,L"Contents",NULL,NULL,MenuItems,sizeof(MenuItems)/sizeof(MenuItems[0]));
 
 		if (MenuCode==0)
 		{
@@ -2412,7 +2400,7 @@ bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, c
 			Opt.TotalProgress=0;
 			if (Opt.CmpCase || Opt.CmpSize || Opt.CmpTime || Opt.CmpContents)
 			{
-				bDifferenceNotFound=CompareFiles(LDir,&LPPI,RDir,&RPPI,0);
+				bDifferenceNotFound=CompareFiles(LDir,&LPPI,RDir,&RPPI,0,0);
 			}
 			else
 				bDifferenceNotFound=!FSF.LStricmp(LFileName,RFileName);
@@ -2439,10 +2427,13 @@ bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, c
 			}
 		}
 		else if (MenuCode==2 && bImage)
-			ShowCmpCurDialog(&LPPI,&RPPI);
+//			ShowCmpCurDialog(&LPPI,&RPPI);
+;
 		else if (MenuCode==3 && pCompareFiles)
 			pCompareFiles(strLFullFileName.get(),strRFullFileName.get(),0);
 
+		if (LPPI.FileName) free((void*)LPPI.FileName);
+		if (RPPI.FileName) free((void*)RPPI.FileName);
 		FreeImage(&CmpPic.L);
 		FreeImage(&CmpPic.R);
 	}

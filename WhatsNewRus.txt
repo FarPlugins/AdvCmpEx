@@ -3,13 +3,13 @@
 [-] Исправлена ошибка
 [*] Изменения
 
-Advanced compare 2
-~~~~~~~~~~~~~~~~~~~~~~
+AdvCmp
+~~~~~~~~
 
 
-Build 034 (  .09.2012)
+Build 034 (  .12.2012)
 ----------------------
-[!] Портирован на Far 3.0.2796
+[!] Портирован на Far 3.0.2927
 [!] Плагину требуется библиотека MSVCR100.dll.
 [!] Работаем с обновленной библиотекой GFL - libgfl340.dll версии 3.40.
 [!] Работаем с обновленной библиотекой BASS - bass.dll версии 2.4.9.
@@ -18,6 +18,7 @@ Build 034 (  .09.2012)
 [+] Клавиши Ctrl, Ins, Ctrl-PgUp, Ctrl-\,Ctrl-+, Ctrl--, Ctrl-[, Ctrl-], Ctrl-R, Space, Shift-Enter в итоговом диалоге.
 [+] Закрываем итоговый диалог по клику в правом верхнем угу.
 [+] Режим "Синхронизация папок", много подсмотрено в DirSync, спасибо основателям :)
+[+] Опция "Легкая синхронизация" - файлы не копируются, только атрибуты и временные метки.
 [+] Еще ускорение сравнения: проверяем некоторую идентичность BY_HANDLE_FILE_INFORMATION.
 [+] Работаем с символическими ссылками (только в режиме сравнения).
 [*] Немного разных переделок.
@@ -39,7 +40,7 @@ Build 034 (  .09.2012)
     <pluginsconfig>
         <plugin guid="ED0C4BD8-D2F0-4B6E-A19F-B0B0137C9B0C">
             <hierarchicalconfig>
-                <key name="ED0C4BD8-D2F0-4B6E-A19F-B0B0137C9B0C" description="Advanced compare 2">
+                <key name="ED0C4BD8-D2F0-4B6E-A19F-B0B0137C9B0C" description="AdvCmp">
                     <value name="WinMergePath" type="text" value="%FARHOME%\Util\WinMerge\WinMergeU.exe" />
                 </key>
             </hierarchicalconfig>

@@ -47,10 +47,10 @@ int GetSyncOpt(cmpFileList *pFileList)
 	{
 		cmpFile *cur=&pFileList->F[i];
 
-		if ((cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY) && (cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY))
+		if ((cur->L.dwAttributes&FILE_ATTRIBUTE_DIRECTORY) && (cur->R.dwAttributes&FILE_ATTRIBUTE_DIRECTORY))
 			continue;
-		if ( ((cur->dwFlags&RCIF_USERSELECT) && !pFileList->bShowSelect) || ((cur->dwFlags&RCIF_DIFFER) && !pFileList->bShowDifferent) ||
-				 ((cur->dwFlags&RCIF_LNEW) && !pFileList->bShowLNew) || ((cur->dwFlags&RCIF_RNEW) && !pFileList->bShowRNew) )
+		if ( ((cur->dwFlags&RCIF_USERSELECT) && !Opt.ShowListSelect) || ((cur->dwFlags&RCIF_DIFFER) && !Opt.ShowListDifferent) ||
+				 ((cur->dwFlags&RCIF_LNEW) && !Opt.ShowListLNew) || ((cur->dwFlags&RCIF_RNEW) && !Opt.ShowListRNew) )
 			continue;
 		if ((cur->dwFlags&RCIF_EQUAL) || ((cur->dwFlags&RCIF_DIFFER) && !(cur->dwFlags&(RCIF_USERLNEW|RCIF_USERRNEW))) || (cur->dwFlags&RCIF_USERNONE))
 			continue;
@@ -105,7 +105,7 @@ int GetSyncOpt(cmpFileList *pFileList)
 
 	if (hDlg != INVALID_HANDLE_VALUE)
 	{
-		ret=Info.DialogRun(hDlg);
+		ret=(int)Info.DialogRun(hDlg);
 		if (ret==6)
 		{
 			Opt.SyncRPanel=Info.SendDlgMessage(hDlg,DM_GETCHECK,1,0);
@@ -155,7 +155,7 @@ int AdvCmpProc::QueryOverwriteFile(const wchar_t *FileName, FILETIME *srcTime, F
 		GetMsg(MOverwrite), GetMsg(MAll), GetMsg(MSkip), GetMsg(MSkipAll), GetMsg(MCancel)
 	};
 
-	int ExitCode=Info.Message(&MainGuid,&QueryOverwriteMsgGuid,FMSG_WARNING|FMSG_LEFTALIGN,NULL,MsgItems,sizeof(MsgItems)/sizeof(MsgItems[0]), 5);
+	int ExitCode=(int)Info.Message(&MainGuid,&QueryOverwriteMsgGuid,FMSG_WARNING|FMSG_LEFTALIGN,NULL,MsgItems,sizeof(MsgItems)/sizeof(MsgItems[0]), 5);
 
 	return (ExitCode<=QR_SKIPALL?ExitCode:QR_ABORT);
 }
@@ -174,7 +174,7 @@ int AdvCmpProc::QueryDelete(const wchar_t *FileName, bool bIsDir, bool bReadOnly
 		GetMsg(MDelete), GetMsg(MAll), GetMsg(MSkip), GetMsg(MSkipAll), GetMsg(MCancel)
 	};
 
-	int ExitCode=Info.Message(&MainGuid,&QueryDelMsgGuid,FMSG_WARNING,NULL,MsgItems,sizeof(MsgItems)/sizeof(MsgItems[0]), 5);
+	int ExitCode=(int)Info.Message(&MainGuid,&QueryDelMsgGuid,FMSG_WARNING,NULL,MsgItems,sizeof(MsgItems)/sizeof(MsgItems[0]), 5);
 
 	return (ExitCode<=QR_SKIPALL?ExitCode:QR_ABORT);
 }
@@ -244,27 +244,25 @@ DWORD WINAPI SynchronizeFileCopyCallback( LARGE_INTEGER TotalFileSize, LARGE_INT
 /***************************************************************************
  * ѕроверка на наличие файла
  ***************************************************************************/
-int AdvCmpProc::FileExists(const wchar_t *FileName, unsigned __int64 *pSize, FILETIME *pTime, DWORD *pAttrib, int CheckForFilter)
+int AdvCmpProc::FileExists(const wchar_t *FileName, WIN32_FIND_DATA &FindData, int CheckForFilter)
 {
 	int ret=0; // продолжим, но пропустим элемент
-	WIN32_FIND_DATA wfdFindData;
-	HANDLE hFind=FindFirstFileW(FileName,&wfdFindData);
+	HANDLE hFind=FindFirstFileW(FileName,&FindData);
 
 	if (hFind != INVALID_HANDLE_VALUE)
 	{
 		FindClose(hFind);
 		if (CheckForFilter)
 		{
-			if (!Opt.ProcessHidden && (wfdFindData.dwFileAttributes&FILE_ATTRIBUTE_HIDDEN))
+			if (!Opt.ProcessHidden && (FindData.dwFileAttributes&FILE_ATTRIBUTE_HIDDEN))
 				return ret;
 
-			PluginPanelItem ppi;
-			memset(&ppi,0,sizeof(ppi));
-			ppi.FileAttributes=wfdFindData.dwFileAttributes;
-			ppi.LastAccessTime=wfdFindData.ftLastAccessTime;
-			ppi.LastWriteTime=wfdFindData.ftLastWriteTime;
-			ppi.FileSize=((unsigned __int64)wfdFindData.nFileSizeHigh << 32) | wfdFindData.nFileSizeLow;
-			ppi.FileName=FSF.PointToName(FileName);
+			PluginPanelItem ppi={};
+			ppi.FileAttributes=FindData.dwFileAttributes;
+			ppi.LastAccessTime=FindData.ftLastAccessTime;
+			ppi.LastWriteTime=FindData.ftLastWriteTime;
+			ppi.FileSize=((unsigned __int64)FindData.nFileSizeHigh << 32) | FindData.nFileSizeLow;
+			ppi.FileName=FindData.cFileName; //FSF.PointToName(FileName);
 
 			if ( (CheckForFilter>0?LPanel.hFilter:RPanel.hFilter)!=INVALID_HANDLE_VALUE &&
 					 !Info.FileFilterControl((CheckForFilter>0?LPanel.hFilter:RPanel.hFilter),FFCTL_ISFILEINFILTER,0,&ppi))
@@ -273,19 +271,17 @@ int AdvCmpProc::FileExists(const wchar_t *FileName, unsigned __int64 *pSize, FIL
 			if (Opt.Filter && !Info.FileFilterControl(Opt.hCustomFilter,FFCTL_ISFILEINFILTER,0,&ppi))
 				return ret;
 		}
-		*pSize=((unsigned __int64)wfdFindData.nFileSizeHigh << 32) | wfdFindData.nFileSizeLow;
-		*pTime=wfdFindData.ftLastWriteTime;
-		*pAttrib=wfdFindData.dwFileAttributes;
 		ret=1; // ќ 
 	}
-
+	else
+		memset(&FindData,0,sizeof(FindData));
 	return ret;
 }
 
 /***************************************************************************
  * —инхронизаци€ файлов (копирование)
  ***************************************************************************/
-int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName, int direction)
+int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName, int direction, DWORD dwFlag)
 {
 	if (bBrokenByEsc)
 		return 0;
@@ -296,21 +292,21 @@ int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName
 	if (((direction < 0) && !Opt.SyncLPanel) || ((direction > 0) && !Opt.SyncRPanel))
 		return ret;
 
-	unsigned __int64 srcSize=0, destSize=0;
-	DWORD srcAttrib=0, destAttrib=0;
-	FILETIME srcTime, destTime;
+	WIN32_FIND_DATA sWFD,dWFD;
 
-	if (srcFileName && destFileName && FileExists(srcFileName,&srcSize,&srcTime,&srcAttrib,direction))
+	if (srcFileName && destFileName && FileExists(srcFileName,sWFD,direction))
 	{
+		unsigned __int64 srcSize=((unsigned __int64)sWFD.nFileSizeHigh << 32) | sWFD.nFileSizeLow;
 		ShowSyncMsg(srcFileName,destFileName,0,srcSize,true);
 		int doCopy=1;
 
-		if (FileExists(destFileName,&destSize,&destTime,&destAttrib,0))
+		if (FileExists(destFileName,dWFD,0))
 		{
+			unsigned __int64 destSize=((unsigned __int64)dWFD.nFileSizeHigh << 32) | dWFD.nFileSizeLow;
 			// Overwrite confirmation
 			if (((direction < 0) && bAskLOverwrite) || ((direction > 0) && bAskROverwrite))
 			{
-				switch(QueryOverwriteFile(destFileName,&srcTime,&destTime,srcSize,destSize,direction,false))
+				switch(QueryOverwriteFile(destFileName,&sWFD.ftLastWriteTime,&dWFD.ftLastWriteTime,srcSize,destSize,direction,false))
 				{
 					case QR_OVERWRITE:
 						doCopy=1;
@@ -337,7 +333,7 @@ int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName
 			}
 
 			// ReadOnly overwrite confirmation
-			if (doCopy && (destAttrib & FILE_ATTRIBUTE_READONLY))
+			if (doCopy && (dWFD.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
 			{
 				if (((direction < 0) && bSkipLReadOnly) || ((direction > 0) && bSkipRReadOnly))
 				{
@@ -345,7 +341,7 @@ int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName
 				}
 				else if (((direction < 0) && bAskLReadOnly) || ((direction > 0) && bAskRReadOnly))
 				{
-					switch(QueryOverwriteFile(destFileName,&srcTime,&destTime,srcSize,destSize,direction,true))
+					switch(QueryOverwriteFile(destFileName,&sWFD.ftLastWriteTime,&dWFD.ftLastWriteTime,srcSize,destSize,direction,true))
 					{
 						case QR_OVERWRITE:
 							doCopy=1;
@@ -378,25 +374,88 @@ int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName
 			struct SynchronizeFileCopyCallbackData copyData;
 			copyData.srcFileName=(wchar_t *)srcFileName;
 			copyData.destFileName=(wchar_t *)destFileName;
-
+			int doSync=1; 
+			int reSync=1; // только один раз пробуем переименование
 RetryCopy:
 
 			DWORD dwErr=0;
 			SetLastError(dwErr);
 
-			SetFileAttributesW(srcFileName,srcAttrib & ~(FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM));
-			SetFileAttributesW(destFileName,destAttrib & ~(FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM));
-
-			if (!CopyFileExW(srcFileName,destFileName,SynchronizeFileCopyCallback,&copyData,NULL,0))
+			// если использовали полное сравнение - просто переименуем файл и выставим атрибуты!
+#if 1
+			if (!Opt.LightSync && reSync && dwFlag)
 			{
-				dwErr=GetLastError();
-				if (!dwErr) dwErr=E_UNEXPECTED;
-				SetFileAttributesW(destFileName,destAttrib); // пробуем восстановить атрибуты
-			}
-			else
-				SetFileAttributesW(destFileName,srcAttrib); // установим
+				reSync--;
+				if ((Opt.CmpContents && (dwFlag&RCIF_CONT)) /*|| (!Opt.CmpContents && Opt.CmpSize && (dwFlag&RCIF_SIZE))*/)
+				{
+					const wchar_t *pSrc=FSF.PointToName(srcFileName);
+					if ((Opt.CmpCase && (dwFlag&RCIF_NAMEDIFF)) || (!Opt.CmpCase && Strncmp(pSrc,FSF.PointToName(destFileName))))
+					{
+						wchar_t *NewFileName=(wchar_t*)malloc((wcslen(destFileName)+1)*sizeof(wchar_t));
+						if (NewFileName)
+						{
+							wcscpy(NewFileName,destFileName);
+							wcscpy((wchar_t*)(FSF.PointToName(NewFileName)),pSrc);
 
-			SetFileAttributesW(srcFileName,srcAttrib);  // восстановим атрибуты
+							if (!MoveFileW(destFileName,NewFileName))
+								dwErr=GetLastError();
+							free(NewFileName);
+						}
+						else
+							dwErr=GetLastError();
+					}
+					if (!dwErr && ((Opt.CmpTime && (dwFlag&RCIF_TIMEDIFF)) || !Opt.CmpTime))
+					{
+						HANDLE hFile=CreateFileW(destFileName,FILE_WRITE_ATTRIBUTES,FILE_SHARE_READ|FILE_SHARE_WRITE,0,OPEN_EXISTING,FILE_FLAG_SEQUENTIAL_SCAN,0);
+						if (hFile!=INVALID_HANDLE_VALUE)
+						{
+							if (!SetFileTime(hFile,&sWFD.ftCreationTime,&sWFD.ftLastAccessTime,&sWFD.ftLastWriteTime))
+								dwErr=GetLastError();
+							CloseHandle(hFile);
+						}
+						else
+							dwErr=GetLastError();
+					}
+					if (!dwErr)
+					{
+						if (!SetFileAttributesW(destFileName,sWFD.dwFileAttributes))
+							dwErr=GetLastError();
+					}
+					if (!dwErr) doSync=0;
+				}
+			}
+#endif
+
+			if (doSync)
+			{
+				if (dWFD.dwFileAttributes&(FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_HIDDEN))
+					if (!SetFileAttributesW(destFileName,dWFD.dwFileAttributes & ~(FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_HIDDEN)))
+						dwErr=GetLastError();
+
+				if (!dwErr && CopyFileExW(srcFileName,destFileName,SynchronizeFileCopyCallback,&copyData,NULL,0))
+				{
+					// CopyFileExW() не синхонизирует имена, поэтому...
+					const wchar_t *pSrc=FSF.PointToName(srcFileName);
+					if (Strncmp(pSrc,FSF.PointToName(destFileName)))
+					{
+						wchar_t *NewFileName=(wchar_t*)malloc((wcslen(destFileName)+1)*sizeof(wchar_t));
+						if (NewFileName)
+						{
+							wcscpy(NewFileName,destFileName);
+							wcscpy((wchar_t*)(FSF.PointToName(NewFileName)),pSrc);
+							MoveFileW(destFileName,NewFileName);
+							free(NewFileName);
+						}
+					}
+				}
+				else
+				{
+					dwErr=GetLastError();
+					if (!dwErr) dwErr=E_UNEXPECTED;
+					if (dWFD.dwFileAttributes&(FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_HIDDEN))
+						SetFileAttributesW(destFileName,dWFD.dwFileAttributes); // пробуем восстановить атрибуты
+				}
+			}
 
 			if (dwErr)
 			{
@@ -459,11 +518,9 @@ int AdvCmpProc::DelFile(const wchar_t *FileName)
 	if ((Opt.Mode==MODE_SYNC && !Opt.SyncDel) || (Opt.Mode==MODE_DUP && !Opt.DupDel))
 		return ret;
 
-	unsigned __int64 Size=0;
-	DWORD Attrib=0;
-	FILETIME Time;
+	WIN32_FIND_DATA WFD;
 
-	if (FileName && FileExists(FileName,&Size,&Time,&Attrib,(Opt.Mode==MODE_SYNC && Opt.SyncUseDelFilter?-1:0))) // -1, т.е. справа
+	if (FileName && FileExists(FileName,WFD,(Opt.Mode==MODE_SYNC && Opt.SyncUseDelFilter?-1:0))) // -1, т.е. справа
 	{
 		int doDel=1;
 
@@ -495,7 +552,7 @@ int AdvCmpProc::DelFile(const wchar_t *FileName)
 		}
 
 		// ReadOnly delete confirmation
-		if (doDel && (Attrib & FILE_ATTRIBUTE_READONLY))
+		if (doDel && (WFD.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
 		{
 			if (bSkipRReadOnly)  // дл€ синхронизации это права€ панель, а дл€ дубликатов будем просто юзать переменную :)
 			{
@@ -571,7 +628,7 @@ RetryDelFile:
 					else
 					{
 						CmpInfo.Proc+=1;
-						CmpInfo.ProcSize+=Size;
+						CmpInfo.ProcSize+=(((unsigned __int64)WFD.nFileSizeHigh<<32)|WFD.nFileSizeLow);
 					}
 				}
 				else
@@ -579,7 +636,8 @@ RetryDelFile:
 			}
 			else
 			{
-				SetFileAttributesW(FileName,Attrib & ~(FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM));
+				if (WFD.dwFileAttributes&FILE_ATTRIBUTE_READONLY)
+					SetFileAttributesW(FileName,WFD.dwFileAttributes & ~(FILE_ATTRIBUTE_READONLY));
 
 				if (!DeleteFileW(FileName))
 				{
@@ -589,14 +647,15 @@ RetryDelFile:
 						goto RetryDelFile;
 					else if (ExitCode != 1)
 					{
-						SetFileAttributesW(FileName,Attrib); // пробуем восстановить атрибуты
+						if (WFD.dwFileAttributes&FILE_ATTRIBUTE_READONLY)
+							SetFileAttributesW(FileName,WFD.dwFileAttributes); // пробуем восстановить атрибуты
 						ret=0;
 					}
 				}
 				else
 				{
 					CmpInfo.Proc+=1;
-					CmpInfo.ProcSize+=Size;
+					CmpInfo.ProcSize+=(((unsigned __int64)WFD.nFileSizeHigh<<32)|WFD.nFileSizeLow);
 				}
 			}
 		}
@@ -618,12 +677,10 @@ int AdvCmpProc::SyncDir(const wchar_t *srcDirName, const wchar_t *destDirName, i
 		return 0;
 	}
 
-	unsigned __int64 Size=0;
-	DWORD Attrib=0;
-	FILETIME Time;
-
 	// проверим на фильтр
-	if (!FileExists(srcDirName,&Size,&Time,&Attrib,direction))
+	WIN32_FIND_DATA WFD;
+
+	if (!FileExists(srcDirName,WFD,direction))
 		return 1; // пропустим
 
 RetryMkDir:
@@ -634,8 +691,8 @@ RetryMkDir:
 
 	if (hFind==INVALID_HANDLE_VALUE)
 	{
-		if (Attrib && CreateDirectoryW(destDirName,NULL))
-			SetFileAttributesW(destDirName,Attrib);
+		if (WFD.dwFileAttributes && CreateDirectoryW(destDirName,NULL))
+			SetFileAttributesW(destDirName,WFD.dwFileAttributes);
 		else
 			ret=0;
 	}
@@ -715,12 +772,10 @@ int AdvCmpProc::DelDir(const wchar_t *DirName)
 		return 0;
 	}
 
-	unsigned __int64 Size=0;
-	DWORD Attrib=0;
-	FILETIME Time;
-
 	// проверим на фильтр
-	if (!FileExists(DirName,&Size,&Time,&Attrib,Opt.SyncUseDelFilter?-1:0))
+	WIN32_FIND_DATA WFD;
+
+	if (!FileExists(DirName,WFD,Opt.SyncUseDelFilter?-1:0))
 		return 1; // пропустим
 
 RetryDelDir:
@@ -769,7 +824,7 @@ RetryDelDir:
 					break;
 			}
 		}
-
+/*
 		// ReadOnly delete confirmation
 		if (doDel && (wfdFindData.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
 		{
@@ -803,7 +858,7 @@ RetryDelDir:
 				}
 			}
 		}
-
+*/
 		if (doDel)
 		{
 			string strDirMask(DirName);
@@ -860,7 +915,7 @@ RetryDelDir:
 		else if (ExitCode == 1)
 			ret=1;
 
-		if (Attrib) SetFileAttributesW(DirName,Attrib); // пробуем восстановить
+		if (WFD.dwFileAttributes) SetFileAttributesW(DirName,WFD.dwFileAttributes); // пробуем восстановить
 	}
 
 	return ret;
@@ -890,10 +945,10 @@ int AdvCmpProc::Synchronize()
 		{
 			cmpFile *cur=&pFileList->F[i];
 			int direction;
-			if ((cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY) && (cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY))
+			if ((cur->L.dwAttributes&FILE_ATTRIBUTE_DIRECTORY) && (cur->R.dwAttributes&FILE_ATTRIBUTE_DIRECTORY))
 				continue;
-			if ( ((cur->dwFlags&RCIF_USERSELECT) && !pFileList->bShowSelect) || ((cur->dwFlags&RCIF_DIFFER) && !pFileList->bShowDifferent) ||
-					 ((cur->dwFlags&RCIF_LNEW) && !pFileList->bShowLNew) || ((cur->dwFlags&RCIF_RNEW) && !pFileList->bShowRNew) )
+			if ( ((cur->dwFlags&RCIF_USERSELECT) && !Opt.ShowListSelect) || ((cur->dwFlags&RCIF_DIFFER) && !Opt.ShowListDifferent) ||
+					 ((cur->dwFlags&RCIF_LNEW) && !Opt.ShowListLNew) || ((cur->dwFlags&RCIF_RNEW) && !Opt.ShowListRNew) )
 				continue;
 			if ((cur->dwFlags&RCIF_EQUAL) || ((cur->dwFlags&RCIF_DIFFER) && !(cur->dwFlags&(RCIF_USERLNEW|RCIF_USERRNEW))) || (cur->dwFlags&RCIF_USERNONE))
 				continue;
@@ -901,26 +956,26 @@ int AdvCmpProc::Synchronize()
 			{
 				direction=1; // слева новый, значит копируем направо
 				string strSrcName, strDestName;
-				GetFullFileName(strSrcName,cur->LDir,cur->FileName);
-				GetFullFileName(strDestName,cur->RDir,cur->FileName);
+				GetFullFileName(strSrcName,cur->L.Dir,cur->L.FileName);
+				GetFullFileName(strDestName,cur->R.Dir,cur->R.FileName);
 
-				if (cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY)
+				if (cur->L.dwAttributes&FILE_ATTRIBUTE_DIRECTORY)
 				{
 					if (!(ret=SyncDir(strSrcName,strDestName,direction)))
 						break;
 				}
 				else
 				{
-					if (!(ret=SyncFile(strSrcName,strDestName,direction)))
+					if (!(ret=SyncFile(strSrcName,strDestName,direction,cur->dwFlags)))
 						break;
 				}
 			}
 			else if (cur->dwFlags&RCIF_USERDEL) // справа удал€ем
 			{
 				string strName;
-				GetFullFileName(strName,cur->RDir,cur->FileName);
+				GetFullFileName(strName,cur->R.Dir,cur->R.FileName);
 
-				if (cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY)
+				if (cur->R.dwAttributes&FILE_ATTRIBUTE_DIRECTORY)
 				{
 					if (!(ret=DelDir(strName)))
 						break;
@@ -935,17 +990,17 @@ int AdvCmpProc::Synchronize()
 			{
 				direction=-1; // справа новый, значит копируем налево
 				string strSrcName, strDestName;
-				GetFullFileName(strSrcName,cur->RDir,cur->FileName);
-				GetFullFileName(strDestName,cur->LDir,cur->FileName);
+				GetFullFileName(strSrcName,cur->R.Dir,cur->R.FileName);
+				GetFullFileName(strDestName,cur->L.Dir,cur->L.FileName);
 
-				if (cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY)
+				if (cur->R.dwAttributes&FILE_ATTRIBUTE_DIRECTORY)
 				{
 					if (!(ret=SyncDir(strSrcName,strDestName,direction)))
 						break;
 				}
 				else
 				{
-					if (!(ret=SyncFile(strSrcName,strDestName,direction)))
+					if (!(ret=SyncFile(strSrcName,strDestName,direction,cur->dwFlags)))
 						break;
 				}
 			}

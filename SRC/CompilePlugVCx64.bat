@@ -8,10 +8,10 @@ rem  ======================== Set name and version ... =========================
 
 @set PlugName=AdvCmp
 @set fileversion=3,0,0,34
-@set fileversion_str=3.0 build 34
+@set fileversion_str=3.0 build 34 x64
 @set MyDir=%CD%
 @set companyname=Eugene Roshal ^& FAR Group
-@set filedescription=Advanced compare 2 for Far Manager
+@set filedescription=Advanced compare files for Far Manager x64
 @set legalcopyright=Copyright c 2006-2012 Alexey Samlyukov
 
 rem  ==================== Make %PlugName%.def file... ==========================

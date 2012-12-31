@@ -43,35 +43,25 @@ enum QueryResult {
 	QR_SKIPALL=3
 };
 
-// элемент дл€ показа в диалоге результатов
-struct cmpFile
-{
+struct FileInfo {
 	wchar_t *FileName;
-	wchar_t *LDir;
-	wchar_t *RDir;
-	DWORD dwLAttributes;
-	DWORD dwRAttributes;
-	unsigned __int64 nLFileSize;
-	unsigned __int64 nRFileSize;
-	FILETIME ftLLastWriteTime;
-	FILETIME ftRLastWriteTime;
-	DWORD dwFlags;
+	wchar_t *Dir;
+	DWORD dwAttributes;
+	unsigned __int64 nFileSize;
+	FILETIME ftLastWriteTime;
 
-	cmpFile()
+	FileInfo()
 	{
-		FileName=NULL;
-		LDir=NULL;
-		RDir=NULL;
-		dwLAttributes=0;
-		dwRAttributes=0;
-		nLFileSize=0;
-		nRFileSize=0;
-		ftLLastWriteTime.dwLowDateTime=0;
-		ftLLastWriteTime.dwHighDateTime=0;
-		ftRLastWriteTime.dwLowDateTime=0;
-		ftRLastWriteTime.dwHighDateTime=0;
-		dwFlags=RCIF_NONE;
+		FileName=Dir=NULL;
+		dwAttributes=0; nFileSize=0;
+		ftLastWriteTime.dwLowDateTime=ftLastWriteTime.dwHighDateTime=0;
 	}
+};
+
+// элемент дл€ показа в диалоге результатов
+struct cmpFile {
+	FileInfo L,R;
+	DWORD dwFlags;
 };
 
 // массив элементов, дл€ диалога с результатами сравнени€
@@ -85,14 +75,7 @@ struct cmpFileList {
 	int Different;
 	int LNew;
 	int RNew;
-	bool bShowSelect;
-	bool bShowIdentical;
-	bool bShowDifferent;
-	bool bShowLNew;
-	bool bShowRNew;
-	bool bClearUserFlags;
-	int  Copy;   // <0 - налево, =0 - нет, >0 - направо
-	bool bCopyNew;
+
 	class AdvCmpProc *AdvCmp;
 };
 
@@ -100,18 +83,13 @@ const int PIXELS_SIZE=32;
 
 // элемент дл€ показа в диалоге результатов дублей
 struct dupFile {
-	wchar_t *FileName;
-	wchar_t *Dir;
-	DWORD dwAttributes;
-	unsigned __int64 nFileSize;
-	FILETIME ftLastWriteTime;
-	unsigned int nGroup;
+	FileInfo fi;
+	unsigned int nDupGroup;
 	DWORD dwCRC;
 	DWORD dwFlags;
 
 	int PicWidth;
 	int PicHeight;
-	int PicRatio;             // соотношение PicWidth и PicHeight
 	unsigned char *PicPix;    // массив выборочных пикселей
 
 	wchar_t *MusicArtist;
@@ -121,17 +99,11 @@ struct dupFile {
 
 	dupFile()
 	{
-		FileName=NULL;
-		Dir=NULL;
-		dwAttributes=0;
-		nFileSize=0;
-		ftLastWriteTime.dwLowDateTime=0;
-		ftLastWriteTime.dwHighDateTime=0;
-		nGroup=0;
+		nDupGroup=0;
 		dwCRC=0;
 		dwFlags=RCIF_NONE;
 
-		PicWidth=PicHeight=PicRatio=0;
+		PicWidth=PicHeight=0;
 		PicPix=NULL;
 
 		MusicArtist=NULL;
@@ -146,7 +118,7 @@ struct dupFileList {
 	dupFile *F;
 	int iCount;
 	// дл€ строки статуса
-	int GroupCount;
+	int GroupItems;
 	int Del;
 };
 
@@ -176,9 +148,6 @@ class AdvCmpProc
 {
 		HANDLE hScreen;
 
-		bool TitleSaved;
-		string strFarTitle;
-
 		// отсортированный массив указателей на элементы DirList.PPI
 		struct ItemsIndex {
 			PluginPanelItem **pPPI; // элементы
@@ -200,6 +169,9 @@ class AdvCmpProc
 		bool bSkipLReadOnly;
 		bool bSkipRReadOnly;
 
+	public:
+		bool TitleSaved;
+		string strFarTitle;
 
 	private:
 			// полезн€шки
@@ -219,16 +191,17 @@ class AdvCmpProc
 		int GetCacheResult(DWORD FullFileName1, DWORD FullFileName2, DWORD64 WriteTime1, DWORD64 WriteTime2);
 		bool SetCacheResult(DWORD FullFileName1, DWORD FullFileName2, DWORD64 WriteTime1, DWORD64 WriteTime2, DWORD dwFlag);
 		void ShowCmpMsg(const wchar_t *Dir1, const wchar_t *Name1, const wchar_t *Dir2, const wchar_t *Name2, bool bRedraw);
-		bool CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI, const wchar_t *RDir, const PluginPanelItem *pRPPI, int ScanDepth);
+		bool CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI, const wchar_t *RDir, const PluginPanelItem *pRPPI, int ScanDepth, DWORD *dwFlag);
+#if 0
 		int ShowCmpCurDialog(const PluginPanelItem *pLPPI,const PluginPanelItem *pRPPI);
-
+#endif
 			// диалог результатов сравнени€
 		bool MakeFileList(const wchar_t *LDir,const PluginPanelItem *pLPPI,const wchar_t *RDir,const PluginPanelItem *pRPPI,DWORD dwFlag);
 			// синхронизаци€
 		int QueryOverwriteFile(const wchar_t *FileName, FILETIME *srcTime, FILETIME *destTime, unsigned __int64 srcSize, unsigned __int64 destSize, int direction, bool bReadOnlyType);
 		int QueryDelete(const wchar_t *FileName, bool bIsDir, bool bReadOnlyType);
-		int FileExists(const wchar_t *FileName, unsigned __int64 *pSize, FILETIME *pTime, DWORD *pAttrib, int CheckForFilter);
-		int SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName, int direction);
+		int FileExists(const wchar_t *FileName, WIN32_FIND_DATA &FindData, int CheckForFilter);
+		int SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName, int direction, DWORD dwFlag=0);
 		int DelFile(const wchar_t *FileName);
 		int SyncDir(const wchar_t *srcDirName, const wchar_t *destDirName, int direction);
 		int DelDir(const wchar_t *DirName);
@@ -237,8 +210,8 @@ class AdvCmpProc
 		void ShowDupMsg(const wchar_t *Dir, const wchar_t *Name, bool bRedraw);
 		int ScanDir(const wchar_t *DirName, int ScanDepth);
 		DWORD GetCRC(const dupFile *cur);
-		int GetPic(dupFile *cur);
-		int GetMp3(dupFile *cur);
+		int GetPic(dupFile *cur, int GetInfo);
+		int GetMp3(dupFile *cur, int GetInfo);
 		bool MakeFileList(const wchar_t *Dir,const PluginPanelItem *pPPI);
 		int ShowDupDialog();
 
@@ -259,7 +232,7 @@ class AdvCmpProc
 void MakeListItemText(wchar_t *buf, cmpFile *cur, wchar_t Mark);
 void SetBottom(HANDLE hDlg, cmpFileList *pFileList, wchar_t *CurDir=NULL);
 bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos=true, bool bSort=false);
-INT_PTR WINAPI ShowCmpDialogProc(HANDLE hDlg,int Msg,int Param1,void *Param2);
+intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg,intptr_t Msg,intptr_t Param1,void *Param2);
 
 // синхронизаци€
 int GetSyncOpt(cmpFileList *pFileList);
@@ -273,7 +246,6 @@ void ProgressLine(wchar_t *Dest, unsigned __int64 nCurrent, unsigned __int64 nTo
 wchar_t *GetPosToName(const wchar_t *FileName);
 void GetFullFileName(string &strFullFileName, const wchar_t *Dir, const wchar_t *FileName, bool bNative=true);
 wchar_t *GetStrFileTime(FILETIME *LastWriteTime, wchar_t *Time, bool FullYear=true);
-wchar_t *GetStrFileSize(unsigned __int64 nFileSize, wchar_t *Size);
 bool CheckForEsc(void);
 void TruncCopy(wchar_t *Dest, const wchar_t *Src, int TruncLen, const wchar_t *FormatMsg=NULL);
 int GetArgv(const wchar_t *cmd, wchar_t ***argv);
