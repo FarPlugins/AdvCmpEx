@@ -3,7 +3,7 @@
  *
  * Plugin module for Far Manager 3.0
  *
- * Copyright (c) 2006-2012 Alexey Samlyukov
+ * Copyright (c) 2006 Alexey Samlyukov
  ****************************************************************************/
 /*
 Redistribution and use in source and binary forms, with or without
@@ -548,6 +548,9 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 	GetClientRect(WinInfo.hFarWindow,&WinInfo.Win);
 	if (Info.AdvControl(&MainGuid,ACTL_GETFARRECT,0,&WinInfo.Con))
 	{
+		WinInfo.Con.Right-=WinInfo.Con.Left;
+		WinInfo.Con.Bottom-=WinInfo.Con.Top;
+		WinInfo.Con.Left=WinInfo.Con.Top=0;
 		WinInfo.TruncLen=WinInfo.Con.Right-WinInfo.Con.Left-20+1;
 		if (WinInfo.TruncLen>MAX_PATH-2) WinInfo.TruncLen=MAX_PATH-2;
 	}
