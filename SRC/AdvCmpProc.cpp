@@ -2355,6 +2355,7 @@ bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, c
 	if (Method) // перебираем всё
 	{
 		bool bImage=false;
+		bool bVisCmp=(pCompareFiles && GetModuleHandleW(L"VisComp.dll"));
 		if (bGflLoaded)
 		{
 			CmpPic.L.FileName=strLFullFileName.get();
@@ -2387,11 +2388,11 @@ bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, c
 		MenuItems[1].Text=GetMsg(MWinMerge);
 		MenuItems[2].Text=GetMsg(MPictures);
 		MenuItems[3].Text=GetMsg(MVisCmp);
-		if (!pCompareFiles) MenuItems[3].Flags|=MIF_GRAYED;
+		if (!bVisCmp) MenuItems[3].Flags|=MIF_GRAYED;
 		if (!bFindDiffProg) MenuItems[1].Flags|=MIF_GRAYED;
 		if (!bImage) MenuItems[2].Flags|=MIF_GRAYED;
 		if (bImage) MenuItems[2].Flags|=MIF_SELECTED;
-		else if (pCompareFiles) MenuItems[3].Flags|=MIF_SELECTED;
+		else if (bVisCmp) MenuItems[3].Flags|=MIF_SELECTED;
 		int MenuCode=Info.Menu(&MainGuid,&CmpMethodMenuGuid,-1,-1,0,FMENU_AUTOHIGHLIGHT|FMENU_WRAPMODE,GetMsg(MMethod),NULL,L"Contents",NULL,NULL,MenuItems,sizeof(MenuItems)/sizeof(MenuItems[0]));
 
 		if (MenuCode==0)
@@ -2429,7 +2430,7 @@ bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, c
 		else if (MenuCode==2 && bImage)
 //			ShowCmpCurDialog(&LPPI,&RPPI);
 ;
-		else if (MenuCode==3 && pCompareFiles)
+		else if (MenuCode==3 && bVisCmp)
 			pCompareFiles(strLFullFileName.get(),strRFullFileName.get(),0);
 
 		if (LPPI.FileName) free((void*)LPPI.FileName);
