@@ -2087,7 +2087,7 @@ bool UpdateImage(PicData *data, bool CheckOnly=false)
 
 void FreeImage(PicData *data)
 {
-	if (data->DibData)
+	if (data && data->DibData)
 	{
 		free(data->DibData);
 		data->DibData=NULL;
@@ -2434,8 +2434,11 @@ bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, c
 
 		if (LPPI.FileName) free((void*)LPPI.FileName);
 		if (RPPI.FileName) free((void*)RPPI.FileName);
-		FreeImage(&CmpPic.L);
-		FreeImage(&CmpPic.R);
+		if (bGflLoaded)
+		{
+			FreeImage(&CmpPic.L);
+			FreeImage(&CmpPic.R);
+		}
 	}
 	else if (bFindDiffProg) // WinMerge
 	{
@@ -2446,6 +2449,5 @@ bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, c
 			CloseHandle(pi.hThread);
 		}
 	}
-
 	return true;
 }
