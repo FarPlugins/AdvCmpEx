@@ -1,6 +1,6 @@
 
 
-       AdvCmp - Расширенное сравнение файлов, плагин для Far Manager
+       AdvCmpEx - Расширенное сравнение файлов, плагин для Far Manager
        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
              http://code.google.com/p/farplug-alvls/
 
@@ -48,7 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Использование
 ~~~~~~~~~~~~~
 
-  Запустите плагин:  F11 -> "Расширенное сравнение файлов"
+  Запустите плагин:  F11 -> AdvCmpEx
                      и прочитайте справку (нажмите F1).
 
 

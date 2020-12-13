@@ -293,6 +293,7 @@ int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName
 		return ret;
 
 	WIN32_FIND_DATA sWFD,dWFD;
+	int destFileExists=FileExists(destFileName,dWFD,0);
 
 	if (srcFileName && destFileName && FileExists(srcFileName,sWFD,direction))
 	{
@@ -300,7 +301,7 @@ int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName
 		ShowSyncMsg(srcFileName,destFileName,0,srcSize,true);
 		int doCopy=1;
 
-		if (FileExists(destFileName,dWFD,0))
+		if (destFileExists)
 		{
 			unsigned __int64 destSize=((unsigned __int64)dWFD.nFileSizeHigh << 32) | dWFD.nFileSizeLow;
 			// Overwrite confirmation
@@ -383,7 +384,7 @@ RetryCopy:
 
 			// если использовали полное сравнение - просто переименуем файл и выставим атрибуты!
 #if 1
-			if (!Opt.LightSync && reSync && dwFlag)
+			if (!Opt.LightSync && reSync && destFileExists && dwFlag)
 			{
 				reSync--;
 				if ((Opt.CmpContents && (dwFlag&RCIF_CONT)) /*|| (!Opt.CmpContents && Opt.CmpSize && (dwFlag&RCIF_SIZE))*/)
@@ -434,7 +435,7 @@ RetryCopy:
 
 				if (!dwErr && CopyFileExW(srcFileName,destFileName,SynchronizeFileCopyCallback,&copyData,NULL,0))
 				{
-					// CopyFileExW() не синхонизирует имена, поэтому...
+					// CopyFileExW() не синхронизирует имена, поэтому...
 					const wchar_t *pSrc=FSF.PointToName(srcFileName);
 					if (Strncmp(pSrc,FSF.PointToName(destFileName)))
 					{
@@ -701,6 +702,22 @@ RetryMkDir:
 		FindClose(hFind);
 		if (!(wfdFindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 			ret=0;
+		else
+		{
+			// синхронизирует имена...
+			const wchar_t *pSrc=FSF.PointToName(srcDirName);
+			if (Strncmp(pSrc,FSF.PointToName(destDirName)))
+			{
+				wchar_t *NewName=(wchar_t*)malloc((wcslen(destDirName)+1)*sizeof(wchar_t));
+				if (NewName)
+				{
+					wcscpy(NewName,destDirName);
+					wcscpy((wchar_t*)(FSF.PointToName(NewName)),pSrc);
+					MoveFileW(destDirName,NewName);
+					free(NewName);
+				}
+			}
+		}
 	}
 
 	if (!ret)
@@ -957,7 +974,7 @@ int AdvCmpProc::Synchronize()
 				direction=1; // слева новый, значит копируем направо
 				string strSrcName, strDestName;
 				GetFullFileName(strSrcName,cur->L.Dir,cur->L.FileName);
-				GetFullFileName(strDestName,cur->R.Dir,cur->R.FileName);
+				GetFullFileName(strDestName,cur->R.Dir,(cur->R.FileName?cur->R.FileName:cur->L.FileName));
 
 				if (cur->L.dwAttributes&FILE_ATTRIBUTE_DIRECTORY)
 				{
@@ -991,7 +1008,7 @@ int AdvCmpProc::Synchronize()
 				direction=-1; // справа новый, значит копируем налево
 				string strSrcName, strDestName;
 				GetFullFileName(strSrcName,cur->R.Dir,cur->R.FileName);
-				GetFullFileName(strDestName,cur->L.Dir,cur->L.FileName);
+				GetFullFileName(strDestName,cur->L.Dir,(cur->L.FileName?cur->L.FileName:cur->R.FileName));
 
 				if (cur->R.dwAttributes&FILE_ATTRIBUTE_DIRECTORY)
 				{

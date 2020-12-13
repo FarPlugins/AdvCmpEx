@@ -6,9 +6,9 @@ rem ===================== Use Microsoft Visual Studio ==========================
 
 rem  ======================== Set name and version ... =========================
 
-@set PlugName=AdvCmp
-@set fileversion=3,0,0,34
-@set fileversion_str=3.0 build 34 x64
+@set PlugName=AdvCmpEx
+@set fileversion=3,0,0,36
+@set fileversion_str=3.0 build 36 x64
 @set MyDir=%CD%
 @set companyname=Eugene Roshal ^& FAR Group
 @set filedescription=Advanced compare files for Far Manager x64
@@ -77,7 +77,7 @@ rem  ==================== Compile %PlugName%.dll file...========================
 
 @cd %MyDir%
 @rc /l 0x4E4 %PlugName%.rc
-@cl /Zp8 /O2 /W2 /Gy /GF /J /GS- /Gr /GR- /EHs-c- /LD %PlugName%.cpp string.cpp AdvCmpDlgOpt.cpp AdvCmpProc.cpp /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /DUNICODE /D_UNICODE /link /subsystem:console /machine:AMD64 /nodefaultlib /def:%PlugName%.def kernel32.lib advapi32.lib user32.lib shell32.lib gdi32.lib MSVCRT.LIB %PlugName%.res /map:"..\%PlugName%.map" /out:"..\%PlugName%.dll" /merge:.rdata=.text
+@cl /Zp8 /O2 /W2 /Gy /GF /J /GS- /Gr /GR- /EHs-c- /LD AdvCmp.cpp string.cpp AdvCmpDlgOpt.cpp AdvCmpProc.cpp /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /DUNICODE /D_UNICODE /link /subsystem:console /machine:AMD64 /nodefaultlib /def:%PlugName%.def kernel32.lib advapi32.lib user32.lib shell32.lib gdi32.lib MSVCRT.LIB %PlugName%.res /map:"..\%PlugName%.map" /out:"..\%PlugName%.dll" /merge:.rdata=.text
 
 @if exist *.exp del *.exp>nul
 @if exist *.obj del *.obj>nul

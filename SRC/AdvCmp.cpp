@@ -447,9 +447,9 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *pInfo)
 {
 	pInfo->StructSize=sizeof(GlobalInfo);
 	pInfo->MinFarVersion=FARMANAGERVERSION;
-	pInfo->Version=MAKEFARVERSION(3,0,0,34,VS_RC);
+	pInfo->Version=MAKEFARVERSION(3,0,0,36,VS_RC);
 	pInfo->Guid=MainGuid;
-	pInfo->Title=L"AdvCmp";
+	pInfo->Title=L"AdvCmpEx";
 	pInfo->Description=L"Advanced compare files plugin for Far Manager v3.0";
 	pInfo->Author=L"Alexey Samlyukov";
 }
