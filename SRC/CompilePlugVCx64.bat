@@ -7,8 +7,8 @@ rem ===================== Use Microsoft Visual Studio ==========================
 rem  ======================== Set name and version ... =========================
 
 @set PlugName=AdvCmpEx
-@set fileversion=3,0,0,36
-@set fileversion_str=3.0 build 36 x64
+@set fileversion=3,0,0,37
+@set fileversion_str=3.0 build 37 x64
 @set MyDir=%CD%
 @set companyname=Eugene Roshal ^& FAR Group
 @set filedescription=Advanced compare files for Far Manager x64
