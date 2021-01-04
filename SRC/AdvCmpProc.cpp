@@ -343,7 +343,7 @@ void AdvCmpProc::Init()
 	Info.FileFilterControl(RPanel.hPanel,FFCTL_CREATEFILEFILTER,FFT_PANEL,&RPanel.hFilter);
 	Info.FileFilterControl(LPanel.hFilter,FFCTL_STARTINGTOFILTER,0,0);
 	Info.FileFilterControl(RPanel.hFilter,FFCTL_STARTINGTOFILTER,0,0);
-	Info.FileFilterControl(Opt.hCustomFilter,FFCTL_STARTINGTOFILTER,0,0);
+	if (Opt.Filter) Info.FileFilterControl(Opt.hCustomFilter,FFCTL_STARTINGTOFILTER,0,0);
 
 	// На время сравнения изменим заголовок консоли ФАРа...
 	TitleSaved=GetFarTitle(strFarTitle);

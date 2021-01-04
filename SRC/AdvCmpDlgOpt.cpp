@@ -188,7 +188,7 @@ void AdvCmpDlgOpt::Close()
 	if (Opt.Substr) { free(Opt.Substr); Opt.Substr=NULL; }
 	if (Opt.WinMergePath) { free(Opt.WinMergePath); Opt.WinMergePath=NULL; }
 	if (Opt.DupPath) { free(Opt.DupPath); Opt.DupPath=NULL; }
-	Info.FileFilterControl(Opt.hCustomFilter,FFCTL_FREEFILEFILTER,0,0);
+	if (Opt.Filter) Info.FileFilterControl(Opt.hCustomFilter,FFCTL_FREEFILEFILTER,0,0);
 }
 
 intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, void *Param2)
