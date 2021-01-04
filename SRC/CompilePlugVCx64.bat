@@ -2,7 +2,11 @@
 
 rem ===================== Use Microsoft Visual Studio ==========================
 
- @call "%VS100COMNTOOLS%..\..\VC\vcvarsall.bat" amd64
+if exist "%VS160COMNTOOLS%..\..\VC\Auxiliary\Build\vcvarsall.bat" (
+  call "%VS160COMNTOOLS%..\..\VC\Auxiliary\Build\vcvarsall.bat" x64
+) else (
+  call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+)
 
 rem  ======================== Set name and version ... =========================
 
@@ -77,7 +81,7 @@ rem  ==================== Compile %PlugName%.dll file...========================
 
 @cd %MyDir%
 @rc /l 0x4E4 %PlugName%.rc
-@cl /Zp8 /O2 /W2 /Gy /GF /J /GS- /Gr /GR- /EHs-c- /LD AdvCmp.cpp string.cpp AdvCmpDlgOpt.cpp AdvCmpProc.cpp /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /DUNICODE /D_UNICODE /link /subsystem:console /machine:AMD64 /nodefaultlib /def:%PlugName%.def kernel32.lib advapi32.lib user32.lib shell32.lib gdi32.lib MSVCRT.LIB %PlugName%.res /map:"..\%PlugName%.map" /out:"..\%PlugName%.dll" /merge:.rdata=.text
+@cl /Zp8 /O2 /W2 /Gy /GF /J /GS- /Gr /GR- /EHs-c- /LD AdvCmp.cpp string.cpp AdvCmpDlgOpt.cpp AdvCmpProc.cpp /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /DUNICODE /D_UNICODE /link /subsystem:console /machine:AMD64 /def:%PlugName%.def kernel32.lib advapi32.lib user32.lib shell32.lib gdi32.lib %PlugName%.res /map:"..\%PlugName%.map" /out:"..\%PlugName%.dll" /merge:.rdata=.text
 
 @if exist *.exp del *.exp>nul
 @if exist *.obj del *.obj>nul
