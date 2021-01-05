@@ -50,6 +50,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(CMAKE_RC_FLAGS -D_WIN64)
   endif ()
 
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+
 endif ()
 
 # set options for target
@@ -95,7 +97,7 @@ set_target_properties(AdvCmpEx
 # build misc files
 #====================================================
 # used @@ESCAPE and ESCAPE@@ for escape @ in files
-configure_file(AdvCmpExRus.hlf AdvCmpExRus.hlf)
+configure_file(AdvCmpExRus.hlf.in AdvCmpExRus.hlf)
 
 #====================================================
 # install

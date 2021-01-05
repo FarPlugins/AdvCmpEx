@@ -447,7 +447,7 @@ bool LoadBASS(wchar_t *PlugPath)
 void WINAPI GetGlobalInfoW(struct GlobalInfo *pInfo)
 {
 	pInfo->StructSize=sizeof(GlobalInfo);
-	pInfo->MinFarVersion=MAKEFARVERSION(3, 0, 0, 3192, VS_RELEASE);;
+	pInfo->MinFarVersion=MAKEFARVERSION(3, 0, 0, 2927, VS_RELEASE);;
 	pInfo->Version=MAKEFARVERSION(PLUGIN_VER_MAJOR, PLUGIN_VER_MINOR, PLUGIN_VER_PATCH, 0, VS_RELEASE);
 	pInfo->Guid=MainGuid;
 	pInfo->Title=L"AdvCmpEx";
