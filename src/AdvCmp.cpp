@@ -452,7 +452,7 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *pInfo)
 	pInfo->Guid=MainGuid;
 	pInfo->Title=L"AdvCmpEx";
 	pInfo->Description=L"Advanced compare files plugin for Far Manager v3.0";
-	pInfo->Author=L"Alexey Samlyukov";
+	pInfo->Author=L"Alexey Samlyukov & FarPlugins Team";
 }
 
 // заполним структуру PluginStartupInfo и сделаем ряд полезных действий...

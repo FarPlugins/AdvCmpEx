@@ -12,7 +12,7 @@
 #define PLUGIN_DESC L"Advanced compare files for Far Manager 3" PLATFORM
 #define PLUGIN_NAME L"AdvCmpEx"
 #define PLUGIN_FILENAME L"AdvCmpEx.dll"
-#define PLUGIN_COPYRIGHT L"Copyright © 2006 Alexey Samlyukov"
+#define PLUGIN_COPYRIGHT L"© Alexey Samlyukov, 2006-2019. © FarPlugins Team, 2020 -"
 
 #define STRINGIZE2(s) #s
 #define STRINGIZE(s) STRINGIZE2(s)
