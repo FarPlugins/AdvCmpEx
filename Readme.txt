@@ -4,7 +4,7 @@
        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
              https://github.com/FarPlugins/AdvCmpEx
 
-Распространяется под той же лицензией, что и сам Far Manager, т.е.BSD 3-Clause License
+Распространяется под той же лицензией, что и сам Far Manager, т.е. BSD 3-Clause License
 
 Установка
 ~~~~~~~~~
