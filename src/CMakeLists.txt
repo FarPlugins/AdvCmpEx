@@ -90,3 +90,17 @@ set_target_properties(AdvCmpEx
     PROPERTIES
     LINK_FLAGS "${LINK_FLAGS}"
     )
+
+#====================================================
+# build misc files
+#====================================================
+# used @@ESCAPE and ESCAPE@@ for escape @ in files
+configure_file(AdvCmpExRus.hlf AdvCmpExRus.hlf)
+
+#====================================================
+# install
+#====================================================
+install(TARGETS AdvCmpEx RUNTIME DESTINATION .)
+install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.map DESTINATION .)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AdvCmpExRus.hlf AdvCmpExEng.lng AdvCmpExRus.lng DESTINATION .)
+install(FILES ${PROJECT_SOURCE_DIR}/../WhatsNewRus.txt ${PROJECT_SOURCE_DIR}/../ReadMe.txt DESTINATION .)
