@@ -31,16 +31,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /***************************************************************************
  *
- *                               СИНХРОНИЗАЦИЯ
+ *                               РЎРРќРҐР РћРќРР—РђР¦РРЇ
  *
  ***************************************************************************/
 
 /***************************************************************************
- * Узнаем опции синхронизации
+ * РЈР·РЅР°РµРј РѕРїС†РёРё СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё
  ***************************************************************************/
 int GetSyncOpt(cmpFileList *pFileList)
 {
-	int ret=QR_EDIT; // продолжаем редактировать список
+	int ret=QR_EDIT; // РїСЂРѕРґРѕР»Р¶Р°РµРј СЂРµРґР°РєС‚РёСЂРѕРІР°С‚СЊ СЃРїРёСЃРѕРє
 	int ItemsLNew=0, ItemsRNew=0, ItemsRDel=0;
 
 	for (int i=0; i<pFileList->iCount; i++)
@@ -70,7 +70,7 @@ int GetSyncOpt(cmpFileList *pFileList)
 		}
 	}
 
-	// нет элементов для синхронизации, выходим
+	// РЅРµС‚ СЌР»РµРјРµРЅС‚РѕРІ РґР»СЏ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё, РІС‹С…РѕРґРёРј
 	if (!ItemsLNew && !ItemsRNew && !ItemsRDel)
 	{
 		if (Opt.ShowMsg)
@@ -78,7 +78,7 @@ int GetSyncOpt(cmpFileList *pFileList)
 			const wchar_t *MsgItems[] = { GetMsg(MSyncTitle), GetMsg(MNoSyncBody), GetMsg(MOK) };
 			Info.Message(&MainGuid,&NoSyncMsgGuid,0,0,MsgItems,sizeof(MsgItems) / sizeof(MsgItems[0]),1);
 		}
-		return ret=QR_SKIP; //нет элементов
+		return ret=QR_SKIP; //РЅРµС‚ СЌР»РµРјРµРЅС‚РѕРІ
 	}
 
 	Opt.SyncLPanel=ItemsRNew, Opt.SyncRPanel=ItemsLNew, Opt.SyncDel=ItemsRDel;
@@ -112,14 +112,14 @@ int GetSyncOpt(cmpFileList *pFileList)
 			Opt.SyncLPanel=Info.SendDlgMessage(hDlg,DM_GETCHECK,2,0);
 			Opt.SyncDel=Info.SendDlgMessage(hDlg,DM_GETCHECK,3,0);
 			Opt.SyncUseDelFilter=Info.SendDlgMessage(hDlg,DM_GETCHECK,4,0);
-			ret=(Opt.SyncLPanel || Opt.SyncRPanel || Opt.SyncDel)?QR_ALL:QR_SKIP;   // синхронизируем, иначе - пропустим
+			ret=(Opt.SyncLPanel || Opt.SyncRPanel || Opt.SyncDel)?QR_ALL:QR_SKIP;   // СЃРёРЅС…СЂРѕРЅРёР·РёСЂСѓРµРј, РёРЅР°С‡Рµ - РїСЂРѕРїСѓСЃС‚РёРј
 		}
 		else if (ret==7)
 			ret=QR_EDIT;
 		else
 		{
 			bBrokenByEsc=true;
-			ret=QR_ABORT; // отменили синхронизацию
+			ret=QR_ABORT; // РѕС‚РјРµРЅРёР»Рё СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёСЋ
 		}
 		Info.DialogFree(hDlg);
 	}
@@ -130,7 +130,7 @@ int GetSyncOpt(cmpFileList *pFileList)
 }
 
 /***************************************************************************
- * Запрос на перезапись файлов
+ * Р—Р°РїСЂРѕСЃ РЅР° РїРµСЂРµР·Р°РїРёСЃСЊ С„Р°Р№Р»РѕРІ
  ***************************************************************************/
 int AdvCmpProc::QueryOverwriteFile(const wchar_t *FileName, FILETIME *srcTime, FILETIME *destTime, unsigned __int64 srcSize, unsigned __int64 destSize, int direction, bool bReadOnlyType)
 {
@@ -161,7 +161,7 @@ int AdvCmpProc::QueryOverwriteFile(const wchar_t *FileName, FILETIME *srcTime, F
 }
 
 /***************************************************************************
- * Запрос на удаление файлов
+ * Р—Р°РїСЂРѕСЃ РЅР° СѓРґР°Р»РµРЅРёРµ С„Р°Р№Р»РѕРІ
  ***************************************************************************/
 int AdvCmpProc::QueryDelete(const wchar_t *FileName, bool bIsDir, bool bReadOnlyType)
 {
@@ -180,11 +180,11 @@ int AdvCmpProc::QueryDelete(const wchar_t *FileName, bool bIsDir, bool bReadOnly
 }
 
 /***************************************************************************
- * Диалог-прогресс
+ * Р”РёР°Р»РѕРі-РїСЂРѕРіСЂРµСЃСЃ
  ***************************************************************************/
 void ShowSyncMsg(const wchar_t *Name1, const wchar_t *Name2, unsigned __int64 Progress, unsigned __int64 Max, bool bRedraw)
 {
-	// Для перерисовки не чаще 3-х раз в 1 сек.
+	// Р”Р»СЏ РїРµСЂРµСЂРёСЃРѕРІРєРё РЅРµ С‡Р°С‰Рµ 3-С… СЂР°Р· РІ 1 СЃРµРє.
 	if (!bRedraw)
 	{
 		static DWORD dwTicks;
@@ -242,11 +242,11 @@ DWORD WINAPI SynchronizeFileCopyCallback( LARGE_INTEGER TotalFileSize, LARGE_INT
 }
 
 /***************************************************************************
- * Проверка на наличие файла
+ * РџСЂРѕРІРµСЂРєР° РЅР° РЅР°Р»РёС‡РёРµ С„Р°Р№Р»Р°
  ***************************************************************************/
 int AdvCmpProc::FileExists(const wchar_t *FileName, WIN32_FIND_DATA &FindData, int CheckForFilter)
 {
-	int ret=0; // продолжим, но пропустим элемент
+	int ret=0; // РїСЂРѕРґРѕР»Р¶РёРј, РЅРѕ РїСЂРѕРїСѓСЃС‚РёРј СЌР»РµРјРµРЅС‚
 	HANDLE hFind=FindFirstFileW(FileName,&FindData);
 
 	if (hFind != INVALID_HANDLE_VALUE)
@@ -271,7 +271,7 @@ int AdvCmpProc::FileExists(const wchar_t *FileName, WIN32_FIND_DATA &FindData, i
 			if (Opt.Filter && !Info.FileFilterControl(Opt.hCustomFilter,FFCTL_ISFILEINFILTER,0,&ppi))
 				return ret;
 		}
-		ret=1; // ОК
+		ret=1; // РћРљ
 	}
 	else
 		memset(&FindData,0,sizeof(FindData));
@@ -279,7 +279,7 @@ int AdvCmpProc::FileExists(const wchar_t *FileName, WIN32_FIND_DATA &FindData, i
 }
 
 /***************************************************************************
- * Синхронизация файлов (копирование)
+ * РЎРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ С„Р°Р№Р»РѕРІ (РєРѕРїРёСЂРѕРІР°РЅРёРµ)
  ***************************************************************************/
 int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName, int direction, DWORD dwFlag)
 {
@@ -288,7 +288,7 @@ int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName
 
 	int ret=1;
 
-	// если сказали - "а мы не хотим туда копировать", то пропустим...
+	// РµСЃР»Рё СЃРєР°Р·Р°Р»Рё - "Р° РјС‹ РЅРµ С…РѕС‚РёРј С‚СѓРґР° РєРѕРїРёСЂРѕРІР°С‚СЊ", С‚Рѕ РїСЂРѕРїСѓСЃС‚РёРј...
 	if (((direction < 0) && !Opt.SyncLPanel) || ((direction > 0) && !Opt.SyncRPanel))
 		return ret;
 
@@ -376,13 +376,13 @@ int AdvCmpProc::SyncFile(const wchar_t *srcFileName, const wchar_t *destFileName
 			copyData.srcFileName=(wchar_t *)srcFileName;
 			copyData.destFileName=(wchar_t *)destFileName;
 			int doSync=1; 
-			int reSync=1; // только один раз пробуем переименование
+			int reSync=1; // С‚РѕР»СЊРєРѕ РѕРґРёРЅ СЂР°Р· РїСЂРѕР±СѓРµРј РїРµСЂРµРёРјРµРЅРѕРІР°РЅРёРµ
 RetryCopy:
 
 			DWORD dwErr=0;
 			SetLastError(dwErr);
 
-			// если использовали полное сравнение - просто переименуем файл и выставим атрибуты!
+			// РµСЃР»Рё РёСЃРїРѕР»СЊР·РѕРІР°Р»Рё РїРѕР»РЅРѕРµ СЃСЂР°РІРЅРµРЅРёРµ - РїСЂРѕСЃС‚Рѕ РїРµСЂРµРёРјРµРЅСѓРµРј С„Р°Р№Р» Рё РІС‹СЃС‚Р°РІРёРј Р°С‚СЂРёР±СѓС‚С‹!
 #if 1
 			if (!Opt.LightSync && reSync && destFileExists && dwFlag)
 			{
@@ -435,7 +435,7 @@ RetryCopy:
 
 				if (!dwErr && CopyFileExW(srcFileName,destFileName,SynchronizeFileCopyCallback,&copyData,NULL,0))
 				{
-					// CopyFileExW() не синхронизирует имена, поэтому...
+					// CopyFileExW() РЅРµ СЃРёРЅС…СЂРѕРЅРёР·РёСЂСѓРµС‚ РёРјРµРЅР°, РїРѕСЌС‚РѕРјСѓ...
 					const wchar_t *pSrc=FSF.PointToName(srcFileName);
 					if (Strncmp(pSrc,FSF.PointToName(destFileName)))
 					{
@@ -454,7 +454,7 @@ RetryCopy:
 					dwErr=GetLastError();
 					if (!dwErr) dwErr=E_UNEXPECTED;
 					if (dWFD.dwFileAttributes&(FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_HIDDEN))
-						SetFileAttributesW(destFileName,dWFD.dwFileAttributes); // пробуем восстановить атрибуты
+						SetFileAttributesW(destFileName,dWFD.dwFileAttributes); // РїСЂРѕР±СѓРµРј РІРѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ Р°С‚СЂРёР±СѓС‚С‹
 				}
 			}
 
@@ -506,8 +506,8 @@ RetryCopy:
 }
 
 /***************************************************************************
- * Синхронизация файлов (удаление)
- * Теперь оно же и при удалении дубликатов
+ * РЎРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ С„Р°Р№Р»РѕРІ (СѓРґР°Р»РµРЅРёРµ)
+ * РўРµРїРµСЂСЊ РѕРЅРѕ Р¶Рµ Рё РїСЂРё СѓРґР°Р»РµРЅРёРё РґСѓР±Р»РёРєР°С‚РѕРІ
  ***************************************************************************/
 int AdvCmpProc::DelFile(const wchar_t *FileName)
 {
@@ -521,7 +521,7 @@ int AdvCmpProc::DelFile(const wchar_t *FileName)
 
 	WIN32_FIND_DATA WFD;
 
-	if (FileName && FileExists(FileName,WFD,(Opt.Mode==MODE_SYNC && Opt.SyncUseDelFilter?-1:0))) // -1, т.е. справа
+	if (FileName && FileExists(FileName,WFD,(Opt.Mode==MODE_SYNC && Opt.SyncUseDelFilter?-1:0))) // -1, С‚.Рµ. СЃРїСЂР°РІР°
 	{
 		int doDel=1;
 
@@ -555,11 +555,11 @@ int AdvCmpProc::DelFile(const wchar_t *FileName)
 		// ReadOnly delete confirmation
 		if (doDel && (WFD.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
 		{
-			if (bSkipRReadOnly)  // для синхронизации это правая панель, а для дубликатов будем просто юзать переменную :)
+			if (bSkipRReadOnly)  // РґР»СЏ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё СЌС‚Рѕ РїСЂР°РІР°СЏ РїР°РЅРµР»СЊ, Р° РґР»СЏ РґСѓР±Р»РёРєР°С‚РѕРІ Р±СѓРґРµРј РїСЂРѕСЃС‚Рѕ СЋР·Р°С‚СЊ РїРµСЂРµРјРµРЅРЅСѓСЋ :)
 			{
 				doDel=0;
 			}
-			else if (bAskRReadOnly)  // для синхронизации это правая панель, а для дубликатов будем просто юзать переменную :)
+			else if (bAskRReadOnly)  // РґР»СЏ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё СЌС‚Рѕ РїСЂР°РІР°СЏ РїР°РЅРµР»СЊ, Р° РґР»СЏ РґСѓР±Р»РёРєР°С‚РѕРІ Р±СѓРґРµРј РїСЂРѕСЃС‚Рѕ СЋР·Р°С‚СЊ РїРµСЂРµРјРµРЅРЅСѓСЋ :)
 			{
 				switch(QueryDelete(FileName,false,true))
 				{
@@ -649,7 +649,7 @@ RetryDelFile:
 					else if (ExitCode != 1)
 					{
 						if (WFD.dwFileAttributes&FILE_ATTRIBUTE_READONLY)
-							SetFileAttributesW(FileName,WFD.dwFileAttributes); // пробуем восстановить атрибуты
+							SetFileAttributesW(FileName,WFD.dwFileAttributes); // РїСЂРѕР±СѓРµРј РІРѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ Р°С‚СЂРёР±СѓС‚С‹
 						ret=0;
 					}
 				}
@@ -665,7 +665,7 @@ RetryDelFile:
 }
 
 /***************************************************************************
- * Синхронизация каталогов (копирование)
+ * РЎРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ РєР°С‚Р°Р»РѕРіРѕРІ (РєРѕРїРёСЂРѕРІР°РЅРёРµ)
  ***************************************************************************/
 int AdvCmpProc::SyncDir(const wchar_t *srcDirName, const wchar_t *destDirName, int direction)
 {
@@ -678,11 +678,11 @@ int AdvCmpProc::SyncDir(const wchar_t *srcDirName, const wchar_t *destDirName, i
 		return 0;
 	}
 
-	// проверим на фильтр
+	// РїСЂРѕРІРµСЂРёРј РЅР° С„РёР»СЊС‚СЂ
 	WIN32_FIND_DATA WFD;
 
 	if (!FileExists(srcDirName,WFD,direction))
-		return 1; // пропустим
+		return 1; // РїСЂРѕРїСѓСЃС‚РёРј
 
 RetryMkDir:
 
@@ -704,7 +704,7 @@ RetryMkDir:
 			ret=0;
 		else
 		{
-			// синхронизирует имена...
+			// СЃРёРЅС…СЂРѕРЅРёР·РёСЂСѓРµС‚ РёРјРµРЅР°...
 			const wchar_t *pSrc=FSF.PointToName(srcDirName);
 			if (Strncmp(pSrc,FSF.PointToName(destDirName)))
 			{
@@ -735,7 +735,7 @@ RetryMkDir:
 		if (!ExitCode)
 			goto RetryMkDir;
 		else if (ExitCode == 1)
-			return 1; // значит продолжим, но не будем копировать эту папку и ее содержимое!
+			return 1; // Р·РЅР°С‡РёС‚ РїСЂРѕРґРѕР»Р¶РёРј, РЅРѕ РЅРµ Р±СѓРґРµРј РєРѕРїРёСЂРѕРІР°С‚СЊ СЌС‚Сѓ РїР°РїРєСѓ Рё РµРµ СЃРѕРґРµСЂР¶РёРјРѕРµ!
 		return 0;
 	}
 
@@ -771,7 +771,7 @@ RetryMkDir:
 }
 
 /***************************************************************************
- * Синхронизация каталогов (удаление)
+ * РЎРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ РєР°С‚Р°Р»РѕРіРѕРІ (СѓРґР°Р»РµРЅРёРµ)
  ***************************************************************************/
 int AdvCmpProc::DelDir(const wchar_t *DirName)
 {
@@ -789,11 +789,11 @@ int AdvCmpProc::DelDir(const wchar_t *DirName)
 		return 0;
 	}
 
-	// проверим на фильтр
+	// РїСЂРѕРІРµСЂРёРј РЅР° С„РёР»СЊС‚СЂ
 	WIN32_FIND_DATA WFD;
 
 	if (!FileExists(DirName,WFD,Opt.SyncUseDelFilter?-1:0))
-		return 1; // пропустим
+		return 1; // РїСЂРѕРїСѓСЃС‚РёРј
 
 RetryDelDir:
 
@@ -802,7 +802,7 @@ RetryDelDir:
 
 	if (hFind==INVALID_HANDLE_VALUE)
 	{
-		return 1;  // не найден, считаем, что удалили
+		return 1;  // РЅРµ РЅР°Р№РґРµРЅ, СЃС‡РёС‚Р°РµРј, С‡С‚Рѕ СѓРґР°Р»РёР»Рё
 	}
 	else
 	{
@@ -932,20 +932,20 @@ RetryDelDir:
 		else if (ExitCode == 1)
 			ret=1;
 
-		if (WFD.dwFileAttributes) SetFileAttributesW(DirName,WFD.dwFileAttributes); // пробуем восстановить
+		if (WFD.dwFileAttributes) SetFileAttributesW(DirName,WFD.dwFileAttributes); // РїСЂРѕР±СѓРµРј РІРѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ
 	}
 
 	return ret;
 }
 
 /***************************************************************************
- * Основания функция синхронизации
+ * РћСЃРЅРѕРІР°РЅРёСЏ С„СѓРЅРєС†РёСЏ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё
  ***************************************************************************/
 int AdvCmpProc::Synchronize()
 {
 	int ret=0;
 
-	if (Opt.Sync==QR_ALL) // есть элементы, синхронизируем
+	if (Opt.Sync==QR_ALL) // РµСЃС‚СЊ СЌР»РµРјРµРЅС‚С‹, СЃРёРЅС…СЂРѕРЅРёР·РёСЂСѓРµРј
 	{
 		bBrokenByEsc=false;
 		bStartMsg=true;
@@ -971,7 +971,7 @@ int AdvCmpProc::Synchronize()
 				continue;
 			if ((cur->dwFlags&RCIF_USERLNEW) || (cur->dwFlags&RCIF_LNEW))
 			{
-				direction=1; // слева новый, значит копируем направо
+				direction=1; // СЃР»РµРІР° РЅРѕРІС‹Р№, Р·РЅР°С‡РёС‚ РєРѕРїРёСЂСѓРµРј РЅР°РїСЂР°РІРѕ
 				string strSrcName, strDestName;
 				GetFullFileName(strSrcName,cur->L.Dir,cur->L.FileName);
 				GetFullFileName(strDestName,cur->R.Dir,(cur->R.FileName?cur->R.FileName:cur->L.FileName));
@@ -987,7 +987,7 @@ int AdvCmpProc::Synchronize()
 						break;
 				}
 			}
-			else if (cur->dwFlags&RCIF_USERDEL) // справа удаляем
+			else if (cur->dwFlags&RCIF_USERDEL) // СЃРїСЂР°РІР° СѓРґР°Р»СЏРµРј
 			{
 				string strName;
 				GetFullFileName(strName,cur->R.Dir,cur->R.FileName);
@@ -1005,7 +1005,7 @@ int AdvCmpProc::Synchronize()
 			}
 			else if ((cur->dwFlags&RCIF_USERRNEW) || (cur->dwFlags&RCIF_RNEW))
 			{
-				direction=-1; // справа новый, значит копируем налево
+				direction=-1; // СЃРїСЂР°РІР° РЅРѕРІС‹Р№, Р·РЅР°С‡РёС‚ РєРѕРїРёСЂСѓРµРј РЅР°Р»РµРІРѕ
 				string strSrcName, strDestName;
 				GetFullFileName(strSrcName,cur->R.Dir,cur->R.FileName);
 				GetFullFileName(strDestName,cur->L.Dir,(cur->L.FileName?cur->L.FileName:cur->R.FileName));
@@ -1031,7 +1031,7 @@ int AdvCmpProc::Synchronize()
 			Info.AdvControl(&MainGuid,ACTL_PROGRESSNOTIFY,0,0);
 		}
 
-		// Кеш стал неактуальным, освободим
+		// РљРµС€ СЃС‚Р°Р» РЅРµР°РєС‚СѓР°Р»СЊРЅС‹Рј, РѕСЃРІРѕР±РѕРґРёРј
 		if (Cache.RCI)
 			free(Cache.RCI);
 		Cache.RCI=0;

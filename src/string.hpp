@@ -2,7 +2,7 @@
     string.hpp
     Copyright (C) 2002-2008 zg
 
-    · ¨Æ®¨® „‚ÆÁ≠•≠®Ô¨® :-)
+    —Å –º–æ–∏–º–∏ —É—Ç–æ—á–Ω–µ–Ω–∏—è–º–∏ :-)
 */
 /*
 Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,7 @@ class string
     operator const wchar_t *() const;
     wchar_t &operator[](size_t index);
     size_t length(void) const;
-    void updsize(void);    //≠•Æ°ÂÆ§®¨Æ ¢ÎßÎ¢†‚Ï ØÆ·´• ¢Æß§•©·‚¢®Ô ≠† data ®ß¢≠•
+    void updsize(void);    //–Ω–µ–æ–±—Ö–æ–¥–∏–º–æ –≤—ã–∑—ã–≤–∞—Ç—å –ø–æ—Å–ª–µ –≤–æ–∑–¥–µ–π—Å—Ç–≤–∏—è –Ω–∞ data –∏–∑–≤–Ω–µ
     wchar_t *get(size_t size = (size_t)-1);
     void clear(void);
     string& operator+=(wchar_t Value);

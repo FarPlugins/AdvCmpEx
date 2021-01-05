@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 #include "AdvCmp.hpp"
 
-// диалог с опциями
+// РґРёР°Р»РѕРі СЃ РѕРїС†РёСЏРјРё
 class AdvCmpDlgOpt
 {
 		bool bSkipSaveOpt;

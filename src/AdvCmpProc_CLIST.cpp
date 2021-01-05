@@ -32,13 +32,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /***************************************************************************
  *
- *                       ДИАЛОГ РЕЗУЛЬТАТОВ СРАВНЕНИЯ
+ *                       Р”РРђР›РћР“ Р Р•Р—РЈР›Р¬РўРђРўРћР’ РЎР РђР’РќР•РќРРЇ
  *
  ***************************************************************************/
 
 
 /****************************************************************************
- * Построение массива элементов, для диалога с результатами сравнения
+ * РџРѕСЃС‚СЂРѕРµРЅРёРµ РјР°СЃСЃРёРІР° СЌР»РµРјРµРЅС‚РѕРІ, РґР»СЏ РґРёР°Р»РѕРіР° СЃ СЂРµР·СѓР»СЊС‚Р°С‚Р°РјРё СЃСЂР°РІРЅРµРЅРёСЏ
  ****************************************************************************/
 bool AdvCmpProc::MakeFileList(const wchar_t *LDir,const PluginPanelItem *pLPPI,const wchar_t *RDir,const PluginPanelItem *pRPPI,DWORD dwFlag)
 {
@@ -112,15 +112,15 @@ int WINAPI cmpSortList(const void *el1, const void *el2, void * el3)
 }
 
 /***************************************************************************
- * Создание текстовой метки для элемента листа
+ * РЎРѕР·РґР°РЅРёРµ С‚РµРєСЃС‚РѕРІРѕР№ РјРµС‚РєРё РґР»СЏ СЌР»РµРјРµРЅС‚Р° Р»РёСЃС‚Р°
  ***************************************************************************/
 void MakeListItemText(wchar_t *buf, cmpFile *cur, wchar_t Mark)
 {
 	wchar_t LTime[20]={0}, RTime[20]={0};
 
-	if (!(cur->dwFlags&RCIF_RUNIQ))  // есть элемент слева
+	if (!(cur->dwFlags&RCIF_RUNIQ))  // РµСЃС‚СЊ СЌР»РµРјРµРЅС‚ СЃР»РµРІР°
 		GetStrFileTime(&cur->L.ftLastWriteTime,LTime,false);
-	if (!(cur->dwFlags&RCIF_LUNIQ))  // есть элемент справа
+	if (!(cur->dwFlags&RCIF_LUNIQ))  // РµСЃС‚СЊ СЌР»РµРјРµРЅС‚ СЃРїСЂР°РІР°
 		GetStrFileTime(&cur->R.ftLastWriteTime,RTime,false);
 
 	wchar_t LSize[65]={0}, RSize[65]={0};
@@ -154,7 +154,7 @@ void MakeListItemText(wchar_t *buf, cmpFile *cur, wchar_t Mark)
 }
 
 /***************************************************************************
- * Изменение строки статуса в листе
+ * РР·РјРµРЅРµРЅРёРµ СЃС‚СЂРѕРєРё СЃС‚Р°С‚СѓСЃР° РІ Р»РёСЃС‚Рµ
 ***************************************************************************/
 void SetBottom(HANDLE hDlg, cmpFileList *pFileList, wchar_t *CurDir)
 {
@@ -175,7 +175,7 @@ void SetBottom(HANDLE hDlg, cmpFileList *pFileList, wchar_t *CurDir)
 }
 
 /***************************************************************************
- * Изменение/обновление листа файлов в диалоге
+ * РР·РјРµРЅРµРЅРёРµ/РѕР±РЅРѕРІР»РµРЅРёРµ Р»РёСЃС‚Р° С„Р°Р№Р»РѕРІ РІ РґРёР°Р»РѕРіРµ
  ***************************************************************************/
 bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool bSort)
 {
@@ -186,7 +186,7 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 	pFileList->LNew=0;
 	pFileList->RNew=0;
 
-	// запросим информацию
+	// Р·Р°РїСЂРѕСЃРёРј РёРЅС„РѕСЂРјР°С†РёСЋ
 	FarListInfo ListInfo={sizeof(FarListInfo)};
 	Info.SendDlgMessage(hDlg,DM_LISTINFO,0,&ListInfo);
 
@@ -196,14 +196,14 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 	if (!pFileList->iCount)
 		return true;
 
-	// сортируем только при инициализации
+	// СЃРѕСЂС‚РёСЂСѓРµРј С‚РѕР»СЊРєРѕ РїСЂРё РёРЅРёС†РёР°Р»РёР·Р°С†РёРё
 	if (bSort)
 		FSF.qsort(pFileList->F,pFileList->iCount,sizeof(pFileList->F[0]),cmpSortList,NULL);
 
 	int Index=0;
 	string strBuf;
 	strBuf.get(65536);
-	const int nSIZE=32; // размер ячейки для FSF.sprintf(%*.*)
+	const int nSIZE=32; // СЂР°Р·РјРµСЂ СЏС‡РµР№РєРё РґР»СЏ FSF.sprintf(%*.*)
 
 	for (int i=0; i<pFileList->iCount; i++)
 	{
@@ -237,7 +237,7 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 				if (Opt.SyncOnlyRight==1 || (Opt.SyncOnlyRight==2 && Delta>0)) cur->dwFlags|=RCIF_USERLNEW;
 			}
 #if 1
-			// отметка элементов
+			// РѕС‚РјРµС‚РєР° СЌР»РµРјРµРЅС‚РѕРІ
 			if (Opt.SyncFlagCopy)
 			{
 				if ((Opt.SyncFlagCopy==2 && !Opt.SyncFlagIfNew) || (Opt.SyncFlagCopy==2 && Opt.SyncFlagIfNew && Delta>0))
@@ -267,10 +267,10 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 			if (!Opt.ShowListLNew)
 				continue;
 #if 1
-			// отметка элементов
+			// РѕС‚РјРµС‚РєР° СЌР»РµРјРµРЅС‚РѕРІ
 			if (Opt.SyncFlagLCopy<=0)
 			{
-				if (Opt.SyncFlagLCopy<0) // юзерское
+				if (Opt.SyncFlagLCopy<0) // СЋР·РµСЂСЃРєРѕРµ
 				{
 					if (!(cur->dwFlags&RCIF_LUNIQ) && !Opt.SyncOnlyRight)
 					{
@@ -283,20 +283,20 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 						cur->dwFlags&=~RCIF_USERRNEW;
 					}
 				}
-				else // скинем
+				else // СЃРєРёРЅРµРј
 				{
 					cur->dwFlags|=RCIF_USERNONE;
 					cur->dwFlags&=~RCIF_USERRNEW;
 				}
 			}
-			else if (Opt.SyncFlagLCopy==2) // установим обычное
+			else if (Opt.SyncFlagLCopy==2) // СѓСЃС‚Р°РЅРѕРІРёРј РѕР±С‹С‡РЅРѕРµ
 			{
 				cur->dwFlags&=~RCIF_USERNONE;
 				cur->dwFlags&=~RCIF_USERRNEW;
 			}
 #endif
-			if (!Opt.SyncOnlyRight && (cur->dwFlags&RCIF_USERRNEW)) Mark=0x25c4;  //направо
-			else if (!(cur->dwFlags&RCIF_USERNONE)) Mark=0x2192; //как обычно, налево
+			if (!Opt.SyncOnlyRight && (cur->dwFlags&RCIF_USERRNEW)) Mark=0x25c4;  //РЅР°РїСЂР°РІРѕ
+			else if (!(cur->dwFlags&RCIF_USERNONE)) Mark=0x2192; //РєР°Рє РѕР±С‹С‡РЅРѕ, РЅР°Р»РµРІРѕ
 			pFileList->LNew++;
 		}
 		if (cur->dwFlags&RCIF_RNEW)
@@ -317,10 +317,10 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 				}
 			}
 #if 1
-			// отметка элементов
+			// РѕС‚РјРµС‚РєР° СЌР»РµРјРµРЅС‚РѕРІ
 			if (Opt.SyncFlagRCopy>=0)
 			{
-				if (Opt.SyncFlagRCopy>0) // юзерское
+				if (Opt.SyncFlagRCopy>0) // СЋР·РµСЂСЃРєРѕРµ
 				{
 					if (!(cur->dwFlags&RCIF_RUNIQ))
 					{
@@ -338,31 +338,31 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 */
 					}
 				}
-				else // скинем
+				else // СЃРєРёРЅРµРј
 				{
 					cur->dwFlags|=RCIF_USERNONE;
 					cur->dwFlags&=~RCIF_USERLNEW;
 					cur->dwFlags&=~RCIF_USERDEL;
 				}
 			}
-			else if (Opt.SyncFlagRCopy==-2) // установим обычное
+			else if (Opt.SyncFlagRCopy==-2) // СѓСЃС‚Р°РЅРѕРІРёРј РѕР±С‹С‡РЅРѕРµ
 			{
 				cur->dwFlags&=~RCIF_USERNONE;
 				cur->dwFlags&=~RCIF_USERLNEW;
 				if (Opt.SyncOnlyRight && cur->dwFlags&RCIF_RUNIQ) cur->dwFlags|=RCIF_USERDEL;
 			}
 #endif
-			if (cur->dwFlags&RCIF_USERLNEW) Mark=0x25ba; //налево
-			else if (!Opt.SyncOnlyRight && !(cur->dwFlags&RCIF_USERNONE)) Mark=0x2190; //как обычно, направо
+			if (cur->dwFlags&RCIF_USERLNEW) Mark=0x25ba; //РЅР°Р»РµРІРѕ
+			else if (!Opt.SyncOnlyRight && !(cur->dwFlags&RCIF_USERNONE)) Mark=0x2190; //РєР°Рє РѕР±С‹С‡РЅРѕ, РЅР°РїСЂР°РІРѕ
 			else if (cur->dwFlags&RCIF_USERDEL) Mark=L'x';
 			if (!Opt.SyncOnlyRight || (Opt.SyncOnlyRight && (cur->dwFlags&RCIF_RUNIQ))) pFileList->RNew++;
 		}
 
-		// виртуальная папка
+		// РІРёСЂС‚СѓР°Р»СЊРЅР°СЏ РїР°РїРєР°
 		bool bAddVirtDir=false;
 		string strVirtDir;
 
-		// если попали сразу в подкаталог... добавим виртуальную папку в начало
+		// РµСЃР»Рё РїРѕРїР°Р»Рё СЃСЂР°Р·Сѓ РІ РїРѕРґРєР°С‚Р°Р»РѕРі... РґРѕР±Р°РІРёРј РІРёСЂС‚СѓР°Р»СЊРЅСѓСЋ РїР°РїРєСѓ РІ РЅР°С‡Р°Р»Рѕ
 		if (!Index && FSF.LStricmp(GetPosToName(cur->L.Dir),LPanel.Dir))
 		{
 			strVirtDir=GetPosToName(cur->L.Dir)+wcslen(LPanel.Dir);
@@ -387,7 +387,7 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 				cmpFile *next=&pFileList->F[j];
 
 				if (Opt.SyncFlagClearUser)
-					next->dwFlags&= ~RCIF_USER; // все равно же скидывать
+					next->dwFlags&= ~RCIF_USER; // РІСЃРµ СЂР°РІРЅРѕ Р¶Рµ СЃРєРёРґС‹РІР°С‚СЊ
 
 				if ((next->L.dwAttributes&FILE_ATTRIBUTE_DIRECTORY) && (next->R.dwAttributes&FILE_ATTRIBUTE_DIRECTORY))
 					continue;
@@ -428,11 +428,11 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 		List.ItemsNumber=1;
 		List.Items=&Item;
 
-		// если удачно добавили элемент...
+		// РµСЃР»Рё СѓРґР°С‡РЅРѕ РґРѕР±Р°РІРёР»Рё СЌР»РµРјРµРЅС‚...
 		if (Info.SendDlgMessage(hDlg,DM_LISTADD,0,&List))
 		{
 			pFileList->Items++;
-			// ... то ассоциируем данные с элементом листа
+			// ... С‚Рѕ Р°СЃСЃРѕС†РёРёСЂСѓРµРј РґР°РЅРЅС‹Рµ СЃ СЌР»РµРјРµРЅС‚РѕРј Р»РёСЃС‚Р°
 			struct FarListItemData Data={sizeof(FarListItemData)};
 			Data.Index=Index++;
 			Data.DataSize=sizeof(cur);
@@ -469,7 +469,7 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos, bool b
 bool bSetBottom=false;
 
 /***************************************************************************
- * Обработчик диалога
+ * РћР±СЂР°Р±РѕС‚С‡РёРє РґРёР°Р»РѕРіР°
  ***************************************************************************/
 intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg,intptr_t Msg,intptr_t Param1,void *Param2)
 {
@@ -510,25 +510,25 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg,intptr_t Msg,intptr_t Param1,void 
 				{
 					COL_PANELTEXT,
 					COL_PANELBOX,
-					COL_PANELBOX,             // заголовки
-					COL_PANELTEXT,            // элемент списка
+					COL_PANELBOX,             // Р·Р°РіРѕР»РѕРІРєРё
+					COL_PANELTEXT,            // СЌР»РµРјРµРЅС‚ СЃРїРёСЃРєР°
 					COL_PANELSELECTEDTEXT,
 					COL_PANELBOX,
-					COL_PANELCURSOR,          // под курсором
+					COL_PANELCURSOR,          // РїРѕРґ РєСѓСЂСЃРѕСЂРѕРј
 					COL_PANELSELECTEDCURSOR,
 					COL_PANELSCROLLBAR,
-					COL_PANELHIGHLIGHTTEXT,   // виртуальная папка
+					COL_PANELHIGHLIGHTTEXT,   // РІРёСЂС‚СѓР°Р»СЊРЅР°СЏ РїР°РїРєР°
 					COL_PANELSELECTEDTEXT,
 					COL_PANELSELECTEDCURSOR,
 					COL_PANELSELECTEDTEXT,
-					COL_PANELHIGHLIGHTTEXT,   // одинаковые элементы
+					COL_PANELHIGHLIGHTTEXT,   // РѕРґРёРЅР°РєРѕРІС‹Рµ СЌР»РµРјРµРЅС‚С‹
 					COL_PANELCURSOR
 				};
 				for (int i=0; i<15; i++)
 				{
 					Info.AdvControl(&MainGuid,ACTL_GETCOLOR,ColorIndex[i],&Color);
 					Colors->Colors[i] = Color;
-					if (i==9) // виртуальная папка
+					if (i==9) // РІРёСЂС‚СѓР°Р»СЊРЅР°СЏ РїР°РїРєР°
 					{
 						int color=0x1F;
 						Colors->Colors[i].Flags=FCF_FG_4BIT|FCF_BG_4BIT;
@@ -560,12 +560,12 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg,intptr_t Msg,intptr_t Param1,void 
 			const INPUT_RECORD* record=(const INPUT_RECORD *)Param2;
 
 			if (record->EventType==MOUSE_EVENT)
-				// отработаем щелчок мыши в поле Mark
+				// РѕС‚СЂР°Р±РѕС‚Р°РµРј С‰РµР»С‡РѕРє РјС‹С€Рё РІ РїРѕР»Рµ Mark
 				if (Opt.Mode==MODE_SYNC && Param1==0 && record->Event.MouseEvent.dwButtonState==FROM_LEFT_1ST_BUTTON_PRESSED && record->Event.MouseEvent.dwEventFlags!=DOUBLE_CLICK)
 				{
 					SMALL_RECT dlgRect;
 					Info.SendDlgMessage(hDlg, DM_GETDLGRECT, 0, &dlgRect);
-					// щелкнули в LISTе
+					// С‰РµР»РєРЅСѓР»Рё РІ LISTРµ
 					if (record->Event.MouseEvent.dwMousePosition.X>dlgRect.Left && record->Event.MouseEvent.dwMousePosition.X<dlgRect.Right
 					&& record->Event.MouseEvent.dwMousePosition.Y>dlgRect.Top && record->Event.MouseEvent.dwMousePosition.Y<dlgRect.Bottom)
 					{
@@ -582,7 +582,7 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg,intptr_t Msg,intptr_t Param1,void 
 							MessageBeep(MB_OK);
 						}
 						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
-						// вот оно, поле Mark
+						// РІРѕС‚ РѕРЅРѕ, РїРѕР»Рµ Mark
 						if (NewPos==ListPos.SelectPos && record->Event.MouseEvent.dwMousePosition.X>=dlgRect.Left+68 && record->Event.MouseEvent.dwMousePosition.X<=dlgRect.Left+70)
 						{
 							goto GOTOCHANGEMARK;
@@ -594,14 +594,14 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg,intptr_t Msg,intptr_t Param1,void 
 				{
 					SMALL_RECT dlgRect;
 					Info.SendDlgMessage(hDlg, DM_GETDLGRECT, 0, &dlgRect);
-					// не нужно поле Mark
+					// РЅРµ РЅСѓР¶РЅРѕ РїРѕР»Рµ Mark
 					if (Opt.Mode==MODE_CMP || record->Event.MouseEvent.dwMousePosition.X<dlgRect.Left+68 || record->Event.MouseEvent.dwMousePosition.X>dlgRect.Left+70)
 					{
 						goto GOTOCMPFILE;
 						return false;
 					}
 				}
-				// закроем диалог по клику в правом верхнем угу
+				// Р·Р°РєСЂРѕРµРј РґРёР°Р»РѕРі РїРѕ РєР»РёРєСѓ РІ РїСЂР°РІРѕРј РІРµСЂС…РЅРµРј СѓРіСѓ
 				else if (Param1==0 && record->Event.MouseEvent.dwButtonState==FROM_LEFT_1ST_BUTTON_PRESSED)
 				{
 					SMALL_RECT dlgRect;
@@ -832,7 +832,7 @@ GOTOCHANGEMARK:
 									Delta=(((__int64)cur->L.ftLastWriteTime.dwHighDateTime << 32) | cur->L.ftLastWriteTime.dwLowDateTime) -
 												(((__int64)cur->R.ftLastWriteTime.dwHighDateTime << 32) | cur->R.ftLastWriteTime.dwLowDateTime);
 
-								if (cur->dwFlags&RCIF_DIFFER) // сравнивали без учета времени элементов
+								if (cur->dwFlags&RCIF_DIFFER) // СЃСЂР°РІРЅРёРІР°Р»Рё Р±РµР· СѓС‡РµС‚Р° РІСЂРµРјРµРЅРё СЌР»РµРјРµРЅС‚РѕРІ
 								{
 									if (!(cur->dwFlags&RCIF_USERLNEW) && !(cur->dwFlags&RCIF_USERRNEW))
 									{
@@ -855,7 +855,7 @@ GOTOCHANGEMARK:
 										cur->dwFlags&=~RCIF_USERRNEW;
 									}
 								}
-								else if (!(cur->dwFlags&RCIF_LUNIQ) && !(cur->dwFlags&RCIF_RUNIQ))  // сравнивали с учетом времени элементов
+								else if (!(cur->dwFlags&RCIF_LUNIQ) && !(cur->dwFlags&RCIF_RUNIQ))  // СЃСЂР°РІРЅРёРІР°Р»Рё СЃ СѓС‡РµС‚РѕРј РІСЂРµРјРµРЅРё СЌР»РµРјРµРЅС‚РѕРІ
 								{
 									if (!(cur->dwFlags&RCIF_USERNONE) && !(cur->dwFlags&RCIF_USERLNEW) && !(cur->dwFlags&RCIF_USERRNEW))
 									{
@@ -993,7 +993,7 @@ GOTOCHANGEMARK:
 						Opt.ShowListRNew=true;
 						Opt.SyncFlagClearUser=true;
 						MakeCmpFarList(hDlg,pFileList);
-						Opt.SyncFlagClearUser=false; // восстановим!
+						Opt.SyncFlagClearUser=false; // РІРѕСЃСЃС‚Р°РЅРѕРІРёРј!
 						Info.SendDlgMessage(hDlg,DM_ENABLEREDRAW,true,0);
 						return true;
 					}
@@ -1096,7 +1096,7 @@ GOTOCHANGEMARK:
 								return true;
 							}
 
-							Opt.Mode=MODE_CMP; //скидываем!!!
+							Opt.Mode=MODE_CMP; //СЃРєРёРґС‹РІР°РµРј!!!
 
 							PanelRedrawInfo LRInfo={sizeof(PanelRedrawInfo),0,0}, RRInfo={sizeof(PanelRedrawInfo),0,0};
 							bool bSetLDir=false, bSetLFile=false;
@@ -1135,7 +1135,7 @@ DebugMsg(strLPanelDir.get(),L"strLPanelDir.get()");
 											LRInfo.CurrentItem=i;
 											bSetLFile=true;
 										}
-										// если изменили каталог, то отметим все отличия на новой напанели
+										// РµСЃР»Рё РёР·РјРµРЅРёР»Рё РєР°С‚Р°Р»РѕРі, С‚Рѕ РѕС‚РјРµС‚РёРј РІСЃРµ РѕС‚Р»РёС‡РёСЏ РЅР° РЅРѕРІРѕР№ РЅР°РїР°РЅРµР»Рё
 										if (bSetLDir)
 										{
 											for (int j=0; j<pFileList->iCount; j++)
@@ -1217,7 +1217,7 @@ DebugMsg(strLPanelDir.get(),L"strLPanelDir.get()");
 }
 
 /***************************************************************************
- * Диалог результатов сравнения файлов
+ * Р”РёР°Р»РѕРі СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ СЃСЂР°РІРЅРµРЅРёСЏ С„Р°Р№Р»РѕРІ
  ***************************************************************************/
 int AdvCmpProc::ShowCmpDialog(const struct DirList *pLList,const struct DirList *pRList)
 {

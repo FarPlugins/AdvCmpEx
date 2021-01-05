@@ -32,13 +32,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /***************************************************************************
  *
- *                              ДУБЛИКАТЫ
+ *                              Р”РЈР‘Р›РРљРђРўР«
  *
  ***************************************************************************/
 
 
 /****************************************************************************
- * Построение массива элементов, для диалога дубликатов
+ * РџРѕСЃС‚СЂРѕРµРЅРёРµ РјР°СЃСЃРёРІР° СЌР»РµРјРµРЅС‚РѕРІ, РґР»СЏ РґРёР°Р»РѕРіР° РґСѓР±Р»РёРєР°С‚РѕРІ
  ****************************************************************************/
 bool AdvCmpProc::MakeFileList(const wchar_t *Dir,const PluginPanelItem *pPPI)
 {
@@ -71,11 +71,11 @@ bool AdvCmpProc::MakeFileList(const wchar_t *Dir,const PluginPanelItem *pPPI)
 }
 
 /***************************************************************************
- * Узнаем опции синхронизации
+ * РЈР·РЅР°РµРј РѕРїС†РёРё СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё
  ***************************************************************************/
 int GetDupOpt(dupFileList *pFileList)
 {
-	int ret=QR_EDIT; // продолжаем редактировать список
+	int ret=QR_EDIT; // РїСЂРѕРґРѕР»Р¶Р°РµРј СЂРµРґР°РєС‚РёСЂРѕРІР°С‚СЊ СЃРїРёСЃРѕРє
 	int ItemsDel=0;
 
 	for (int i=0; i<pFileList->iCount; i++)
@@ -86,7 +86,7 @@ int GetDupOpt(dupFileList *pFileList)
 			ItemsDel++;
 	}
 /*
-	// нет элементов, выходим
+	// РЅРµС‚ СЌР»РµРјРµРЅС‚РѕРІ, РІС‹С…РѕРґРёРј
 	if (!ItemsDel)
 	{
 		if (Opt.ShowMsg)
@@ -94,7 +94,7 @@ int GetDupOpt(dupFileList *pFileList)
 			const wchar_t *MsgItems[] = { GetMsg(MDupTitle), GetMsg(MNoDupBody), GetMsg(MOK) };
 			Info.Message(&MainGuid,&NoDupMsgGuid,0,0,MsgItems,sizeof(MsgItems) / sizeof(MsgItems[0]),1);
 		}
-		return ret=QR_SKIP; //нет элементов
+		return ret=QR_SKIP; //РЅРµС‚ СЌР»РµРјРµРЅС‚РѕРІ
 	}
 */
 	Opt.DupDel=ItemsDel;
@@ -123,14 +123,14 @@ int GetDupOpt(dupFileList *pFileList)
 		{
 			Opt.DupDel=Info.SendDlgMessage(hDlg,DM_GETCHECK,1,0);
 			Opt.DupDelRecycleBin=Info.SendDlgMessage(hDlg,DM_GETCHECK,2,0);
-			ret=Opt.DupDel?QR_ALL:QR_SKIP;   // удаляем дубли, иначе - пропустим
+			ret=Opt.DupDel?QR_ALL:QR_SKIP;   // СѓРґР°Р»СЏРµРј РґСѓР±Р»Рё, РёРЅР°С‡Рµ - РїСЂРѕРїСѓСЃС‚РёРј
 		}
 		else if (ret==5)
 			ret=QR_EDIT;
 		else
 		{
 			bBrokenByEsc=true;
-			ret=QR_ABORT; // отменили
+			ret=QR_ABORT; // РѕС‚РјРµРЅРёР»Рё
 		}
 		Info.DialogFree(hDlg);
 	}
@@ -165,7 +165,7 @@ int WINAPI dupSortListByGroupEx(const void *el1, const void *el2, void *el3)
 }
 
 /***************************************************************************
- * Изменение строки статуса в листе
+ * РР·РјРµРЅРµРЅРёРµ СЃС‚СЂРѕРєРё СЃС‚Р°С‚СѓСЃР° РІ Р»РёСЃС‚Рµ
 ***************************************************************************/
 
 void SetBottom(HANDLE hDlg, dupFileList *pFileList, dupFile *curItem)
@@ -197,11 +197,11 @@ void SetBottom(HANDLE hDlg, dupFileList *pFileList, dupFile *curItem)
 }
 
 /***************************************************************************
- * Изменение/обновление листа файлов в диалоге
+ * РР·РјРµРЅРµРЅРёРµ/РѕР±РЅРѕРІР»РµРЅРёРµ Р»РёСЃС‚Р° С„Р°Р№Р»РѕРІ РІ РґРёР°Р»РѕРіРµ
  ***************************************************************************/
 bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool bSort)
 {
-	// запросим информацию
+	// Р·Р°РїСЂРѕСЃРёРј РёРЅС„РѕСЂРјР°С†РёСЋ
 	FarListInfo ListInfo={sizeof(FarListInfo)};
 	Info.SendDlgMessage(hDlg,DM_LISTINFO,0,&ListInfo);
 
@@ -211,7 +211,7 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 	if (!pFileList->iCount)
 		return true;
 
-	// сортируем только при инициализации
+	// СЃРѕСЂС‚РёСЂСѓРµРј С‚РѕР»СЊРєРѕ РїСЂРё РёРЅРёС†РёР°Р»РёР·Р°С†РёРё
 	if (bSort)
 		FSF.qsort(pFileList->F,pFileList->iCount,sizeof(pFileList->F[0]),dupSortListByGroupEx, NULL);
 
@@ -244,13 +244,13 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 /*
 			string strSubstr;
 			wchar_t *p=LPanel.PInfo.Flags&PFLAGS_FOCUS?LPanel.Dir:RPanel.Dir;
-			while (*p) // для экранирования спецсимволов в регэкспах
+			while (*p) // РґР»СЏ СЌРєСЂР°РЅРёСЂРѕРІР°РЅРёСЏ СЃРїРµС†СЃРёРјРІРѕР»РѕРІ РІ СЂРµРіСЌРєСЃРїР°С…
 			{
 				if (*p==L'\\' || *p==L'[' || *p==L']' || *p==L'+' || *p==L'{' || *p==L'}')
 					strSubstr+=L"\\";
 				strSubstr+=*p++;
 			}
-			// вырежем все из имени файла до текущей папки (и сама папка) нам не нужна
+			// РІС‹СЂРµР¶РµРј РІСЃРµ РёР· РёРјРµРЅРё С„Р°Р№Р»Р° РґРѕ С‚РµРєСѓС‰РµР№ РїР°РїРєРё (Рё СЃР°РјР° РїР°РїРєР°) РЅР°Рј РЅРµ РЅСѓР¶РЅР°
 			CutSubstr(strPath,strSubstr.get());
 			strPath+=L"\\";
 */
@@ -290,10 +290,10 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 		List.ItemsNumber=1;
 		List.Items=&Item;
 
-		// если удачно добавили элемент...
+		// РµСЃР»Рё СѓРґР°С‡РЅРѕ РґРѕР±Р°РІРёР»Рё СЌР»РµРјРµРЅС‚...
 		if (Info.SendDlgMessage(hDlg,DM_LISTADD,0,&List))
 		{
-			// ... то ассоциируем данные с элементом листа
+			// ... С‚Рѕ Р°СЃСЃРѕС†РёРёСЂСѓРµРј РґР°РЅРЅС‹Рµ СЃ СЌР»РµРјРµРЅС‚РѕРј Р»РёСЃС‚Р°
 			struct FarListItemData Data={sizeof(FarListItemData)};
 			Data.Index=Index++;
 			Data.DataSize=sizeof(cur);
@@ -301,7 +301,7 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 			Info.SendDlgMessage(hDlg,DM_LISTSETDATA,0,&Data);
 		}
 
-		// сепаратор
+		// СЃРµРїР°СЂР°С‚РѕСЂ
 		int j=i+1;
 		if (j<pFileList->iCount && cur->nDupGroup!=pFileList->F[j].nDupGroup)
 		{
@@ -327,7 +327,7 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList *pFileList, bool bSetCurPos, bool b
 
 
 /***************************************************************************
- * Обработчик диалога
+ * РћР±СЂР°Р±РѕС‚С‡РёРє РґРёР°Р»РѕРіР°
  ***************************************************************************/
 intptr_t WINAPI ShowDupDialogProc(HANDLE hDlg,intptr_t Msg,intptr_t Param1,void *Param2)
 {
@@ -372,18 +372,18 @@ intptr_t WINAPI ShowDupDialogProc(HANDLE hDlg,intptr_t Msg,intptr_t Param1,void 
 				{
 					COL_PANELTEXT,
 					COL_PANELBOX,
-					COL_PANELBOX,             // заголовки
-					COL_PANELTEXT,            // элемент списка
+					COL_PANELBOX,             // Р·Р°РіРѕР»РѕРІРєРё
+					COL_PANELTEXT,            // СЌР»РµРјРµРЅС‚ СЃРїРёСЃРєР°
 					COL_PANELSELECTEDTEXT,
 					COL_PANELBOX,
-					COL_PANELCURSOR,          // под курсором
+					COL_PANELCURSOR,          // РїРѕРґ РєСѓСЂСЃРѕСЂРѕРј
 					COL_PANELSELECTEDCURSOR,
 					COL_PANELSCROLLBAR,
-					COL_PANELHIGHLIGHTTEXT,   // виртуальная папка
+					COL_PANELHIGHLIGHTTEXT,   // РІРёСЂС‚СѓР°Р»СЊРЅР°СЏ РїР°РїРєР°
 					COL_PANELSELECTEDTEXT,
 					COL_PANELSELECTEDCURSOR,
 					COL_PANELSELECTEDTEXT,
-					COL_PANELHIGHLIGHTTEXT,   // одинаковые элементы
+					COL_PANELHIGHLIGHTTEXT,   // РѕРґРёРЅР°РєРѕРІС‹Рµ СЌР»РµРјРµРЅС‚С‹
 					COL_PANELCURSOR
 				};
 				for (int i=0; i<15; i++)
@@ -434,7 +434,7 @@ intptr_t WINAPI ShowDupDialogProc(HANDLE hDlg,intptr_t Msg,intptr_t Param1,void 
 				{
 					SMALL_RECT dlgRect;
 					Info.SendDlgMessage(hDlg, DM_GETDLGRECT, 0, &dlgRect);
-					// щелкнули в LISTе
+					// С‰РµР»РєРЅСѓР»Рё РІ LISTРµ
 					if (record->Event.MouseEvent.dwMousePosition.X>dlgRect.Left && record->Event.MouseEvent.dwMousePosition.X<dlgRect.Right
 					&& record->Event.MouseEvent.dwMousePosition.Y>dlgRect.Top && record->Event.MouseEvent.dwMousePosition.Y<dlgRect.Bottom)
 					{
@@ -511,7 +511,7 @@ intptr_t WINAPI ShowDupDialogProc(HANDLE hDlg,intptr_t Msg,intptr_t Param1,void 
 							GetFullFileName(strFullFileName,cur->fi.Dir,cur->fi.FileName);
 							if (Info.Viewer(GetPosToName(strFullFileName.get()),NULL,0,0,-1,-1,VF_DISABLEHISTORY,CP_DEFAULT))
 							{
-								SetBottom(hDlg,pFileList,cur); // обходим баг фара: почему-то строка функциональных клавиш не прячется автоматом!
+								SetBottom(hDlg,pFileList,cur); // РѕР±С…РѕРґРёРј Р±Р°Рі С„Р°СЂР°: РїРѕС‡РµРјСѓ-С‚Рѕ СЃС‚СЂРѕРєР° С„СѓРЅРєС†РёРѕРЅР°Р»СЊРЅС‹С… РєР»Р°РІРёС€ РЅРµ РїСЂСЏС‡РµС‚СЃСЏ Р°РІС‚РѕРјР°С‚РѕРј!
 								return true;
 							}
 						}
@@ -700,7 +700,7 @@ GOTOCHANGEMARK:
 						dupFile *cur=tmp?*tmp:NULL;
 						if (cur)
 						{
-							Opt.Mode=MODE_CMP; //скидываем!!!
+							Opt.Mode=MODE_CMP; //СЃРєРёРґС‹РІР°РµРј!!!
 
 							PanelRedrawInfo RInfo={sizeof(PanelRedrawInfo),0,0};
 							bool bLeft=(LPanel.PInfo.Flags&PFLAGS_FOCUS?true:false);
@@ -765,7 +765,7 @@ GOTOCHANGEMARK:
 
 
 /***************************************************************************
- * Диалог результатов сравнения файлов
+ * Р”РёР°Р»РѕРі СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ СЃСЂР°РІРЅРµРЅРёСЏ С„Р°Р№Р»РѕРІ
  ***************************************************************************/
 int AdvCmpProc::ShowDupDialog()
 {
@@ -785,7 +785,7 @@ int AdvCmpProc::ShowDupDialog()
 		Opt.DupListSmall=0;
 		if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings))
 		{
-			size_t Root=0; // корень ключа
+			size_t Root=0; // РєРѕСЂРµРЅСЊ РєР»СЋС‡Р°
 			FarSettingsItem item={sizeof(FarSettingsItem),Root,L"DupListSmall",FST_QWORD};
 			if (Info.SettingsControl(settings.Handle,SCTL_GET,0,&item))
 				Opt.DupListSmall=(int)item.Number;
@@ -796,7 +796,7 @@ int AdvCmpProc::ShowDupDialog()
 
 		if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings))
 		{
-			size_t Root=0; // корень ключа
+			size_t Root=0; // РєРѕСЂРµРЅСЊ РєР»СЋС‡Р°
 			FarSettingsItem item={sizeof(FarSettingsItem),Root,L"DupListSmall",FST_QWORD};
 			item.Number=Opt.DupListSmall;
 			Info.SettingsControl(settings.Handle,SCTL_SET,0,&item);
@@ -839,7 +839,7 @@ int AdvCmpProc::ScanDir(const wchar_t *DirName, int ScanDepth)
 
 			if (wfdFindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)
 			{
-				if (Opt.Subfolders==2 && Opt.MaxScanDepth<ScanDepth+1) // не глубже заданного уровня!
+				if (Opt.Subfolders==2 && Opt.MaxScanDepth<ScanDepth+1) // РЅРµ РіР»СѓР±Р¶Рµ Р·Р°РґР°РЅРЅРѕРіРѕ СѓСЂРѕРІРЅСЏ!
 					break;
 				if (!Opt.Subfolders)
 					continue;
@@ -1040,7 +1040,7 @@ bool ID3V23_ReadFrame(int nFlag, char *pRaw, unsigned nFrameSize, wchar_t *pszBu
 }
 
 
-int AdvCmpProc::GetMp3(dupFile *cur, int GetInfo)   //GetInfo=0-только битрейт и время,  1-хеш аудиопотока, 2-теги
+int AdvCmpProc::GetMp3(dupFile *cur, int GetInfo)   //GetInfo=0-С‚РѕР»СЊРєРѕ Р±РёС‚СЂРµР№С‚ Рё РІСЂРµРјСЏ,  1-С…РµС€ Р°СѓРґРёРѕРїРѕС‚РѕРєР°, 2-С‚РµРіРё
 {
 	int ret=0;
 
@@ -1231,7 +1231,7 @@ int AdvCmpProc::GetMp3(dupFile *cur, int GetInfo)   //GetInfo=0-только битрейт и
 		if (!(cur->dwFlags&RCIF_MUSICART) || !(cur->dwFlags&RCIF_MUSICTIT))
 		{
 			wchar_t *Name=cur->fi.FileName;
-			int lenName=wcslen(Name)-4; //за минусом расширения
+			int lenName=wcslen(Name)-4; //Р·Р° РјРёРЅСѓСЃРѕРј СЂР°СЃС€РёСЂРµРЅРёСЏ
 			int Ptr=lenName;
 			for (int i=0; i<lenName; i++)
 			{
@@ -1259,7 +1259,7 @@ int AdvCmpProc::GetMp3(dupFile *cur, int GetInfo)   //GetInfo=0-только битрейт и
 					}
 					cur->MusicArtist[i++]=Name[j];
 				}
-				//!!! память обнулена - cur->MusicArtist[i]=0 не делаем !!!
+				//!!! РїР°РјСЏС‚СЊ РѕР±РЅСѓР»РµРЅР° - cur->MusicArtist[i]=0 РЅРµ РґРµР»Р°РµРј !!!
 				FSF.RTrim(cur->MusicArtist);
 				FSF.LTrim(cur->MusicArtist);
 				if (*cur->MusicArtist)
@@ -1281,7 +1281,7 @@ int AdvCmpProc::GetMp3(dupFile *cur, int GetInfo)   //GetInfo=0-только битрейт и
 					for (int i=0; Name[i] && i<lenName && i<nSize; i++)
 						cur->MusicTitle[i]=Name[i];
 				}
-				//!!! память обнулена, cur->MusicTitle[i]=0 не делаем !!!
+				//!!! РїР°РјСЏС‚СЊ РѕР±РЅСѓР»РµРЅР°, cur->MusicTitle[i]=0 РЅРµ РґРµР»Р°РµРј !!!
 				FSF.RTrim(cur->MusicTitle);
 				FSF.LTrim(cur->MusicTitle);
 				if (*cur->MusicTitle)
@@ -1401,7 +1401,7 @@ int AdvCmpProc::GetPic(dupFile *cur, int GetInfo)
 bool CmpNameEx(const wchar_t *FileName1, const wchar_t *FileName2)
 {
 	bool ret=false;
-	// определим указатель на расширение файла
+	// РѕРїСЂРµРґРµР»РёРј СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЂР°СЃС€РёСЂРµРЅРёРµ С„Р°Р№Р»Р°
 	wchar_t *p1=(wchar_t *)FileName1, *p2=(wchar_t *)FileName2;
 	while (*p1++) ;
 	wchar_t *pEnd1=p1-1;
@@ -1412,10 +1412,10 @@ bool CmpNameEx(const wchar_t *FileName1, const wchar_t *FileName2)
 
 	int lenName1=(*p1== L'.'?p1-FileName1:pEnd1-FileName1);
 	int lenName2=(*p2== L'.'?p2-FileName2:pEnd2-FileName2);
-	// если есть только расширение
+	// РµСЃР»Рё РµСЃС‚СЊ С‚РѕР»СЊРєРѕ СЂР°СЃС€РёСЂРµРЅРёРµ
 	if (!lenName1 && !lenName2) return true;
 	if (!lenName1 || !lenName2) return false;
-	// если нет расширения
+	// РµСЃР»Рё РЅРµС‚ СЂР°СЃС€РёСЂРµРЅРёСЏ
 	if (*p1 != L'.') p1=pEnd1;
 	if (*p2 != L'.') p2=pEnd2;
 
@@ -1539,16 +1539,16 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 			{
 				ShowDupMsg(GetPosToName(pList->Dir),L"*",false);
 				dupFile *cur=&dFList.F[i];
-				// предпроход для сбора первичной инфы о композиции. для ускорения поиска дублей!
+				// РїСЂРµРґРїСЂРѕС…РѕРґ РґР»СЏ СЃР±РѕСЂР° РїРµСЂРІРёС‡РЅРѕР№ РёРЅС„С‹ Рѕ РєРѕРјРїРѕР·РёС†РёРё. РґР»СЏ СѓСЃРєРѕСЂРµРЅРёСЏ РїРѕРёСЃРєР° РґСѓР±Р»РµР№!
 				if (Opt.DupMusic)
 					GetMp3(cur,0);
-				// а теперь предпроход для рисунков
+				// Р° С‚РµРїРµСЂСЊ РїСЂРµРґРїСЂРѕС…РѕРґ РґР»СЏ СЂРёСЃСѓРЅРєРѕРІ
 				if (Opt.DupPic)
 					GetPic(cur,0);
 			}
 	}
 
-	// ищем дубли, первый проход - ускоренный
+	// РёС‰РµРј РґСѓР±Р»Рё, РїРµСЂРІС‹Р№ РїСЂРѕС…РѕРґ - СѓСЃРєРѕСЂРµРЅРЅС‹Р№
 	if (Opt.DupName || Opt.DupSize || (Opt.DupContents && !Opt.DupPic))
 	{
 		for (int i=0, IndexGroup=1; i<dFList.iCount && !bBrokenByEsc; i++)
@@ -1571,23 +1571,23 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 						if (Opt.DupName==2)
 						{
 							if (!CmpNameEx(src->fi.FileName,cur->fi.FileName))
-								continue;   // разные, сразу переходим к следующему
+								continue;   // СЂР°Р·РЅС‹Рµ, СЃСЂР°Р·Сѓ РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ
 						}
 						else
 						{
 							if (FSF.LStricmp(src->fi.FileName,cur->fi.FileName))
-								continue;   // разные, сразу переходим к следующему
+								continue;   // СЂР°Р·РЅС‹Рµ, СЃСЂР°Р·Сѓ РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ
 						}
 					}
 					if (Opt.DupSize)
 					{
 						if (src->fi.nFileSize!=cur->fi.nFileSize)
-							continue;   // разные, сразу переходим к следующему
+							continue;   // СЂР°Р·РЅС‹Рµ, СЃСЂР°Р·Сѓ РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ
 					}
 					if (Opt.DupContents && !Opt.DupPic && !Opt.DupMusic)
 					{
 						if (src->fi.nFileSize!=cur->fi.nFileSize)
-							continue;   // разные, сразу переходим к следующему
+							continue;   // СЂР°Р·РЅС‹Рµ, СЃСЂР°Р·Сѓ РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ
 					}
 					if (Opt.DupContents && !Opt.DupPic && Opt.DupMusic)
 					{
@@ -1598,7 +1598,7 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 						}
 						else
 						{
-							continue;   // разные, сразу переходим к следующему
+							continue;   // СЂР°Р·РЅС‹Рµ, СЃСЂР°Р·Сѓ РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ
 						}
 					}
 					bSetGroupItems=true;
@@ -1616,12 +1616,12 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 //DebugMsg(cur->FileName,src->FileName,IndexGroup);
 				}
 			}
-			if (bSetGroupItems) // есть группа
+			if (bSetGroupItems) // РµСЃС‚СЊ РіСЂСѓРїРїР°
 			{
 				dFList.GroupItems=IndexGroup;
 				IndexGroup++;
 			}
-			if (!Opt.DupContents)  // там свой индикатор!
+			if (!Opt.DupContents)  // С‚Р°Рј СЃРІРѕР№ РёРЅРґРёРєР°С‚РѕСЂ!
 			{
 				CmpInfo.ProcSize+=dFList.F[i].fi.nFileSize;
 				CmpInfo.Proc=i+1;
@@ -1631,13 +1631,13 @@ int AdvCmpProc::Duplicate(const struct DirList *pList)
 
 	if (Opt.DupContents)
 	{
-		// собираем инф-цию
+		// СЃРѕР±РёСЂР°РµРј РёРЅС„-С†РёСЋ
 		for (int i=0; i<dFList.iCount && !bBrokenByEsc; i++)
 		{
 			if (CheckForEsc())
 				break;
 			dupFile *cur=&dFList.F[i];
-			cur->nDupGroup=0; // скинем, проверять будем флаг RCIF_EQUAL
+			cur->nDupGroup=0; // СЃРєРёРЅРµРј, РїСЂРѕРІРµСЂСЏС‚СЊ Р±СѓРґРµРј С„Р»Р°Рі RCIF_EQUAL
 
 			ShowDupMsg(GetPosToName(cur->fi.Dir),cur->fi.FileName,false);
 /*
@@ -1651,43 +1651,43 @@ else
 //DebugMsg(cur->FileName,L"tut1",i);
 				CmpInfo.ProcSize+=cur->fi.nFileSize;
 				CmpInfo.Proc=i+1;
-				continue;   // обрабатывали, переходим к следующему
+				continue;   // РѕР±СЂР°Р±Р°С‚С‹РІР°Р»Рё, РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ
 			}
 			if (cur->fi.nFileSize==0)
 			{
 				CmpInfo.Proc=i+1;
-				continue;   // пустой, переходим к следующему
+				continue;   // РїСѓСЃС‚РѕР№, РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ
 			}
 			if (Opt.DupPic && bGflLoaded && GetPic(cur,1))
 			{
 				CmpInfo.ProcSize+=cur->fi.nFileSize;
 				CmpInfo.Proc=i+1;
-				continue;   // обработали, переходим к следующему
+				continue;   // РѕР±СЂР°Р±РѕС‚Р°Р»Рё, РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ
 			}
-			if (Opt.DupMusic && (cur->dwFlags&RCIF_MUSIC) && (cur->dwFlags&RCIF_EQUAL) && !(Opt.DupMusicArtist || Opt.DupMusicTitle) && GetMp3(cur,3))  // анализируем поток
+			if (Opt.DupMusic && (cur->dwFlags&RCIF_MUSIC) && (cur->dwFlags&RCIF_EQUAL) && !(Opt.DupMusicArtist || Opt.DupMusicTitle) && GetMp3(cur,3))  // Р°РЅР°Р»РёР·РёСЂСѓРµРј РїРѕС‚РѕРє
 			{
 //DebugMsg(cur->FileName,L"tut2",i);
 				CmpInfo.ProcSize+=cur->fi.nFileSize;
 				CmpInfo.Proc=i+1;
-				continue;   // обработали, переходим к следующему
+				continue;   // РѕР±СЂР°Р±РѕС‚Р°Р»Рё, РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ
 			}
-			if (Opt.DupMusic && (cur->dwFlags&RCIF_MUSIC) && (Opt.DupMusicArtist || Opt.DupMusicTitle) && GetMp3(cur,2))  // теги
+			if (Opt.DupMusic && (cur->dwFlags&RCIF_MUSIC) && (Opt.DupMusicArtist || Opt.DupMusicTitle) && GetMp3(cur,2))  // С‚РµРіРё
 			{
 				CmpInfo.ProcSize+=cur->fi.nFileSize;
 				CmpInfo.Proc=i+1;
-				continue;   // обработали, переходим к следующему
+				continue;   // РѕР±СЂР°Р±РѕС‚Р°Р»Рё, РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ
 			}
 			if (Opt.DupContents && !(Opt.DupPic==1 || Opt.DupMusic==1) && !cur->dwCRC)
 			{
 				cur->dwCRC=GetCRC(cur);
 				CmpInfo.Proc=i+1;
-				continue;   // обработали, переходим к следующему
+				continue;   // РѕР±СЂР°Р±РѕС‚Р°Р»Рё, РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ
 			}
 			CmpInfo.ProcSize+=cur->fi.nFileSize;
 			CmpInfo.Proc=i+1;
 		}
 
-		// обрабатываем, ищем дубли
+		// РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј, РёС‰РµРј РґСѓР±Р»Рё
 		for (int i=0, IndexGroup=1; i<dFList.iCount && !bBrokenByEsc; i++)
 		{
 			if (CheckForEsc())
@@ -1706,14 +1706,14 @@ else
 				if (!cur->nDupGroup)
 				{
 					if ((Opt.DupName || Opt.DupSize || (Opt.DupContents && !Opt.DupPic && !Opt.DupMusic)) && !(cur->dwFlags&RCIF_EQUAL))
-						continue;   // обрабатывали -они разные, переходим к следующему
+						continue;   // РѕР±СЂР°Р±Р°С‚С‹РІР°Р»Рё -РѕРЅРё СЂР°Р·РЅС‹Рµ, РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ
 
 					if (Opt.DupPic && (src->dwFlags&RCIF_PIC) && (cur->dwFlags&RCIF_PIC))
 					{
 						if (Opt.DupPicSize)
 						{
 							if (src->PicWidth!=cur->PicWidth || src->PicHeight!=cur->PicHeight)
-								continue;   // разные, сразу переходим к следующему
+								continue;   // СЂР°Р·РЅС‹Рµ, СЃСЂР°Р·Сѓ РїРµСЂРµС…РѕРґРёРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ
 						}
 						if (Opt.DupPicFmt)
 						{
@@ -1727,7 +1727,7 @@ else
 								continue;
 							}
 						}
-						// сравнивалка картинок
+						// СЃСЂР°РІРЅРёРІР°Р»РєР° РєР°СЂС‚РёРЅРѕРє
 						// Yermalayeu Ihar, Minsk, Belarus, 2002-2009
 						{
 							int nCmpDiff   = Opt.DupPicDiff*8;
@@ -1831,7 +1831,7 @@ else
 									continue;
 							}
 						}
-						if ((!src->dwCRC || !cur->dwCRC || src->dwCRC!=cur->dwCRC))   // CRC аудиопотока
+						if ((!src->dwCRC || !cur->dwCRC || src->dwCRC!=cur->dwCRC))   // CRC Р°СѓРґРёРѕРїРѕС‚РѕРєР°
 							continue;
 					}
 					else
@@ -1857,7 +1857,7 @@ else
 	if (bBrokenByEsc)
 		goto END;
 
-	// освободимся от уникальных
+	// РѕСЃРІРѕР±РѕРґРёРјСЃСЏ РѕС‚ СѓРЅРёРєР°Р»СЊРЅС‹С…
 	FSF.qsort(dFList.F,dFList.iCount,sizeof(dFList.F[0]),dupSortListByGroup, NULL);
 	int Index;
 	for (Index=dFList.iCount-1; Index>=0 && !dFList.F[Index].nDupGroup; Index--)

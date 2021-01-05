@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ****************************************************************************/
 
 /****************************************************************************
- * ID-константы диалога
+ * ID-РєРѕРЅСЃС‚Р°РЅС‚С‹ РґРёР°Р»РѕРіР°
  ****************************************************************************/
 enum {
 	DlgBORDER = 0,  // 0
@@ -172,7 +172,7 @@ struct ParamStore
 
 
 /****************************************************************************
- * Обработчик диалога для ShowOptDialog
+ * РћР±СЂР°Р±РѕС‚С‡РёРє РґРёР°Р»РѕРіР° РґР»СЏ ShowOptDialog
  ****************************************************************************/
 
 intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProcThunk(HANDLE hDlg, intptr_t Msg, intptr_t Param1, void *Param2)
@@ -184,7 +184,7 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProcThunk(HANDLE hDlg, intptr_t Msg, 
 void AdvCmpDlgOpt::Close()
 {
 	bSkipSaveOpt=false;
-	// определены из диалога опций
+	// РѕРїСЂРµРґРµР»РµРЅС‹ РёР· РґРёР°Р»РѕРіР° РѕРїС†РёР№
 	if (Opt.Substr) { free(Opt.Substr); Opt.Substr=NULL; }
 	if (Opt.WinMergePath) { free(Opt.WinMergePath); Opt.WinMergePath=NULL; }
 	if (Opt.DupPath) { free(Opt.DupPath); Opt.DupPath=NULL; }
@@ -252,7 +252,7 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intpt
 						Info.SendDlgMessage(hDlg,DM_ENABLE,DlgSTOPDIFFDUP,(void*)false);
 						Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgSTOPDIFFDUP,(void*)BSTATE_UNCHECKED);
 					}
-					else if (Opt.Mode==MODE_DUP) // дубликаты
+					else if (Opt.Mode==MODE_DUP) // РґСѓР±Р»РёРєР°С‚С‹
 					{
 						for(int i=DlgCMPCASE; i<=DlgIGNORETEMPL; i++)
 							Info.SendDlgMessage(hDlg,DM_SHOWITEM,i,0);
@@ -275,7 +275,7 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intpt
 					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgDIALOG,(void*)BSTATE_CHECKED);
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgUNDERCURSOR,(void*)false);
 				}
-				//------------порядок важен! идем из глубины опций наверх
+				//------------РїРѕСЂСЏРґРѕРє РІР°Р¶РµРЅ! РёРґРµРј РёР· РіР»СѓР±РёРЅС‹ РѕРїС†РёР№ РЅР°РІРµСЂС…
 				if (Opt.LowPrecisionTime)
 					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgPRECISION,(void*)BSTATE_CHECKED);
 				else
@@ -313,7 +313,7 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intpt
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORE,(void*)false);
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgCACHE,(void*)false);
 				}
-				//------------ порядок важен! идем из глубины опций наверх
+				//------------ РїРѕСЂСЏРґРѕРє РІР°Р¶РµРЅ! РёРґРµРј РёР· РіР»СѓР±РёРЅС‹ РѕРїС†РёР№ РЅР°РІРµСЂС…
 				if (Opt.PartlyFull)
 				{
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgEPARTLYKB,(void*)false);
@@ -332,7 +332,7 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intpt
 				{
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgIGNORETEMPL,(void*)false);
 				}
-				//------------порядок важен! идем из глубины опций наверх
+				//------------РїРѕСЂСЏРґРѕРє РІР°Р¶РµРЅ! РёРґРµРј РёР· РіР»СѓР±РёРЅС‹ РѕРїС†РёР№ РЅР°РІРµСЂС…
 				if (Opt.CacheIgnore)
 					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgCACHEIGNORE,(void*)BSTATE_CHECKED);
 				else
@@ -434,7 +434,7 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intpt
 				if (!LPanel.bCurFile || !RPanel.bCurFile || Opt.Mode!=MODE_CMP)
 					Info.SendDlgMessage(hDlg,DM_ENABLE,DlgUNDERCURSOR,(void*)false);
 
-				// определим остальные опции...
+				// РѕРїСЂРµРґРµР»РёРј РѕСЃС‚Р°Р»СЊРЅС‹Рµ РѕРїС†РёРё...
 				Opt.ProcessHidden=GetFarSetting(FSSF_PANEL,L"ShowHidden")?true:false;
 				Opt.hCustomFilter=INVALID_HANDLE_VALUE;
 
@@ -445,8 +445,8 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intpt
 
 	/************************************************************************/
 
-		case DN_LISTHOTKEY:  // для плагина это
-		case DN_LISTCHANGE:  //  одно и тоже
+		case DN_LISTHOTKEY:  // РґР»СЏ РїР»Р°РіРёРЅР° СЌС‚Рѕ
+		case DN_LISTCHANGE:  //  РѕРґРЅРѕ Рё С‚РѕР¶Рµ
 			if (Param1 == DlgMODEBOX)
 			{
 				if (Param2 == (void*)MODE_DUP)
@@ -525,7 +525,7 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intpt
 					Info.SendDlgMessage(hDlg,DM_SETCHECK,DlgLIGHTSYNC,(void*)(Opt.LightSync?BSTATE_CHECKED:BSTATE_UNCHECKED));
 					}
 				}
-				return Msg==DN_LISTHOTKEY?false:true;    // апи требует разного возврата - сделаем разным
+				return Msg==DN_LISTHOTKEY?false:true;    // Р°РїРё С‚СЂРµР±СѓРµС‚ СЂР°Р·РЅРѕРіРѕ РІРѕР·РІСЂР°С‚Р° - СЃРґРµР»Р°РµРј СЂР°Р·РЅС‹Рј
 			}
 			break;
 
@@ -905,7 +905,7 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intpt
 				FarSettingsCreate settings={sizeof(FarSettingsCreate),MainGuid,INVALID_HANDLE_VALUE};
 				if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings))
 				{
-					size_t Root=0; // корень ключа
+					size_t Root=0; // РєРѕСЂРµРЅСЊ РєР»СЋС‡Р°
 					for (int i=DlgMODEBOX; i<=DlgIGNORETEMPL; i++)
 					{
 						if (StoreOpt[i].OptName && Info.SendDlgMessage(hDlg,DM_ENABLE,i,(void*)-1))
@@ -974,7 +974,7 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intpt
 					FarSettingsCreate settings={sizeof(FarSettingsCreate),MainGuid,INVALID_HANDLE_VALUE};
 					if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings))
 					{
-						size_t Root=0; // корень ключа
+						size_t Root=0; // РєРѕСЂРµРЅСЊ РєР»СЋС‡Р°
 						for (int i=DlgMODEBOX; i<sizeof(StoreOpt)/sizeof(StoreOpt[0]); i++)
 						{
 							if (StoreOpt[i].OptName && Info.SendDlgMessage(hDlg,DM_ENABLE,i,(void*)-1))
@@ -988,7 +988,7 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intpt
 					}
 				}
 
-				// уточним опции для Opt.DupContents
+				// СѓС‚РѕС‡РЅРёРј РѕРїС†РёРё РґР»СЏ Opt.DupContents
 				if (Opt.DupContents && (Opt.DupPic==1 || Opt.DupMusic==1))
 				{
 					if (Opt.DupPic==1 && Opt.DupMusic==2) Opt.DupMusic=1;
@@ -1003,14 +1003,14 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intpt
 }
 
 /****************************************************************************
- * Читает настройки из реестра, показывает диалог с опциями сравнения,
- * заполняет структуру Opt, сохраняет (если надо) новые настройки в реестре,
- * возвращает true, если пользователь нажал OK
+ * Р§РёС‚Р°РµС‚ РЅР°СЃС‚СЂРѕР№РєРё РёР· СЂРµРµСЃС‚СЂР°, РїРѕРєР°Р·С‹РІР°РµС‚ РґРёР°Р»РѕРі СЃ РѕРїС†РёСЏРјРё СЃСЂР°РІРЅРµРЅРёСЏ,
+ * Р·Р°РїРѕР»РЅСЏРµС‚ СЃС‚СЂСѓРєС‚СѓСЂСѓ Opt, СЃРѕС…СЂР°РЅСЏРµС‚ (РµСЃР»Рё РЅР°РґРѕ) РЅРѕРІС‹Рµ РЅР°СЃС‚СЂРѕР№РєРё РІ СЂРµРµСЃС‚СЂРµ,
+ * РІРѕР·РІСЂР°С‰Р°РµС‚ true, РµСЃР»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅР°Р¶Р°Р» OK
  ****************************************************************************/
 int AdvCmpDlgOpt::ShowOptDialog()
 {
-	const intptr_t dW = 68;   // ширина
-	const intptr_t dH = 25;   // высота
+	const intptr_t dW = 68;   // С€РёСЂРёРЅР°
+	const intptr_t dH = 25;   // РІС‹СЃРѕС‚Р°
 
 	struct FarDialogItem DialogItems[] = {
 		//			Type	X1	Y1	X2	Y2		Selected	History					Mask															Flags	Data	MaxLen	UserParam
@@ -1018,7 +1018,7 @@ int AdvCmpDlgOpt::ShowOptDialog()
 
 		/* 1*/{DI_TEXT,       0, 1,  33,   0, 0, 0,                   0,                                0, GetMsg(MMode),0,0},
 		/* 2*/{DI_COMBOBOX,  35, 1,dW-3,   0, 0, 0,                   0,DIF_LISTAUTOHIGHLIGHT|DIF_DROPDOWNLIST|DIF_LISTWRAPMODE|DIF_FOCUS, L"",0,0},
-					/// Режимы "сравнение" и "синхронизация"
+					/// Р РµР¶РёРјС‹ "СЃСЂР°РІРЅРµРЅРёРµ" Рё "СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ"
 		/* 3*/{DI_CHECKBOX,   2, 2,   0,   0, 0, 0,                   0,                                0, GetMsg(MCmpCase),0,0},
 		/* 4*/{DI_CHECKBOX,   2, 3,   0,   0, 1, 0,                   0,                                0, GetMsg(MCmpSize),0,0},
 		/* 5*/{DI_CHECKBOX,   2, 4,   0,   0, 1, 0,                   0,                                0, GetMsg(MCmpTime),0,0},
@@ -1038,7 +1038,7 @@ int AdvCmpDlgOpt::ShowOptDialog()
 		/*19*/{DI_FIXEDIT,   54,10,dW-3,   0, 0, 0,       L"##########",                     DIF_MASKEDIT, L"64",0,0},
 		/*20*/{DI_CHECKBOX,   6,11,  22,   0, 0, 0,                   0,                                0, GetMsg(MCmpIgnore),0,0},
 		/*21*/{DI_COMBOBOX,   0,11,dW-3,   0, 0, 0,                   0,DIF_LISTAUTOHIGHLIGHT|DIF_DROPDOWNLIST|DIF_LISTWRAPMODE, L"",0,0},
-					/// Режим "дубликаты"
+					/// Р РµР¶РёРј "РґСѓР±Р»РёРєР°С‚С‹"
 		/*22*/{DI_EDIT,       2, 2,dW-3,   0, 0, L"AdvCmpDupPath",    0,                      DIF_HISTORY, (LPanel.PInfo.Flags&PFLAGS_FOCUS?LPanel.Dir:RPanel.Dir),0,0},
 		/*23*/{DI_CHECKBOX,   2, 3,   0,   0, 1, 0,                   0,                       DIF_3STATE, GetMsg(MDupName),0,0},
 		/*24*/{DI_CHECKBOX,   2, 4,   0,   0, 0, 0,                   0,                                0, GetMsg(MDupSize),0,0},
@@ -1052,7 +1052,7 @@ int AdvCmpDlgOpt::ShowOptDialog()
 		/*32*/{DI_CHECKBOX,  35, 9,   0,   0, 0, 0,                   0,                       DIF_3STATE, GetMsg(MDupMusicTitle),0,0},
 		/*33*/{DI_CHECKBOX,  10,10,   0,   0, 0, 0,                   0,                                0, GetMsg(MDupMusicDuration),0,0},
 		/*34*/{DI_FIXEDIT,    0,10,   2,   0, 0, 0,              L"999",                     DIF_MASKEDIT, L"3",0,0},
-					/// Прочие опции
+					/// РџСЂРѕС‡РёРµ РѕРїС†РёРё
 		/*35*/{DI_TEXT,      -1,12,   0,   0, 0, 0,                   0,                    DIF_SEPARATOR, GetMsg(MTitleOptions),0,0},
 		/*36*/{DI_CHECKBOX,   2,13,   0,   0, 0, 0,                   0,                       DIF_3STATE, GetMsg(MSubfolders),0,0},
 		/*37*/{DI_TEXT,       0,13,   0,   0, 0, 0,                   0,                                0, GetMsg(MMaxScanDepth),0,0},
@@ -1079,7 +1079,7 @@ int AdvCmpDlgOpt::ShowOptDialog()
 		/*57*/{DI_BUTTON,     0,23,   0,   0, 0, 0,                   0,                  DIF_CENTERGROUP, GetMsg(MCancel),0,0}
 	};
 
-	// динамические координаты для строк
+	// РґРёРЅР°РјРёС‡РµСЃРєРёРµ РєРѕРѕСЂРґРёРЅР°С‚С‹ РґР»СЏ СЃС‚СЂРѕРє
 	DialogItems[DlgMODE].X1 = DialogItems[DlgMODE].X2 - wcslen(DialogItems[DlgMODE].Data) + (wcschr(DialogItems[DlgMODE].Data, L'&')?1:0);
 	DialogItems[DlgIGNORESEC].X1 = DialogItems[DlgSECONDS].X1 + wcslen(DialogItems[DlgSECONDS].Data) - (wcschr(DialogItems[DlgSECONDS].Data, L'&')?1:0) + 5;
 	DialogItems[DlgECMPSKIP].X1 = DialogItems[DlgLCMPSKIP].X1 + wcslen(DialogItems[DlgLCMPSKIP].Data) - (wcschr(DialogItems[DlgLCMPSKIP].Data, L'&')?1:0) + 5;
@@ -1095,11 +1095,11 @@ int AdvCmpDlgOpt::ShowOptDialog()
 	DialogItems[DlgDUPMUSICDURE].X1 = DialogItems[DlgDUPMUSICDURL].X1 + wcslen(DialogItems[DlgDUPMUSICDURL].Data) - (wcschr(DialogItems[DlgDUPMUSICDURL].Data, L'&')?1:0) + 5;
 	DialogItems[DlgDUPMUSICDURE].X2 += DialogItems[DlgDUPMUSICDURE].X1;
 
-	// расставим опции в диалоге
+	// СЂР°СЃСЃС‚Р°РІРёРј РѕРїС†РёРё РІ РґРёР°Р»РѕРіРµ
 	FarSettingsCreate settings={sizeof(FarSettingsCreate),MainGuid,INVALID_HANDLE_VALUE};
 	if (Info.SettingsControl(INVALID_HANDLE_VALUE,SCTL_CREATE,0,&settings))
 	{
-		int Root=0; // корень ключа
+		int Root=0; // РєРѕСЂРµРЅСЊ РєР»СЋС‡Р°
 		for (int i=DlgMODEBOX; i<sizeof(StoreOpt)/sizeof(StoreOpt[0]); i++)
 		{
 			FarSettingsItem item={sizeof(FarSettingsItem),Root,StoreOpt[i].OptName,FST_QWORD};
@@ -1128,7 +1128,7 @@ int AdvCmpDlgOpt::ShowOptDialog()
 					DialogItems[i].Selected=(int)item.Number;
 			}
 		}
-		// узнаем пользовательский путь до WinMerge
+		// СѓР·РЅР°РµРј РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёР№ РїСѓС‚СЊ РґРѕ WinMerge
 		Opt.WinMergePath=NULL;
 		FarSettingsItem item={sizeof(FarSettingsItem),Root,L"WinMergePath",FST_STRING};
 		if (Info.SettingsControl(settings.Handle,SCTL_GET,0,&item))
@@ -1144,13 +1144,13 @@ int AdvCmpDlgOpt::ShowOptDialog()
 		Info.SettingsControl(settings.Handle,SCTL_FREE,0,0);
 	}
 
-	// комбинированный список с режимами сравнения
+	// РєРѕРјР±РёРЅРёСЂРѕРІР°РЅРЅС‹Р№ СЃРїРёСЃРѕРє СЃ СЂРµР¶РёРјР°РјРё СЃСЂР°РІРЅРµРЅРёСЏ
 	FarListItem itemModeBox[3]={};
 	int n = sizeof(itemModeBox) / sizeof(itemModeBox[0]);
 	for (int i=0; i<n; i++)
 	{
 		itemModeBox[i].Flags = 0;
-		// !!! обходим непонятки в фаре: нельзя изменить значение LIF_SELECTED из DN_INITDIALOG
+		// !!! РѕР±С…РѕРґРёРј РЅРµРїРѕРЅСЏС‚РєРё РІ С„Р°СЂРµ: РЅРµР»СЊР·СЏ РёР·РјРµРЅРёС‚СЊ Р·РЅР°С‡РµРЅРёРµ LIF_SELECTED РёР· DN_INITDIALOG
 		if ((LPanel.PInfo.Flags&PFLAGS_PLUGIN) || (RPanel.PInfo.Flags&PFLAGS_PLUGIN))
 			itemModeBox[0].Flags |= LIF_SELECTED;
 		else
@@ -1163,7 +1163,7 @@ int AdvCmpDlgOpt::ShowOptDialog()
 	FarList ModeBox={sizeof(FarList),n,itemModeBox};
 	DialogItems[DlgMODEBOX].ListItems = &ModeBox;
 
-	// комбинированный список с шаблонами фильтра по умолчанию
+	// РєРѕРјР±РёРЅРёСЂРѕРІР°РЅРЅС‹Р№ СЃРїРёСЃРѕРє СЃ С€Р°Р±Р»РѕРЅР°РјРё С„РёР»СЊС‚СЂР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 	FarListItem itemIgnoreTemplates[3]={};
 	n = sizeof(itemIgnoreTemplates) / sizeof(itemIgnoreTemplates[0]);
 	for (int i=0; i<n; i++)
@@ -1176,7 +1176,7 @@ int AdvCmpDlgOpt::ShowOptDialog()
 	FarList IgnoreTemplates={sizeof(FarList),n,itemIgnoreTemplates};
 	DialogItems[DlgIGNORETEMPL].ListItems = &IgnoreTemplates;
 
-	// комбинированный список с степенью различий картинок
+	// РєРѕРјР±РёРЅРёСЂРѕРІР°РЅРЅС‹Р№ СЃРїРёСЃРѕРє СЃ СЃС‚РµРїРµРЅСЊСЋ СЂР°Р·Р»РёС‡РёР№ РєР°СЂС‚РёРЅРѕРє
 	FarListItem itemPicDiffBox[5]={};
 	n = sizeof(itemPicDiffBox) / sizeof(itemPicDiffBox[0]);
 	for (int i=0; i<n; i++)

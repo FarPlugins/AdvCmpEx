@@ -2,7 +2,7 @@
     string.cpp
     Copyright (C) 2002-2008 zg
 
-    · ¨Æ®¨® „‚ÆÁ≠•≠®Ô¨® :-)
+    —Å –º–æ–∏–º–∏ —É—Ç–æ—á–Ω–µ–Ω–∏—è–º–∏ :-)
 */
 /*
 Redistribution and use in source and binary forms, with or without
