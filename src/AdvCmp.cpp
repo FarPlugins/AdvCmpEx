@@ -34,30 +34,30 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AdvCmpProc.hpp"
 
 /****************************************************************************
- * Копии стандартных структур FAR
+ * РљРѕРїРёРё СЃС‚Р°РЅРґР°СЂС‚РЅС‹С… СЃС‚СЂСѓРєС‚СѓСЂ FAR
  ****************************************************************************/
 struct PluginStartupInfo Info;
 struct FarStandardFunctions FSF;
 
 /****************************************************************************
- * Набор переменных
+ * РќР°Р±РѕСЂ РїРµСЂРµРјРµРЅРЅС‹С…
  ****************************************************************************/
-struct Options Opt;                 //Текущие настройки плагина
-struct CacheCmp Cache;              //Кеш сравнения "по содержимому"
+struct Options Opt;                 //РўРµРєСѓС‰РёРµ РЅР°СЃС‚СЂРѕР№РєРё РїР»Р°РіРёРЅР°
+struct CacheCmp Cache;              //РљРµС€ СЃСЂР°РІРЅРµРЅРёСЏ "РїРѕ СЃРѕРґРµСЂР¶РёРјРѕРјСѓ"
 struct FarPanelInfo LPanel,RPanel;
 struct TotalCmpInfo CmpInfo;
 struct FarWindowsInfo WinInfo;
 bool bBrokenByEsc;
 bool bStartMsg;
 bool bGflLoaded=false;
-bool bBASSLoaded=false;   // bass.dll загружена?
+bool bBASSLoaded=false;   // bass.dll Р·Р°РіСЂСѓР¶РµРЅР°?
 HMODULE GflHandle=NULL;
 HMODULE BASSHandle=NULL;
 HANDLE hConInp=INVALID_HANDLE_VALUE;
 
 
 /****************************************************************************
- * Обёртка сервисной функции FAR: получение строки из .lng-файла
+ * РћР±С‘СЂС‚РєР° СЃРµСЂРІРёСЃРЅРѕР№ С„СѓРЅРєС†РёРё FAR: РїРѕР»СѓС‡РµРЅРёРµ СЃС‚СЂРѕРєРё РёР· .lng-С„Р°Р№Р»Р°
  ****************************************************************************/
 const wchar_t *GetMsg(int MsgId)
 {
@@ -65,7 +65,7 @@ const wchar_t *GetMsg(int MsgId)
 }
 
 /****************************************************************************
- * Показ предупреждения-ошибки с заголовком и одной строчкой
+ * РџРѕРєР°Р· РїСЂРµРґСѓРїСЂРµР¶РґРµРЅРёСЏ-РѕС€РёР±РєРё СЃ Р·Р°РіРѕР»РѕРІРєРѕРј Рё РѕРґРЅРѕР№ СЃС‚СЂРѕС‡РєРѕР№
  ****************************************************************************/
 void ErrorMsg(DWORD Title, DWORD Body)
 {
@@ -74,7 +74,7 @@ void ErrorMsg(DWORD Title, DWORD Body)
 }
 
 /****************************************************************************
- * Показ предупреждения "Yes-No" с заголовком и одной строчкой
+ * РџРѕРєР°Р· РїСЂРµРґСѓРїСЂРµР¶РґРµРЅРёСЏ "Yes-No" СЃ Р·Р°РіРѕР»РѕРІРєРѕРј Рё РѕРґРЅРѕР№ СЃС‚СЂРѕС‡РєРѕР№
  ****************************************************************************/
 bool YesNoMsg(DWORD Title, DWORD Body)
 {
@@ -82,7 +82,7 @@ bool YesNoMsg(DWORD Title, DWORD Body)
 	return (!Info.Message(&MainGuid,&YesNoMsgGuid,FMSG_WARNING|FMSG_MB_YESNO,0,MsgItems,2,0));
 }
 
-// Сообщение для отладки
+// РЎРѕРѕР±С‰РµРЅРёРµ РґР»СЏ РѕС‚Р»Р°РґРєРё
 int DebugMsg(wchar_t *msg, wchar_t *msg2, unsigned int i)
 {
   wchar_t *MsgItems[] = {L"DebugMsg", L"", L"", L""};
@@ -196,7 +196,7 @@ void FreeDirList(struct DirList *pList)
 }
 
 /****************************************************************************
- * Динамическая загрузка необходимых dll
+ * Р”РёРЅР°РјРёС‡РµСЃРєР°СЏ Р·Р°РіСЂСѓР·РєР° РЅРµРѕР±С…РѕРґРёРјС‹С… dll
  ****************************************************************************/
 
 ///  VisComp.dll
@@ -441,7 +441,7 @@ bool LoadBASS(wchar_t *PlugPath)
 
 
 /****************************************************************************
- * Эти функции плагина FAR вызывает в первую очередь
+ * Р­С‚Рё С„СѓРЅРєС†РёРё РїР»Р°РіРёРЅР° FAR РІС‹Р·С‹РІР°РµС‚ РІ РїРµСЂРІСѓСЋ РѕС‡РµСЂРµРґСЊ
  ****************************************************************************/
 void WINAPI GetGlobalInfoW(struct GlobalInfo *pInfo)
 {
@@ -454,7 +454,7 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *pInfo)
 	pInfo->Author=L"Alexey Samlyukov";
 }
 
-// заполним структуру PluginStartupInfo и сделаем ряд полезных действий...
+// Р·Р°РїРѕР»РЅРёРј СЃС‚СЂСѓРєС‚СѓСЂСѓ PluginStartupInfo Рё СЃРґРµР»Р°РµРј СЂСЏРґ РїРѕР»РµР·РЅС‹С… РґРµР№СЃС‚РІРёР№...
 void WINAPI SetStartupInfoW(const struct PluginStartupInfo *pInfo)
 {
 	::Info = *pInfo;
@@ -463,7 +463,7 @@ void WINAPI SetStartupInfoW(const struct PluginStartupInfo *pInfo)
 		FSF = *pInfo->FSF;
 		::Info.FSF = &FSF;
 
-		// обнулим кэш (туда будем помещать результаты сравнения)
+		// РѕР±РЅСѓР»РёРј РєСЌС€ (С‚СѓРґР° Р±СѓРґРµРј РїРѕРјРµС‰Р°С‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚С‹ СЃСЂР°РІРЅРµРЅРёСЏ)
 		memset(&Cache,0,sizeof(Cache));
 
 		wchar_t PlugPath[MAX_PATH];
@@ -476,8 +476,8 @@ void WINAPI SetStartupInfoW(const struct PluginStartupInfo *pInfo)
 
 
 /****************************************************************************
- * Эту функцию плагина FAR вызывает во вторую очередь - заполним PluginInfo, т.е.
- * скажем FARу какие пункты добавить в "Plugin commands" и "Plugins configuration".
+ * Р­С‚Сѓ С„СѓРЅРєС†РёСЋ РїР»Р°РіРёРЅР° FAR РІС‹Р·С‹РІР°РµС‚ РІРѕ РІС‚РѕСЂСѓСЋ РѕС‡РµСЂРµРґСЊ - Р·Р°РїРѕР»РЅРёРј PluginInfo, С‚.Рµ.
+ * СЃРєР°Р¶РµРј FARСѓ РєР°РєРёРµ РїСѓРЅРєС‚С‹ РґРѕР±Р°РІРёС‚СЊ РІ "Plugin commands" Рё "Plugins configuration".
  ****************************************************************************/
 void WINAPI GetPluginInfoW(struct PluginInfo *pInfo)
 {
@@ -492,14 +492,14 @@ void WINAPI GetPluginInfoW(struct PluginInfo *pInfo)
 
 
 /****************************************************************************
- * Основная функция плагина. FAR её вызывает, когда пользователь зовёт плагин
+ * РћСЃРЅРѕРІРЅР°СЏ С„СѓРЅРєС†РёСЏ РїР»Р°РіРёРЅР°. FAR РµС‘ РІС‹Р·С‹РІР°РµС‚, РєРѕРіРґР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ Р·РѕРІС‘С‚ РїР»Р°РіРёРЅ
  ****************************************************************************/
 HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 {
 	HANDLE hPanel = NULL;
 	struct PanelInfo PInfo={sizeof(PanelInfo)};
 
-	// Если не удалось запросить информацию о активной панели...
+	// Р•СЃР»Рё РЅРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РїСЂРѕСЃРёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ Р°РєС‚РёРІРЅРѕР№ РїР°РЅРµР»Рё...
 	if (!Info.PanelControl(PANEL_ACTIVE,FCTL_GETPANELINFO,0,&PInfo))
 		return hPanel;
 	if (PInfo.Flags & PFLAGS_PANELLEFT)
@@ -514,7 +514,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		Info.PanelControl(PANEL_ACTIVE,FCTL_GETPANELINFO,0,&RPanel.PInfo);
 		RPanel.hPanel=PANEL_ACTIVE;
 	}
-	// Если не удалось запросить информацию о пассивной панели...
+	// Р•СЃР»Рё РЅРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РїСЂРѕСЃРёС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РїР°СЃСЃРёРІРЅРѕР№ РїР°РЅРµР»Рё...
 	if (!Info.PanelControl(PANEL_PASSIVE,FCTL_GETPANELINFO,0,&PInfo))
 		return hPanel;
 	if (PInfo.Flags & PFLAGS_PANELLEFT)
@@ -530,7 +530,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 		RPanel.hPanel=PANEL_PASSIVE;
 	}
 
-	// Если панели нефайловые...
+	// Р•СЃР»Рё РїР°РЅРµР»Рё РЅРµС„Р°Р№Р»РѕРІС‹Рµ...
 	if (LPanel.PInfo.PanelType != PTYPE_FILEPANEL || RPanel.PInfo.PanelType != PTYPE_FILEPANEL)
 	{
 		ErrorMsg(MCmpTitle, MFilePanelsRequired);
@@ -581,7 +581,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 	if (ret==55 || ret==56) // DlgOK || DlgUNDERCURSOR
 	{
 		DWORD dwTicks=GetTickCount();
-		// откроем, для проверок на Esc
+		// РѕС‚РєСЂРѕРµРј, РґР»СЏ РїСЂРѕРІРµСЂРѕРє РЅР° Esc
 		hConInp=CreateFileW(L"CONIN$", GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
 
 		class AdvCmpProc AdvCmp;
@@ -596,7 +596,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 			if (hConInp!=INVALID_HANDLE_VALUE) CloseHandle(hConInp);
 			if (AdvCmp.TitleSaved) SetConsoleTitle(AdvCmp.strFarTitle);
 
-			// Отмечаем файлы и перерисовываем панели. Если нужно показываем сообщение...
+			// РћС‚РјРµС‡Р°РµРј С„Р°Р№Р»С‹ Рё РїРµСЂРµСЂРёСЃРѕРІС‹РІР°РµРј РїР°РЅРµР»Рё. Р•СЃР»Рё РЅСѓР¶РЅРѕ РїРѕРєР°Р·С‹РІР°РµРј СЃРѕРѕР±С‰РµРЅРёРµ...
 			if (!bBrokenByEsc)
 			{
 				{
@@ -648,11 +648,11 @@ HANDLE WINAPI OpenW(const struct OpenInfo *OInfo)
 }
 
 /****************************************************************************
- * Эту функцию FAR вызывает перед выгрузкой плагина
+ * Р­С‚Сѓ С„СѓРЅРєС†РёСЋ FAR РІС‹Р·С‹РІР°РµС‚ РїРµСЂРµРґ РІС‹РіСЂСѓР·РєРѕР№ РїР»Р°РіРёРЅР°
  ****************************************************************************/
 void WINAPI ExitFARW(const struct ExitInfo *pInfo)
 {
-	//Освободим память в случае выгрузки плагина
+	//РћСЃРІРѕР±РѕРґРёРј РїР°РјСЏС‚СЊ РІ СЃР»СѓС‡Р°Рµ РІС‹РіСЂСѓР·РєРё РїР»Р°РіРёРЅР°
 	if (Cache.RCI)
 		free(Cache.RCI);
 	Cache.RCI=NULL;

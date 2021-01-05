@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 #include "AdvCmp.hpp"
 
-// коды возврата для сообщений
+// РєРѕРґС‹ РІРѕР·РІСЂР°С‚Р° РґР»СЏ СЃРѕРѕР±С‰РµРЅРёР№
 enum QueryResult {
 	QR_ABORT=-1,
 	QR_OVERWRITE=0,
@@ -58,17 +58,17 @@ struct FileInfo {
 	}
 };
 
-// элемент для показа в диалоге результатов
+// СЌР»РµРјРµРЅС‚ РґР»СЏ РїРѕРєР°Р·Р° РІ РґРёР°Р»РѕРіРµ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ
 struct cmpFile {
 	FileInfo L,R;
 	DWORD dwFlags;
 };
 
-// массив элементов, для диалога с результатами сравнения
+// РјР°СЃСЃРёРІ СЌР»РµРјРµРЅС‚РѕРІ, РґР»СЏ РґРёР°Р»РѕРіР° СЃ СЂРµР·СѓР»СЊС‚Р°С‚Р°РјРё СЃСЂР°РІРЅРµРЅРёСЏ
 struct cmpFileList {
 	cmpFile *F;
 	int iCount;
-	// для строки статуса:
+	// РґР»СЏ СЃС‚СЂРѕРєРё СЃС‚Р°С‚СѓСЃР°:
 	int Items;
 	int Select;
 	int Identical;
@@ -81,7 +81,7 @@ struct cmpFileList {
 
 const int PIXELS_SIZE=32;
 
-// элемент для показа в диалоге результатов дублей
+// СЌР»РµРјРµРЅС‚ РґР»СЏ РїРѕРєР°Р·Р° РІ РґРёР°Р»РѕРіРµ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РґСѓР±Р»РµР№
 struct dupFile {
 	FileInfo fi;
 	unsigned int nDupGroup;
@@ -90,12 +90,12 @@ struct dupFile {
 
 	int PicWidth;
 	int PicHeight;
-	unsigned char *PicPix;    // массив выборочных пикселей
+	unsigned char *PicPix;    // РјР°СЃСЃРёРІ РІС‹Р±РѕСЂРѕС‡РЅС‹С… РїРёРєСЃРµР»РµР№
 
 	wchar_t *MusicArtist;
 	wchar_t *MusicTitle;
 	DWORD MusicBitrate;
-	DWORD MusicTime;         // продолжительность
+	DWORD MusicTime;         // РїСЂРѕРґРѕР»Р¶РёС‚РµР»СЊРЅРѕСЃС‚СЊ
 
 	dupFile()
 	{
@@ -113,20 +113,20 @@ struct dupFile {
 	}
 };
 
-// массив элементов - список дубликатов
+// РјР°СЃСЃРёРІ СЌР»РµРјРµРЅС‚РѕРІ - СЃРїРёСЃРѕРє РґСѓР±Р»РёРєР°С‚РѕРІ
 struct dupFileList {
 	dupFile *F;
 	int iCount;
-	// для строки статуса
+	// РґР»СЏ СЃС‚СЂРѕРєРё СЃС‚Р°С‚СѓСЃР°
 	int GroupItems;
 	int Del;
 };
 
-// для показа рисунков
+// РґР»СЏ РїРѕРєР°Р·Р° СЂРёСЃСѓРЅРєРѕРІ
 struct PicData {
 	wchar_t *FileName;
-	RECT DrawRect;  //символы
-	RECT GDIRect;   //точки
+	RECT DrawRect;  //СЃРёРјРІРѕР»С‹
+	RECT GDIRect;   //С‚РѕС‡РєРё
 	bool Redraw;
 	bool Loaded;
 	bool FirstRun;
@@ -143,24 +143,24 @@ struct cmpPicFile {
 	struct PicData R;
 };
 
-// сама сравнивалка :)
+// СЃР°РјР° СЃСЂР°РІРЅРёРІР°Р»РєР° :)
 class AdvCmpProc
 {
 		HANDLE hScreen;
 
-		// отсортированный массив указателей на элементы DirList.PPI
+		// РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅС‹Р№ РјР°СЃСЃРёРІ СѓРєР°Р·Р°С‚РµР»РµР№ РЅР° СЌР»РµРјРµРЅС‚С‹ DirList.PPI
 		struct ItemsIndex {
-			PluginPanelItem **pPPI; // элементы
-			int iCount;             // кол-во
+			PluginPanelItem **pPPI; // СЌР»РµРјРµРЅС‚С‹
+			int iCount;             // РєРѕР»-РІРѕ
 		};
 
-		// массив элементов, для диалога с результатами сравнения
+		// РјР°СЃСЃРёРІ СЌР»РµРјРµРЅС‚РѕРІ, РґР»СЏ РґРёР°Р»РѕРіР° СЃ СЂРµР·СѓР»СЊС‚Р°С‚Р°РјРё СЃСЂР°РІРЅРµРЅРёСЏ
 		struct cmpFileList cFList;
-		// массив дубликатов
+		// РјР°СЃСЃРёРІ РґСѓР±Р»РёРєР°С‚РѕРІ
 		struct dupFileList dFList;
-		// два рисунка
+		// РґРІР° СЂРёСЃСѓРЅРєР°
 		struct cmpPicFile CmpPic;
-		// для синхронизации
+		// РґР»СЏ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё
 		bool bAskLOverwrite;
 		bool bAskROverwrite;
 		bool bAskLReadOnly;
@@ -174,7 +174,7 @@ class AdvCmpProc
 		string strFarTitle;
 
 	private:
-			// полезняшки
+			// РїРѕР»РµР·РЅСЏС€РєРё
 		bool GetFarTitle(string &strTitle);
 		void WFD2PPI(WIN32_FIND_DATA &wfd, PluginPanelItem &ppi);
 		inline bool IsNewLine(int c) {return (c == '\r' || c == '\n');}
@@ -195,9 +195,9 @@ class AdvCmpProc
 #if 0
 		int ShowCmpCurDialog(const PluginPanelItem *pLPPI,const PluginPanelItem *pRPPI);
 #endif
-			// диалог результатов сравнения
+			// РґРёР°Р»РѕРі СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ СЃСЂР°РІРЅРµРЅРёСЏ
 		bool MakeFileList(const wchar_t *LDir,const PluginPanelItem *pLPPI,const wchar_t *RDir,const PluginPanelItem *pRPPI,DWORD dwFlag);
-			// синхронизация
+			// СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ
 		int QueryOverwriteFile(const wchar_t *FileName, FILETIME *srcTime, FILETIME *destTime, unsigned __int64 srcSize, unsigned __int64 destSize, int direction, bool bReadOnlyType);
 		int QueryDelete(const wchar_t *FileName, bool bIsDir, bool bReadOnlyType);
 		int FileExists(const wchar_t *FileName, WIN32_FIND_DATA &FindData, int CheckForFilter);
@@ -206,7 +206,7 @@ class AdvCmpProc
 		int SyncDir(const wchar_t *srcDirName, const wchar_t *destDirName, int direction);
 		int DelDir(const wchar_t *DirName);
 		int Synchronize();
-			// дубликаты
+			// РґСѓР±Р»РёРєР°С‚С‹
 		void ShowDupMsg(const wchar_t *Dir, const wchar_t *Name, bool bRedraw);
 		int ScanDir(const wchar_t *DirName, int ScanDepth);
 		DWORD GetCRC(const dupFile *cur);
@@ -228,17 +228,17 @@ class AdvCmpProc
 		int Duplicate(const struct DirList *pList);
 };
 
-// диалог результатов сравнения
+// РґРёР°Р»РѕРі СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ СЃСЂР°РІРЅРµРЅРёСЏ
 void MakeListItemText(wchar_t *buf, cmpFile *cur, wchar_t Mark);
 void SetBottom(HANDLE hDlg, cmpFileList *pFileList, wchar_t *CurDir=NULL);
 bool MakeCmpFarList(HANDLE hDlg, cmpFileList *pFileList, bool bSetCurPos=true, bool bSort=false);
 intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg,intptr_t Msg,intptr_t Param1,void *Param2);
 
-// синхронизация
+// СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ
 int GetSyncOpt(cmpFileList *pFileList);
 void ShowSyncMsg(const wchar_t *Name1, const wchar_t *Name2, unsigned __int64 Progress, unsigned __int64 Max, bool bRedraw);
 
-// полезняшки
+// РїРѕР»РµР·РЅСЏС€РєРё
 wchar_t *CutSubstr(string &strSrc, wchar_t *Substr);
 void strcentr(wchar_t *Dest, const wchar_t *Src, int len, wchar_t sym);
 wchar_t* itoaa(__int64 num, wchar_t *buf);

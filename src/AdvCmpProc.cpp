@@ -35,12 +35,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /****************************************************************************
  *
- *                    Разные оччччень полезные функции :-)
+ *                    Р Р°Р·РЅС‹Рµ РѕС‡С‡С‡С‡РµРЅСЊ РїРѕР»РµР·РЅС‹Рµ С„СѓРЅРєС†РёРё :-)
  *
  ****************************************************************************/
 
 /****************************************************************************
- * Поиск и вырезание Substr в именах файлов.
+ * РџРѕРёСЃРє Рё РІС‹СЂРµР·Р°РЅРёРµ Substr РІ РёРјРµРЅР°С… С„Р°Р№Р»РѕРІ.
  ****************************************************************************/
 wchar_t *CutSubstr(string &strSrc, wchar_t *Substr)
 {
@@ -51,7 +51,7 @@ wchar_t *CutSubstr(string &strSrc, wchar_t *Substr)
 	int lenSrc=strSrc.length();
 	const wchar_t *src=strSrc.get();
 	string strBuf;
-	// делаем замену
+	// РґРµР»Р°РµРј Р·Р°РјРµРЅСѓ
 	{
 		HANDLE re;
 		int start_offset=0;
@@ -75,7 +75,7 @@ wchar_t *CutSubstr(string &strSrc, wchar_t *Substr)
 
 				if (Info.RegExpControl(re,RECTL_SEARCHEX,0,&search))
 				{
-					// копируем ДО паттерна
+					// РєРѕРїРёСЂСѓРµРј Р”Рћ РїР°С‚С‚РµСЂРЅР°
 					for (int i=start_offset; i<match[0].start; i++)
 						strBuf+=src[i];
 
@@ -90,7 +90,7 @@ wchar_t *CutSubstr(string &strSrc, wchar_t *Substr)
 			free(match);
 			Info.RegExpControl(re,RECTL_FREE,0,0);
 		}
-		// копируем всё то что не вошло в паттерн
+		// РєРѕРїРёСЂСѓРµРј РІСЃС‘ С‚Рѕ С‡С‚Рѕ РЅРµ РІРѕС€Р»Рѕ РІ РїР°С‚С‚РµСЂРЅ
 		for (int i=start_offset; i<lenSrc; i++)
 			strBuf+=src[i];
 		if (!FSF.Trim(strBuf.get())) return strSrc.get();
@@ -100,7 +100,7 @@ wchar_t *CutSubstr(string &strSrc, wchar_t *Substr)
 }
 
 /****************************************************************************
- * Центрирование строки и заполнение символом заполнителем
+ * Р¦РµРЅС‚СЂРёСЂРѕРІР°РЅРёРµ СЃС‚СЂРѕРєРё Рё Р·Р°РїРѕР»РЅРµРЅРёРµ СЃРёРјРІРѕР»РѕРј Р·Р°РїРѕР»РЅРёС‚РµР»РµРј
  ****************************************************************************/
 void strcentr(wchar_t *Dest, const wchar_t *Src, int len, wchar_t sym)
 {
@@ -117,7 +117,7 @@ void strcentr(wchar_t *Dest, const wchar_t *Src, int len, wchar_t sym)
 }
 
 /****************************************************************************
- * Преобразует int в wchar_t поразрядно: из 1234567890 в "1 234 567 890"
+ * РџСЂРµРѕР±СЂР°Р·СѓРµС‚ int РІ wchar_t РїРѕСЂР°Р·СЂСЏРґРЅРѕ: РёР· 1234567890 РІ "1 234 567 890"
  ****************************************************************************/
 wchar_t* itoaa(__int64 num, wchar_t *buf)
 {
@@ -130,7 +130,7 @@ wchar_t* itoaa(__int64 num, wchar_t *buf)
 	wchar_t *p=buf+digits_count+(digits_count-1) / 3;
 	digits_count=0;
 	*p--=L'\0';
-	t--;      //заметь, требуется дополнительное смещение!
+	t--;      //Р·Р°РјРµС‚СЊ, С‚СЂРµР±СѓРµС‚СЃСЏ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕРµ СЃРјРµС‰РµРЅРёРµ!
 	while (p!=buf)
 	{
 		*p--=*--t;
@@ -143,7 +143,7 @@ wchar_t* itoaa(__int64 num, wchar_t *buf)
 }
 
 /****************************************************************************
- * Рисует строку-прогресс
+ * Р РёСЃСѓРµС‚ СЃС‚СЂРѕРєСѓ-РїСЂРѕРіСЂРµСЃСЃ
  ****************************************************************************/
 void ProgressLine(wchar_t *Dest, unsigned __int64 nCurrent, unsigned __int64 nTotal)
 {
@@ -164,7 +164,7 @@ void ProgressLine(wchar_t *Dest, unsigned __int64 nCurrent, unsigned __int64 nTo
 }
 
 /****************************************************************************
- * Возвращает смещение начала файла, т.е. без префиксов "\\?\"
+ * Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃРјРµС‰РµРЅРёРµ РЅР°С‡Р°Р»Р° С„Р°Р№Р»Р°, С‚.Рµ. Р±РµР· РїСЂРµС„РёРєСЃРѕРІ "\\?\"
  ****************************************************************************/
 wchar_t *GetPosToName(const wchar_t *FileName)
 {
@@ -179,7 +179,7 @@ wchar_t *GetPosToName(const wchar_t *FileName)
 }
 
 /****************************************************************************
- * Возвращает полное имя файла, и опционально без префиксов "\\?\"
+ * Р’РѕР·РІСЂР°С‰Р°РµС‚ РїРѕР»РЅРѕРµ РёРјСЏ С„Р°Р№Р»Р°, Рё РѕРїС†РёРѕРЅР°Р»СЊРЅРѕ Р±РµР· РїСЂРµС„РёРєСЃРѕРІ "\\?\"
  ****************************************************************************/
 void GetFullFileName(string &strFullFileName, const wchar_t *Dir, const wchar_t *FileName, bool bNative)
 {
@@ -189,7 +189,7 @@ void GetFullFileName(string &strFullFileName, const wchar_t *Dir, const wchar_t 
 }
 
 /****************************************************************************
- * Возвращает строку с временем файла
+ * Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃС‚СЂРѕРєСѓ СЃ РІСЂРµРјРµРЅРµРј С„Р°Р№Р»Р°
  ****************************************************************************/
 wchar_t *GetStrFileTime(FILETIME *LastWriteTime, wchar_t *Time, bool FullYear)
 {
@@ -197,7 +197,7 @@ wchar_t *GetStrFileTime(FILETIME *LastWriteTime, wchar_t *Time, bool FullYear)
 	FILETIME LocalTime;
 	FileTimeToLocalFileTime(LastWriteTime,&LocalTime);
 	FileTimeToSystemTime(&LocalTime,&ModificTime);
-	// для Time достаточно [20] !!!
+	// РґР»СЏ Time РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ [20] !!!
 	if (Time)
 		FSF.sprintf(Time, FullYear?L"%02d.%02d.%04d %02d:%02d:%02d":L"%02d.%02d.%02d %02d:%02d:%02d",ModificTime.wDay,ModificTime.wMonth,FullYear?ModificTime.wYear:ModificTime.wYear%100,ModificTime.wHour,ModificTime.wMinute,ModificTime.wSecond);
 	return Time;
@@ -205,7 +205,7 @@ wchar_t *GetStrFileTime(FILETIME *LastWriteTime, wchar_t *Time, bool FullYear)
 
 
 /****************************************************************************
- * Проверка на Esc. Возвращает true, если пользователь нажал Esc
+ * РџСЂРѕРІРµСЂРєР° РЅР° Esc. Р’РѕР·РІСЂР°С‰Р°РµС‚ true, РµСЃР»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅР°Р¶Р°Р» Esc
  ****************************************************************************/
 bool CheckForEsc(void)
 {
@@ -225,7 +225,7 @@ bool CheckForEsc(void)
 		ReadConsoleInput(hConInp, &rec, 1, &ReadCount);
 		if ( rec.EventType == KEY_EVENT && rec.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE && rec.Event.KeyEvent.bKeyDown )
 		{
-			// Опциональное подтверждение прерывания по Esc
+			// РћРїС†РёРѕРЅР°Р»СЊРЅРѕРµ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ РїСЂРµСЂС‹РІР°РЅРёСЏ РїРѕ Esc
 			if (GetFarSetting(FSSF_CONFIRMATIONS,L"Esc"))
 			{
 				if (YesNoMsg(MEscTitle, MEscBody))
@@ -239,22 +239,22 @@ bool CheckForEsc(void)
 }
 
 /****************************************************************************
- * Усекает начало длинных имен файлов (или дополняет короткие имена)
- * для правильного показа в сообщении сравнения
+ * РЈСЃРµРєР°РµС‚ РЅР°С‡Р°Р»Рѕ РґР»РёРЅРЅС‹С… РёРјРµРЅ С„Р°Р№Р»РѕРІ (РёР»Рё РґРѕРїРѕР»РЅСЏРµС‚ РєРѕСЂРѕС‚РєРёРµ РёРјРµРЅР°)
+ * РґР»СЏ РїСЂР°РІРёР»СЊРЅРѕРіРѕ РїРѕРєР°Р·Р° РІ СЃРѕРѕР±С‰РµРЅРёРё СЃСЂР°РІРЅРµРЅРёСЏ
  ****************************************************************************/
 void TruncCopy(wchar_t *Dest, const wchar_t *Src, int TruncLen, const wchar_t *FormatMsg)
 {
 	string strSrc(Src);
 	int iLen=0;
-	if (FormatMsg) // чего-нибудь допишем...
+	if (FormatMsg) // С‡РµРіРѕ-РЅРёР±СѓРґСЊ РґРѕРїРёС€РµРј...
 	{
 		FSF.sprintf(Dest,FormatMsg,FSF.TruncPathStr(strSrc.get(),TruncLen-wcslen(FormatMsg)+2));
 		iLen=wcslen(Dest);
 	}
-	else // иначе, тупо скопируем имя
+	else // РёРЅР°С‡Рµ, С‚СѓРїРѕ СЃРєРѕРїРёСЂСѓРµРј РёРјСЏ
 		iLen=wcslen(wcscpy(Dest,FSF.TruncPathStr(strSrc.get(),TruncLen)));
 
-	if (iLen<TruncLen) // для красивости дополним пробелами
+	if (iLen<TruncLen) // РґР»СЏ РєСЂР°СЃРёРІРѕСЃС‚Рё РґРѕРїРѕР»РЅРёРј РїСЂРѕР±РµР»Р°РјРё
 	{
 		wmemset(&Dest[iLen],L' ',TruncLen-iLen);
 		Dest[TruncLen]=L'\0';
@@ -331,7 +331,7 @@ void AdvCmpProc::Init()
 	Opt.Buf[0]=NULL;
 	Opt.Buf[1]=NULL;
 
-	// создадим буферы сравнения
+	// СЃРѕР·РґР°РґРёРј Р±СѓС„РµСЂС‹ СЃСЂР°РІРЅРµРЅРёСЏ
 	if (Opt.CmpContents)
 	{
 		Opt.Buf[0]=(char*)malloc(Opt.BufSize*sizeof(char));
@@ -345,7 +345,7 @@ void AdvCmpProc::Init()
 	Info.FileFilterControl(RPanel.hFilter,FFCTL_STARTINGTOFILTER,0,0);
 	if (Opt.Filter) Info.FileFilterControl(Opt.hCustomFilter,FFCTL_STARTINGTOFILTER,0,0);
 
-	// На время сравнения изменим заголовок консоли ФАРа...
+	// РќР° РІСЂРµРјСЏ СЃСЂР°РІРЅРµРЅРёСЏ РёР·РјРµРЅРёРј Р·Р°РіРѕР»РѕРІРѕРє РєРѕРЅСЃРѕР»Рё Р¤РђР Р°...
 	TitleSaved=GetFarTitle(strFarTitle);
 	SetConsoleTitle(GetMsg(MComparingFiles));
 }
@@ -359,7 +359,7 @@ void AdvCmpProc::Close()
 	Info.FileFilterControl(RPanel.hFilter,FFCTL_FREEFILEFILTER,0,0);
 
 	if (hScreen) Info.RestoreScreen(hScreen);
-	// Восстановим заголовок консоли ФАРа...
+	// Р’РѕСЃСЃС‚Р°РЅРѕРІРёРј Р·Р°РіРѕР»РѕРІРѕРє РєРѕРЅСЃРѕР»Рё Р¤РђР Р°...
 	if (TitleSaved) SetConsoleTitle(strFarTitle);
 
 	for (int i=0; i<cFList.iCount; i++)
@@ -386,12 +386,12 @@ void AdvCmpProc::Close()
 
 /****************************************************************************
  *
- *                    Разные оччччень полезные функции :-)
+ *                    Р Р°Р·РЅС‹Рµ РѕС‡С‡С‡С‡РµРЅСЊ РїРѕР»РµР·РЅС‹Рµ С„СѓРЅРєС†РёРё :-)
  *
  ****************************************************************************/
 
 /****************************************************************************
- * Получить заголовок консоли ФАРа
+ * РџРѕР»СѓС‡РёС‚СЊ Р·Р°РіРѕР»РѕРІРѕРє РєРѕРЅСЃРѕР»Рё Р¤РђР Р°
  ****************************************************************************/
 bool AdvCmpProc::GetFarTitle(string &strTitle)
 {
@@ -423,7 +423,7 @@ void AdvCmpProc::WFD2PPI(WIN32_FIND_DATA &wfd, PluginPanelItem &ppi)
 }
 
 /****************************************************************************
- * Функция проверяет, входит ли файл из архива в заданную глубину вложенности
+ * Р¤СѓРЅРєС†РёСЏ РїСЂРѕРІРµСЂСЏРµС‚, РІС…РѕРґРёС‚ Р»Рё С„Р°Р№Р» РёР· Р°СЂС…РёРІР° РІ Р·Р°РґР°РЅРЅСѓСЋ РіР»СѓР±РёРЅСѓ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё
  ****************************************************************************/
 bool AdvCmpProc::CheckScanDepth(const wchar_t *FileName, int ScanDepth)
 {
@@ -434,7 +434,7 @@ bool AdvCmpProc::CheckScanDepth(const wchar_t *FileName, int ScanDepth)
 }
 
 /****************************************************************************
- * Перемещение указателя в файле для нужд Opt.Contents
+ * РџРµСЂРµРјРµС‰РµРЅРёРµ СѓРєР°Р·Р°С‚РµР»СЏ РІ С„Р°Р№Р»Рµ РґР»СЏ РЅСѓР¶Рґ Opt.Contents
  ****************************************************************************/
 bool AdvCmpProc::mySetFilePointer(HANDLE hf, unsigned __int64 distance, DWORD MoveMethod)
 {
@@ -448,7 +448,7 @@ bool AdvCmpProc::mySetFilePointer(HANDLE hf, unsigned __int64 distance, DWORD Mo
 }
 
 /****************************************************************************
- * CRC32 со стандартным полиномом 0xEDB88320.
+ * CRC32 СЃРѕ СЃС‚Р°РЅРґР°СЂС‚РЅС‹Рј РїРѕР»РёРЅРѕРјРѕРј 0xEDB88320.
  ****************************************************************************/
 DWORD AdvCmpProc::ProcessCRC(void *pData, register int iLen, DWORD FileCRC)
 {
@@ -456,7 +456,7 @@ DWORD AdvCmpProc::ProcessCRC(void *pData, register int iLen, DWORD FileCRC)
 	register DWORD crc = FileCRC;
 	static unsigned TableCRC[256];
 	if (!TableCRC[1])
-	{ // Инициализация CRC32 таблицы
+	{ // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ CRC32 С‚Р°Р±Р»РёС†С‹
 		unsigned i, j, r;
 		for (i = 0; i < 256; i++)
 		{
@@ -483,9 +483,9 @@ DWORD AdvCmpProc::ProcessCRC(void *pData, register int iLen, DWORD FileCRC)
 
 
 /****************************************************************************
- * Замена сервисной функции Info.GetDirList(). В отличие от оной возвращает
- * список файлов только в каталоге Dir, без подкаталогов.
- * Умеет собирать информацию об элементах на заданную глубину.
+ * Р—Р°РјРµРЅР° СЃРµСЂРІРёСЃРЅРѕР№ С„СѓРЅРєС†РёРё Info.GetDirList(). Р’ РѕС‚Р»РёС‡РёРµ РѕС‚ РѕРЅРѕР№ РІРѕР·РІСЂР°С‰Р°РµС‚
+ * СЃРїРёСЃРѕРє С„Р°Р№Р»РѕРІ С‚РѕР»СЊРєРѕ РІ РєР°С‚Р°Р»РѕРіРµ Dir, Р±РµР· РїРѕРґРєР°С‚Р°Р»РѕРіРѕРІ.
+ * РЈРјРµРµС‚ СЃРѕР±РёСЂР°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± СЌР»РµРјРµРЅС‚Р°С… РЅР° Р·Р°РґР°РЅРЅСѓСЋ РіР»СѓР±РёРЅСѓ.
  ****************************************************************************/
 int AdvCmpProc::GetDirList(const wchar_t *Dir, int ScanDepth, bool OnlyInfo, struct DirList *pList)
 {
@@ -501,23 +501,23 @@ int AdvCmpProc::GetDirList(const wchar_t *Dir, int ScanDepth, bool OnlyInfo, str
 		DWORD Attrib=GetFileAttributesW(Dir);
 		if (Attrib!=INVALID_FILE_ATTRIBUTES && (Attrib&FILE_ATTRIBUTE_REPARSE_POINT))
 		{
-			// получим реальный путь
+			// РїРѕР»СѓС‡РёРј СЂРµР°Р»СЊРЅС‹Р№ РїСѓС‚СЊ
 			size_t size=FSF.ConvertPath(CPM_REAL,Dir,0,0);
 			wchar_t *buf=strPathMask.get(size); 
 			FSF.ConvertPath(CPM_REAL,Dir,buf,size);
 			strPathMask.updsize();
-			// проверка на рекурсию - узнаем, может мы уже отсюда пришли
+			// РїСЂРѕРІРµСЂРєР° РЅР° СЂРµРєСѓСЂСЃРёСЋ - СѓР·РЅР°РµРј, РјРѕР¶РµС‚ РјС‹ СѓР¶Рµ РѕС‚СЃСЋРґР° РїСЂРёС€Р»Рё
 			wchar_t RealPrevDir[32768];
 			wcscpy(RealPrevDir,Dir);
 			(wchar_t)*(FSF.PointToName(RealPrevDir)) = 0;
 			FSF.ConvertPath(CPM_REAL,RealPrevDir,RealPrevDir,32768);
 
-			if (!FSF.LStricmp(strPathMask.get(),RealPrevDir)) // да, уже были тут!
+			if (!FSF.LStricmp(strPathMask.get(),RealPrevDir)) // РґР°, СѓР¶Рµ Р±С‹Р»Рё С‚СѓС‚!
 				ret=false;
 		}
 	}
 
-	if (!OnlyInfo) // заполняем DirList
+	if (!OnlyInfo) // Р·Р°РїРѕР»РЅСЏРµРј DirList
 	{
 		pList->Dir=(wchar_t*)malloc((wcslen(Dir)+1)*sizeof(wchar_t));
 		if (pList->Dir) wcscpy(pList->Dir,Dir);
@@ -525,7 +525,7 @@ int AdvCmpProc::GetDirList(const wchar_t *Dir, int ScanDepth, bool OnlyInfo, str
 		pList->ItemsNumber=0;
 	}
 
-	if (Opt.ScanSymlink && !ret) // выходим
+	if (Opt.ScanSymlink && !ret) // РІС‹С…РѕРґРёРј
 		return true;
 
 	strPathMask+=L"\\*";
@@ -549,7 +549,7 @@ int AdvCmpProc::GetDirList(const wchar_t *Dir, int ScanDepth, bool OnlyInfo, str
 				continue;
 			if (OnlyInfo && (wfdFindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY))
 			{
-				if (Opt.Subfolders==2 && Opt.MaxScanDepth<ScanDepth+1) // не глубже заданного уровня!
+				if (Opt.Subfolders==2 && Opt.MaxScanDepth<ScanDepth+1) // РЅРµ РіР»СѓР±Р¶Рµ Р·Р°РґР°РЅРЅРѕРіРѕ СѓСЂРѕРІРЅСЏ!
 					break;
 				if (!Opt.Subfolders)
 					continue;
@@ -571,7 +571,7 @@ int AdvCmpProc::GetDirList(const wchar_t *Dir, int ScanDepth, bool OnlyInfo, str
 					if (!pPPI)
 					{
 						ErrorMsg(MNoMemTitle, MNoMemBody);
-						// !!! возможно тут требуется обнулить элементы и их кол-во
+						// !!! РІРѕР·РјРѕР¶РЅРѕ С‚СѓС‚ С‚СЂРµР±СѓРµС‚СЃСЏ РѕР±РЅСѓР»РёС‚СЊ СЌР»РµРјРµРЅС‚С‹ Рё РёС… РєРѕР»-РІРѕ
 						ret=false;
 						break;
 					}
@@ -589,7 +589,7 @@ int AdvCmpProc::GetDirList(const wchar_t *Dir, int ScanDepth, bool OnlyInfo, str
 }
 
 /****************************************************************************
- * Замена сервисной функции Info.FreeDirList().
+ * Р—Р°РјРµРЅР° СЃРµСЂРІРёСЃРЅРѕР№ С„СѓРЅРєС†РёРё Info.FreeDirList().
  ****************************************************************************/
 void AdvCmpProc::FreeDirList(struct DirList *pList)
 {
@@ -604,8 +604,8 @@ void AdvCmpProc::FreeDirList(struct DirList *pList)
 }
 
 /****************************************************************************
- * Функция сравнения имён файлов в двух структурах PluginPanelItem
- * для нужд qsort()
+ * Р¤СѓРЅРєС†РёСЏ СЃСЂР°РІРЅРµРЅРёСЏ РёРјС‘РЅ С„Р°Р№Р»РѕРІ РІ РґРІСѓС… СЃС‚СЂСѓРєС‚СѓСЂР°С… PluginPanelItem
+ * РґР»СЏ РЅСѓР¶Рґ qsort()
  ****************************************************************************/
 int WINAPI PICompare(const void *el1, const void *el2, void *el3)
 {
@@ -634,7 +634,7 @@ int WINAPI PICompare(const void *el1, const void *el2, void *el3)
 
 
 /****************************************************************************
- * Построение сортированного списка элементов для быстрого сравнения
+ * РџРѕСЃС‚СЂРѕРµРЅРёРµ СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅРѕРіРѕ СЃРїРёСЃРєР° СЌР»РµРјРµРЅС‚РѕРІ РґР»СЏ Р±С‹СЃС‚СЂРѕРіРѕ СЃСЂР°РІРЅРµРЅРёСЏ
  ****************************************************************************/
 bool AdvCmpProc::BuildItemsIndex(bool bLeftPanel,const struct DirList *pList,struct ItemsIndex *pIndex,int ScanDepth)
 {
@@ -649,9 +649,9 @@ bool AdvCmpProc::BuildItemsIndex(bool bLeftPanel,const struct DirList *pList,str
 	int j = 0;
 	for (int i=pIndex->iCount-1; i>=0 && j<pIndex->iCount; i--)
 	{
-					// каталоги отсеиваем сразу... если надо
+					// РєР°С‚Р°Р»РѕРіРё РѕС‚СЃРµРёРІР°РµРј СЃСЂР°Р·Сѓ... РµСЃР»Рё РЅР°РґРѕ
 		if ( (Opt.Subfolders || !(pList->PPI[i].FileAttributes & FILE_ATTRIBUTE_DIRECTORY)) &&
-					// выбираем только отмеченные элементы... если надо :)
+					// РІС‹Р±РёСЂР°РµРј С‚РѕР»СЊРєРѕ РѕС‚РјРµС‡РµРЅРЅС‹Рµ СЌР»РµРјРµРЅС‚С‹... РµСЃР»Рё РЅР°РґРѕ :)
 				(!(Opt.ProcessSelected && ScanDepth==0) || (pList->PPI[i].Flags & PPIF_SELECTED))
 			 )
 		{
@@ -672,26 +672,26 @@ bool AdvCmpProc::BuildItemsIndex(bool bLeftPanel,const struct DirList *pList,str
 			{
 				bool bLPanelPlug=(LPanel.PInfo.Flags&PFLAGS_PLUGIN), bRPanelPlug=(RPanel.PInfo.Flags&PFLAGS_PLUGIN);
 
-				// плагин + панель || панель + плагин (элемент с панели)
+				// РїР»Р°РіРёРЅ + РїР°РЅРµР»СЊ || РїР°РЅРµР»СЊ + РїР»Р°РіРёРЅ (СЌР»РµРјРµРЅС‚ СЃ РїР°РЅРµР»Рё)
 				if ((bLPanelPlug && !bRPanelPlug && !bLeftPanel) || (!bLPanelPlug && bRPanelPlug && bLeftPanel))
 				{
 					string srtFileName(pList->PPI[i].FileName);
 					string strSubstr;
 					wchar_t *p=pList->Dir+4;
-					while (*p++) // для экранирования спецсимволов в регэкспах
+					while (*p++) // РґР»СЏ СЌРєСЂР°РЅРёСЂРѕРІР°РЅРёСЏ СЃРїРµС†СЃРёРјРІРѕР»РѕРІ РІ СЂРµРіСЌРєСЃРїР°С…
 					{
 						if (*p==L'\\' || *p==L'[' || *p==L']' || *p==L'+' || *p==L'{' || *p==L'}')
 							strSubstr+=L"\\";
 						strSubstr+=*p;
 					}
-					// вырежем pList->Dir из имени файла, т.к. путь до текущей папки (и сама папка) нам не нужен
+					// РІС‹СЂРµР¶РµРј pList->Dir РёР· РёРјРµРЅРё С„Р°Р№Р»Р°, С‚.Рє. РїСѓС‚СЊ РґРѕ С‚РµРєСѓС‰РµР№ РїР°РїРєРё (Рё СЃР°РјР° РїР°РїРєР°) РЅР°Рј РЅРµ РЅСѓР¶РµРЅ
 					wcscpy((wchar_t*)pList->PPI[i].FileName,CutSubstr(srtFileName,strSubstr.get())+2);
 
 					if (Opt.Subfolders==2 && !CheckScanDepth(pList->PPI[i].FileName, Opt.MaxScanDepth))
 						continue;
 				}
 
-				// плагин + панель || панель + плагин (элемент с плагина)
+				// РїР»Р°РіРёРЅ + РїР°РЅРµР»СЊ || РїР°РЅРµР»СЊ + РїР»Р°РіРёРЅ (СЌР»РµРјРµРЅС‚ СЃ РїР»Р°РіРёРЅР°)
 				else if ((bLPanelPlug && !bRPanelPlug && bLeftPanel) || (!bLPanelPlug && bRPanelPlug && !bLeftPanel))
 				{
 					if (Opt.Subfolders==2 && !CheckScanDepth(pList->PPI[i].FileName, Opt.MaxScanDepth))
@@ -717,7 +717,7 @@ bool AdvCmpProc::BuildItemsIndex(bool bLeftPanel,const struct DirList *pList,str
 }
 
 /****************************************************************************
- * Освобождение памяти
+ * РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РїР°РјСЏС‚Рё
  ****************************************************************************/
 void AdvCmpProc::FreeItemsIndex(struct ItemsIndex *pIndex)
 {
@@ -729,7 +729,7 @@ void AdvCmpProc::FreeItemsIndex(struct ItemsIndex *pIndex)
 
 
 /****************************************************************************
- * Результат предыдущего сравнения "по содержимому".
+ * Р РµР·СѓР»СЊС‚Р°С‚ РїСЂРµРґС‹РґСѓС‰РµРіРѕ СЃСЂР°РІРЅРµРЅРёСЏ "РїРѕ СЃРѕРґРµСЂР¶РёРјРѕРјСѓ".
  ****************************************************************************/
 int AdvCmpProc::GetCacheResult(DWORD FullFileName1, DWORD FullFileName2, DWORD64 WriteTime1, DWORD64 WriteTime2)
 {
@@ -743,11 +743,11 @@ int AdvCmpProc::GetCacheResult(DWORD FullFileName1, DWORD FullFileName2, DWORD64
 			return (int)Cache.RCI[i].dwFlags;
 		}
 	}
-	return 0;  // 0 - результат не определен, т.к. элемент не найден
+	return 0;  // 0 - СЂРµР·СѓР»СЊС‚Р°С‚ РЅРµ РѕРїСЂРµРґРµР»РµРЅ, С‚.Рє. СЌР»РµРјРµРЅС‚ РЅРµ РЅР°Р№РґРµРЅ
 }
 
 /****************************************************************************
- * Сохранение результата сравнения "по содержимому".
+ * РЎРѕС…СЂР°РЅРµРЅРёРµ СЂРµР·СѓР»СЊС‚Р°С‚Р° СЃСЂР°РІРЅРµРЅРёСЏ "РїРѕ СЃРѕРґРµСЂР¶РёРјРѕРјСѓ".
  ****************************************************************************/
 bool AdvCmpProc::SetCacheResult(DWORD FullFileName1, DWORD FullFileName2, DWORD64 WriteTime1, DWORD64 WriteTime2, DWORD dwFlag)
 {
@@ -758,7 +758,7 @@ bool AdvCmpProc::SetCacheResult(DWORD FullFileName1, DWORD FullFileName2, DWORD6
 				|| ((FullFileName1==Cache.RCI[i].dwFullFileName[1] && FullFileName2==Cache.RCI[i].dwFullFileName[0]) &&
 					(WriteTime1==Cache.RCI[i].dwWriteTime[1] && WriteTime2==Cache.RCI[i].dwWriteTime[0])) )
 		{
-			Cache.RCI[i].dwFlags=dwFlag; // был такой, обновим. сделаем "тупо" :-)
+			Cache.RCI[i].dwFlags=dwFlag; // Р±С‹Р» С‚Р°РєРѕР№, РѕР±РЅРѕРІРёРј. СЃРґРµР»Р°РµРј "С‚СѓРїРѕ" :-)
 			return true;
 		}
 	}
@@ -786,11 +786,11 @@ bool AdvCmpProc::SetCacheResult(DWORD FullFileName1, DWORD FullFileName2, DWORD6
 
 
 /****************************************************************************
- * Показывает сообщение о сравнении двух файлов
+ * РџРѕРєР°Р·С‹РІР°РµС‚ СЃРѕРѕР±С‰РµРЅРёРµ Рѕ СЃСЂР°РІРЅРµРЅРёРё РґРІСѓС… С„Р°Р№Р»РѕРІ
  ****************************************************************************/
 void AdvCmpProc::ShowCmpMsg(const wchar_t *Dir1, const wchar_t *Name1, const wchar_t *Dir2, const wchar_t *Name2, bool bRedraw)
 {
-	// Для перерисовки не чаще 3-х раз в 1 сек.
+	// Р”Р»СЏ РїРµСЂРµСЂРёСЃРѕРІРєРё РЅРµ С‡Р°С‰Рµ 3-С… СЂР°Р· РІ 1 СЃРµРє.
 	if (!bRedraw)
 	{
 		static DWORD dwTicks;
@@ -832,7 +832,7 @@ void AdvCmpProc::ShowCmpMsg(const wchar_t *Dir1, const wchar_t *Name1, const wch
 		else
 			ProgressLine(ProgressLineTotal,CmpInfo.ProcSize,CmpInfo.CountSize);
 	}
-	strcentr(Buf,L"",WinInfo.TruncLen,0x00002500);  // просто сепаратор
+	strcentr(Buf,L"",WinInfo.TruncLen,0x00002500);  // РїСЂРѕСЃС‚Рѕ СЃРµРїР°СЂР°С‚РѕСЂ
 
 	const wchar_t *MsgItems1[] = {
 		GetMsg(MCmpTitle),
@@ -851,11 +851,11 @@ void AdvCmpProc::ShowCmpMsg(const wchar_t *Dir1, const wchar_t *Name1, const wch
 }
 
 /****************************************************************************
- * Показывает сообщение о сравнении двух файлов
+ * РџРѕРєР°Р·С‹РІР°РµС‚ СЃРѕРѕР±С‰РµРЅРёРµ Рѕ СЃСЂР°РІРЅРµРЅРёРё РґРІСѓС… С„Р°Р№Р»РѕРІ
  ****************************************************************************/
 void AdvCmpProc::ShowDupMsg(const wchar_t *Dir, const wchar_t *Name, bool bRedraw)
 {
-	// Для перерисовки не чаще 3-х раз в 1 сек.
+	// Р”Р»СЏ РїРµСЂРµСЂРёСЃРѕРІРєРё РЅРµ С‡Р°С‰Рµ 3-С… СЂР°Р· РІ 1 СЃРµРє.
 	if (!bRedraw)
 	{
 		static DWORD dwTicks;
@@ -895,7 +895,7 @@ void AdvCmpProc::ShowDupMsg(const wchar_t *Dir, const wchar_t *Name, bool bRedra
 		else
 			ProgressLine(ProgressLineTotal,CmpInfo.ProcSize,CmpInfo.CountSize);
 	}
-	strcentr(Buf,L"",WinInfo.TruncLen,0x00002500);  // просто сепаратор
+	strcentr(Buf,L"",WinInfo.TruncLen,0x00002500);  // РїСЂРѕСЃС‚Рѕ СЃРµРїР°СЂР°С‚РѕСЂ
 
 	const wchar_t *MsgItems1[] = {
 		GetMsg(MCmpTitle),
@@ -916,15 +916,15 @@ void AdvCmpProc::ShowDupMsg(const wchar_t *Dir, const wchar_t *Name, bool bRedra
 
 
 /****************************************************************************
- * Сравнение атрибутов и прочего для двух одноимённых элементов (файлов или
- * подкаталогов).
- * Возвращает true, если они совпадают.
+ * РЎСЂР°РІРЅРµРЅРёРµ Р°С‚СЂРёР±СѓС‚РѕРІ Рё РїСЂРѕС‡РµРіРѕ РґР»СЏ РґРІСѓС… РѕРґРЅРѕРёРјС‘РЅРЅС‹С… СЌР»РµРјРµРЅС‚РѕРІ (С„Р°Р№Р»РѕРІ РёР»Рё
+ * РїРѕРґРєР°С‚Р°Р»РѕРіРѕРІ).
+ * Р’РѕР·РІСЂР°С‰Р°РµС‚ true, РµСЃР»Рё РѕРЅРё СЃРѕРІРїР°РґР°СЋС‚.
  ****************************************************************************/
 bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI, const wchar_t *RDir, const PluginPanelItem *pRPPI, int ScanDepth, DWORD *dwFlag)
 {
 	if (pLPPI->FileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 	{
-		// Здесь сравниваем два подкаталога
+		// Р—РґРµСЃСЊ СЃСЂР°РІРЅРёРІР°РµРј РґРІР° РїРѕРґРєР°С‚Р°Р»РѕРіР°
 		if (Opt.Subfolders)
 		{
 			if (Opt.Subfolders==2 && Opt.MaxScanDepth<ScanDepth+1)
@@ -939,7 +939,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 			GetFullFileName(strLFullDir,LDir,pLPPI->FileName);
 			GetFullFileName(strRFullDir,RDir,pRPPI->FileName);
 
-			// Составим списки элементов в подкаталогах
+			// РЎРѕСЃС‚Р°РІРёРј СЃРїРёСЃРєРё СЌР»РµРјРµРЅС‚РѕРІ РІ РїРѕРґРєР°С‚Р°Р»РѕРіР°С…
 			struct DirList LList, RList;
 			bool bEqual = true;
 
@@ -947,8 +947,8 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 			{
 				if (!GetDirList(strLFullDir.get(),ScanDepth,false,&LList) || !GetDirList(strRFullDir.get(),ScanDepth,false,&RList))
 				{
-					bBrokenByEsc=true; // То ли юзер прервал, то ли ошибка чтения
-					bEqual=false; // Остановим сравнение
+					bBrokenByEsc=true; // РўРѕ Р»Рё СЋР·РµСЂ РїСЂРµСЂРІР°Р», С‚Рѕ Р»Рё РѕС€РёР±РєР° С‡С‚РµРЅРёСЏ
+					bEqual=false; // РћСЃС‚Р°РЅРѕРІРёРј СЃСЂР°РІРЅРµРЅРёРµ
 				}
 			}
 			else if (bLPanelPlug || bRPanelPlug)
@@ -997,7 +997,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 			}
 
 			if (bEqual)
-				bEqual=CompareDirs(&LList,&RList,Opt.Dialog,ScanDepth+1);  // Opt.Dialog==1 то всё сравним в подкаталоге, для показа в диалоге
+				bEqual=CompareDirs(&LList,&RList,Opt.Dialog,ScanDepth+1);  // Opt.Dialog==1 С‚Рѕ РІСЃС‘ СЃСЂР°РІРЅРёРј РІ РїРѕРґРєР°С‚Р°Р»РѕРіРµ, РґР»СЏ РїРѕРєР°Р·Р° РІ РґРёР°Р»РѕРіРµ
 
 			if (!(bLPanelPlug || bRPanelPlug))
 			{
@@ -1018,19 +1018,19 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 		}
 	}
 	else
-	// Здесь сравниваем два файла
+	// Р—РґРµСЃСЊ СЃСЂР°РІРЅРёРІР°РµРј РґРІР° С„Р°Р№Р»Р°
 	{
 		CmpInfo.CurCountSize=pLPPI->FileSize+pRPPI->FileSize;
 		CmpInfo.CurProcSize=0;
 
 		bool bFullCmp=(Opt.Mode==MODE_CMP||Opt.LightSync?false:true);
 
-		// покажем "работу" на прогрессе :)
-		if (!Opt.CmpContents)  // содержимое - особый случай...
+		// РїРѕРєР°Р¶РµРј "СЂР°Р±РѕС‚Сѓ" РЅР° РїСЂРѕРіСЂРµСЃСЃРµ :)
+		if (!Opt.CmpContents)  // СЃРѕРґРµСЂР¶РёРјРѕРµ - РѕСЃРѕР±С‹Р№ СЃР»СѓС‡Р°Р№...
 			CmpInfo.ProcSize+=CmpInfo.CurCountSize;
 
 		//===========================================================================
-		// регистр имен
+		// СЂРµРіРёСЃС‚СЂ РёРјРµРЅ
 		if (Opt.CmpCase)
 		{
 			string strLFileName(LPanel.bTMP?FSF.PointToName(pLPPI->FileName):pLPPI->FileName);
@@ -1045,7 +1045,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 			else if (bFullCmp) *dwFlag|=RCIF_NAME;
 		}
 		//===========================================================================
-		// размер
+		// СЂР°Р·РјРµСЂ
 		if (Opt.CmpSize)
 		{
 			if (pLPPI->FileSize != pRPPI->FileSize)
@@ -1056,7 +1056,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 			else if (bFullCmp) *dwFlag|=RCIF_SIZE;
 		}
 		//===========================================================================
-		// время
+		// РІСЂРµРјСЏ
 		if (Opt.CmpTime)
 		{
 			if (Opt.Seconds || Opt.IgnoreTimeZone)
@@ -1111,7 +1111,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 					}
 				}
 
-				//игнорировать различия не больше чем 26 часов.
+				//РёРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ СЂР°Р·Р»РёС‡РёСЏ РЅРµ Р±РѕР»СЊС€Рµ С‡РµРј 26 С‡Р°СЃРѕРІ.
 				if (Opt.IgnoreTimeZone)
 				{
 					int counter = 0;
@@ -1149,13 +1149,13 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 			else if (bFullCmp) *dwFlag|=RCIF_TIME;
 		}
 		//===========================================================================
-		// содержимое
+		// СЃРѕРґРµСЂР¶РёРјРѕРµ
 		if (Opt.CmpContents)
 		{
 			bool bEqual=true;
 			string strLFullFileName, strRFullFileName;
 
-			// экспресс-сравнение: сравним размер файлов
+			// СЌРєСЃРїСЂРµСЃСЃ-СЃСЂР°РІРЅРµРЅРёРµ: СЃСЂР°РІРЅРёРј СЂР°Р·РјРµСЂ С„Р°Р№Р»РѕРІ
 			if (!Opt.Ignore && (pLPPI->FileSize != pRPPI->FileSize))
 			{
 				CmpInfo.ProcSize+=CmpInfo.CurCountSize;
@@ -1165,7 +1165,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 				goto End;
 			}
 
-			// экспресс-сравнение: время совпало - скажем "одинаковые"
+			// СЌРєСЃРїСЂРµСЃСЃ-СЃСЂР°РІРЅРµРЅРёРµ: РІСЂРµРјСЏ СЃРѕРІРїР°Р»Рѕ - СЃРєР°Р¶РµРј "РѕРґРёРЅР°РєРѕРІС‹Рµ"
 			if ( Opt.OnlyTimeDiff &&
 					 (pLPPI->LastWriteTime.dwLowDateTime == pRPPI->LastWriteTime.dwLowDateTime &&
 						pLPPI->LastWriteTime.dwHighDateTime == pRPPI->LastWriteTime.dwHighDateTime)
@@ -1178,7 +1178,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 				goto End;
 			}
 
-			// сравним 2-е архивные панели
+			// СЃСЂР°РІРЅРёРј 2-Рµ Р°СЂС…РёРІРЅС‹Рµ РїР°РЅРµР»Рё
 			if (LPanel.bARC && RPanel.bARC)
 			{
 				CmpInfo.ProcSize+=CmpInfo.CurCountSize;
@@ -1193,7 +1193,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 			GetFullFileName(strLFullFileName,LDir,pLPPI->FileName);
 			GetFullFileName(strRFullFileName,RDir,pRPPI->FileName);
 
-			// получим NativeDir - "\\?\dir\"
+			// РїРѕР»СѓС‡РёРј NativeDir - "\\?\dir\"
 			if (LPanel.bTMP || RPanel.bTMP)
 			{
 				size_t size=FSF.ConvertPath(CPM_NATIVE,LPanel.bTMP?strLFullFileName.get():strRFullFileName.get(),0,0);
@@ -1206,7 +1206,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 				}
 			}
 
-			// работа с кешем
+			// СЂР°Р±РѕС‚Р° СЃ РєРµС€РµРј
 			DWORD dwLFileName, dwRFileName;
 
 			if (Opt.Cache && !Opt.Ignore && !(LPanel.bARC || RPanel.bARC))
@@ -1214,7 +1214,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 				dwLFileName=ProcessCRC((void *)strLFullFileName.get(),strLFullFileName.length()*2,0);
 				dwRFileName=ProcessCRC((void *)strRFullFileName.get(),strRFullFileName.length()*2,0);
 
-				// Используем кешированные данные
+				// РСЃРїРѕР»СЊР·СѓРµРј РєРµС€РёСЂРѕРІР°РЅРЅС‹Рµ РґР°РЅРЅС‹Рµ
 				if (!Opt.CacheIgnore )
 				{
 					int Result=GetCacheResult(dwLFileName,dwRFileName,
@@ -1261,7 +1261,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 					goto End;
 				}
 				bOkLFileInfo=GetFileInformationByHandle(hLFile,&LFileInfo);
-				// Сохраним время последнего доступа к файлу
+				// РЎРѕС…СЂР°РЅРёРј РІСЂРµРјСЏ РїРѕСЃР»РµРґРЅРµРіРѕ РґРѕСЃС‚СѓРїР° Рє С„Р°Р№Р»Сѓ
 				LAccess=pLPPI->LastAccessTime;
 			}
 
@@ -1286,7 +1286,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 
 			ShowCmpMsg(LDir,pLPPI->FileName,RDir,pRPPI->FileName,true);
 
-			// экспресс-сравнение: FileIndex совпали - скажем "одинаковые"
+			// СЌРєСЃРїСЂРµСЃСЃ-СЃСЂР°РІРЅРµРЅРёРµ: FileIndex СЃРѕРІРїР°Р»Рё - СЃРєР°Р¶РµРј "РѕРґРёРЅР°РєРѕРІС‹Рµ"
 			if ( bOkLFileInfo && bOkRFileInfo &&
 						LFileInfo.dwVolumeSerialNumber==RFileInfo.dwVolumeSerialNumber &&
 						LFileInfo.nFileIndexHigh==RFileInfo.nFileIndexHigh && LFileInfo.nFileIndexLow==RFileInfo.nFileIndexLow )
@@ -1301,9 +1301,9 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 			}
 
 			DWORD LReadSize=1, RReadSize=1;
-			DWORD LBufPos=1, RBufPos=1;     // позиция в Opt.Buf
+			DWORD LBufPos=1, RBufPos=1;     // РїРѕР·РёС†РёСЏ РІ Opt.Buf
 			const DWORD ReadBlock=65536;
-			__int64 LFilePos=0, RFilePos=0;  // позиция в файле
+			__int64 LFilePos=0, RFilePos=0;  // РїРѕР·РёС†РёСЏ РІ С„Р°Р№Р»Рµ
 
 			{
 				char *LPtr=Opt.Buf[0]+LBufPos, *RPtr=Opt.Buf[1]+RBufPos;
@@ -1317,7 +1317,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 
 				DWORD dwFileCRC=0;
 				__int64 PartlyKbSize=(__int64)Opt.PartlyKbSize*1024;
-				// частичное сравнение
+				// С‡Р°СЃС‚РёС‡РЅРѕРµ СЃСЂР°РІРЅРµРЅРёРµ
 				bool bPartlyFull=( Opt.Partly && !Opt.Ignore && !(LPanel.bARC || RPanel.bARC) &&
 													(Opt.PartlyFull && pLPPI->FileSize > Opt.BufSize) );
 
@@ -1327,7 +1327,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 				unsigned int BlockIndex=pLPPI->FileSize / Opt.BufSize;
 				unsigned int LCurBlockIndex=0, RCurBlockIndex=0;
 
-				// если с минусом, отсчитаем с конца файла
+				// РµСЃР»Рё СЃ РјРёРЅСѓСЃРѕРј, РѕС‚СЃС‡РёС‚Р°РµРј СЃ РєРѕРЅС†Р° С„Р°Р№Р»Р°
 				bool bFromEnd=(bPartlyKb && abs(PartlyKbSize)!=PartlyKbSize);
 				if (bFromEnd)
 				{
@@ -1337,7 +1337,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 
 				while (1)
 				{
-					// частичное сравнение, пропускаем блоками по Opt.BufSize
+					// С‡Р°СЃС‚РёС‡РЅРѕРµ СЃСЂР°РІРЅРµРЅРёРµ, РїСЂРѕРїСѓСЃРєР°РµРј Р±Р»РѕРєР°РјРё РїРѕ Opt.BufSize
 					if (bPartlyFull)
 					{
 						if (!mySetFilePointer(hLFile,Opt.BufSize,FILE_CURRENT) || !mySetFilePointer(hRFile,Opt.BufSize,FILE_CURRENT))
@@ -1348,12 +1348,12 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 //						else 	DebugMsg(L"skip",L"",Opt.BufSize);
 					}
 
-					// читаем файл с активной панели
+					// С‡РёС‚Р°РµРј С„Р°Р№Р» СЃ Р°РєС‚РёРІРЅРѕР№ РїР°РЅРµР»Рё
 					if (!LPanel.bARC && LPtr >= Opt.Buf[0]+LBufPos)
 					{
 						LBufPos=0;
 						LPtr=Opt.Buf[0];
-						// читаем блоком Opt.BufSize
+						// С‡РёС‚Р°РµРј Р±Р»РѕРєРѕРј Opt.BufSize
 						while (LBufPos < (unsigned)Opt.BufSize)
 						{
 							if (CheckForEsc() || 
@@ -1373,12 +1373,12 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 					if (!bEqual)
 						break;
 
-					// читаем файл с пассивной панели
+					// С‡РёС‚Р°РµРј С„Р°Р№Р» СЃ РїР°СЃСЃРёРІРЅРѕР№ РїР°РЅРµР»Рё
 					if (!RPanel.bARC && RPtr >= Opt.Buf[1]+RBufPos)
 					{
 						RBufPos=0;
 						RPtr=Opt.Buf[1];
-						// читаем блоком Opt.BufSize
+						// С‡РёС‚Р°РµРј Р±Р»РѕРєРѕРј Opt.BufSize
 						while (RBufPos < (unsigned)Opt.BufSize)
 						{
 							if (CheckForEsc() || 
@@ -1401,7 +1401,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 
 					ShowCmpMsg(LDir,pLPPI->FileName,RDir,pRPPI->FileName,false);
 
-					// сравниваем с архивом
+					// СЃСЂР°РІРЅРёРІР°РµРј СЃ Р°СЂС…РёРІРѕРј
 					if (RPanel.bARC)
 					{
 						dwFileCRC=ProcessCRC(Opt.Buf[0],LBufPos,dwFileCRC);
@@ -1435,7 +1435,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 							continue;
 					}
 
-					// обычное сравнение (фильтр отключен или файлы исполнимые)
+					// РѕР±С‹С‡РЅРѕРµ СЃСЂР°РІРЅРµРЅРёРµ (С„РёР»СЊС‚СЂ РѕС‚РєР»СЋС‡РµРЅ РёР»Рё С„Р°Р№Р»С‹ РёСЃРїРѕР»РЅРёРјС‹Рµ)
 					if (!Opt.Ignore || bExe)
 					{
 						if (memcmp(Opt.Buf[0], Opt.Buf[1], LBufPos))
@@ -1446,12 +1446,12 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 						LPtr += LBufPos;
 						RPtr += RBufPos;
 
-						// считали всё, выходим
+						// СЃС‡РёС‚Р°Р»Рё РІСЃС‘, РІС‹С…РѕРґРёРј
 						if (LBufPos != Opt.BufSize || RBufPos != Opt.BufSize)
 							break;
 					}
 					else
-					// фильтр включен
+					// С„РёР»СЊС‚СЂ РІРєР»СЋС‡РµРЅ
 					{
 						if (Opt.IgnoreTemplates == 0)      // '\n' & ' '
 						{
@@ -1552,7 +1552,7 @@ bool AdvCmpProc::CompareFiles(const wchar_t *LDir, const PluginPanelItem *pLPPI,
 						break;
 				}
 
-				// поместим в кэш результат
+				// РїРѕРјРµСЃС‚РёРј РІ РєСЌС€ СЂРµР·СѓР»СЊС‚Р°С‚
 				if (Opt.Cache && !(LPanel.bARC || RPanel.bARC) && (!Opt.Ignore || bExe) && !Opt.Partly)
 				{
 					Opt.Cache=SetCacheResult(dwLFileName,dwRFileName,
@@ -1602,7 +1602,7 @@ End:
 			else if (bFullCmp) *dwFlag|=RCIF_CONT;
 		}
 		//===========================================================================
-		// если полное сравнение, то суммируем результаты сравнения
+		// РµСЃР»Рё РїРѕР»РЅРѕРµ СЃСЂР°РІРЅРµРЅРёРµ, С‚Рѕ СЃСѓРјРјРёСЂСѓРµРј СЂРµР·СѓР»СЊС‚Р°С‚С‹ СЃСЂР°РІРЅРµРЅРёСЏ
 		if (bFullCmp && ((*dwFlag&RCIF_NAMEDIFF) || (*dwFlag&RCIF_TIMEDIFF) || (*dwFlag&RCIF_SIZEDIFF) || (*dwFlag&RCIF_CONTDIFF)))
 			return false;
 	}
@@ -1610,18 +1610,18 @@ End:
 }
 
 /****************************************************************************
- * Сравнение двух каталогов, описанных структурами AInfo и PInfo.
- * Возвращает true, если они совпадают.
- * Параметр bCompareAll определяет,
- * надо ли сравнивать все файлы и взводить PPIF_SELECTED (bCompareAll == true)
- * или просто вернуть false при первом несовпадении (bCompareAll == false).
+ * РЎСЂР°РІРЅРµРЅРёРµ РґРІСѓС… РєР°С‚Р°Р»РѕРіРѕРІ, РѕРїРёСЃР°РЅРЅС‹С… СЃС‚СЂСѓРєС‚СѓСЂР°РјРё AInfo Рё PInfo.
+ * Р’РѕР·РІСЂР°С‰Р°РµС‚ true, РµСЃР»Рё РѕРЅРё СЃРѕРІРїР°РґР°СЋС‚.
+ * РџР°СЂР°РјРµС‚СЂ bCompareAll РѕРїСЂРµРґРµР»СЏРµС‚,
+ * РЅР°РґРѕ Р»Рё СЃСЂР°РІРЅРёРІР°С‚СЊ РІСЃРµ С„Р°Р№Р»С‹ Рё РІР·РІРѕРґРёС‚СЊ PPIF_SELECTED (bCompareAll == true)
+ * РёР»Рё РїСЂРѕСЃС‚Рѕ РІРµСЂРЅСѓС‚СЊ false РїСЂРё РїРµСЂРІРѕРј РЅРµСЃРѕРІРїР°РґРµРЅРёРё (bCompareAll == false).
  ****************************************************************************/
 bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *pRList,bool bCompareAll,int ScanDepth)
 {
-	// Стартуем с сообщением о сравнении
+	// РЎС‚Р°СЂС‚СѓРµРј СЃ СЃРѕРѕР±С‰РµРЅРёРµРј Рѕ СЃСЂР°РІРЅРµРЅРёРё
 	ShowCmpMsg(pLList->Dir,L"*",pRList->Dir,L"*",true);
 
-	// строим индексы элементов, для убыстрения сравнения
+	// СЃС‚СЂРѕРёРј РёРЅРґРµРєСЃС‹ СЌР»РµРјРµРЅС‚РѕРІ, РґР»СЏ СѓР±С‹СЃС‚СЂРµРЅРёСЏ СЃСЂР°РІРЅРµРЅРёСЏ
 	struct ItemsIndex LII, RII;
 	if (!BuildItemsIndex(true,pLList,&LII,ScanDepth) || !BuildItemsIndex(false,pRList,&RII,ScanDepth))
 	{
@@ -1634,7 +1634,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 
 	int i=0, j=0;
 
-	// соберем информацию, сколько элементов будем сравнивать и их размер
+	// СЃРѕР±РµСЂРµРј РёРЅС„РѕСЂРјР°С†РёСЋ, СЃРєРѕР»СЊРєРѕ СЌР»РµРјРµРЅС‚РѕРІ Р±СѓРґРµРј СЃСЂР°РІРЅРёРІР°С‚СЊ Рё РёС… СЂР°Р·РјРµСЂ
 	if (ScanDepth==0 && Opt.TotalProgress)
 	{
 		while (i<LII.iCount && j<RII.iCount && !bBrokenByEsc)
@@ -1696,7 +1696,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 		return true;
 	}
 
-	// экспресс-сравнение вложенного каталога
+	// СЌРєСЃРїСЂРµСЃСЃ-СЃСЂР°РІРЅРµРЅРёРµ РІР»РѕР¶РµРЅРЅРѕРіРѕ РєР°С‚Р°Р»РѕРіР°
 	if (ScanDepth && !Opt.Dialog && !Opt.IgnoreMissing && LII.iCount!=RII.iCount)
 	{
 		FreeItemsIndex(&LII);
@@ -1704,7 +1704,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 		return false;
 	}
 
-	// вначале снимем выделение на панелях
+	// РІРЅР°С‡Р°Р»Рµ СЃРЅРёРјРµРј РІС‹РґРµР»РµРЅРёРµ РЅР° РїР°РЅРµР»СЏС…
 	if (ScanDepth==0)
 	{
 		for (i=0; i<pLList->ItemsNumber; i++)
@@ -1713,14 +1713,14 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 			pRList->PPI[i].Flags &= ~PPIF_SELECTED;
 	}
 
-	// начинаем сравнивать "наши" элементы...
+	// РЅР°С‡РёРЅР°РµРј СЃСЂР°РІРЅРёРІР°С‚СЊ "РЅР°С€Рё" СЌР»РµРјРµРЅС‚С‹...
 	bool bDifferenceNotFound=true;
 	i=0; j=0;
 	DWORD dwFlag=0;
 
 	while (i<LII.iCount && j<RII.iCount && (bDifferenceNotFound || bCompareAll) && !bBrokenByEsc)
 	{
-		// проверка на ESC
+		// РїСЂРѕРІРµСЂРєР° РЅР° ESC
 		const int iMaxCounter=256;
 		static int iCounter=iMaxCounter;
 		if (!--iCounter)
@@ -1738,21 +1738,21 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 
 			/******************************************************************************/
 
-			case 0: // Имена совпали - проверяем всё остальное
+			case 0: // РРјРµРЅР° СЃРѕРІРїР°Р»Рё - РїСЂРѕРІРµСЂСЏРµРј РІСЃС‘ РѕСЃС‚Р°Р»СЊРЅРѕРµ
 			{
 //wchar_t buf[512];
 //FSF.sprintf(buf,L"Left: %s Right: %s, %d + %d", LII.pPPI[i]->FindData.lpwszFileName, RII.pPPI[j]->FindData.lpwszFileName, i,j);
 //			 DebugMsg(buf,L"case 0",bDifferenceNotFound);
 
 				if (CompareFiles(pLList->Dir,LII.pPPI[i],pRList->Dir,RII.pPPI[j],ScanDepth,&dwFlag))
-				{// И остальное совпало
+				{// Р РѕСЃС‚Р°Р»СЊРЅРѕРµ СЃРѕРІРїР°Р»Рѕ
 					i++; j++;
-					dwFlag=RCIF_EQUAL;  // просто установим
+					dwFlag=RCIF_EQUAL;  // РїСЂРѕСЃС‚Рѕ СѓСЃС‚Р°РЅРѕРІРёРј
 				}
 				else
 				{
 					bDifferenceNotFound=false;
-					// узнаем, новый кто?
+					// СѓР·РЅР°РµРј, РЅРѕРІС‹Р№ РєС‚Рѕ?
 					__int64 Delta=(((__int64)LII.pPPI[i]->LastWriteTime.dwHighDateTime << 32) | LII.pPPI[i]->LastWriteTime.dwLowDateTime) -
 												(((__int64)RII.pPPI[j]->LastWriteTime.dwHighDateTime << 32) | RII.pPPI[j]->LastWriteTime.dwLowDateTime);
 					if (Opt.CmpTime)
@@ -1785,13 +1785,13 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 					CmpInfo.LDiff++; CmpInfo.RDiff++;
 //					dwFlag=RCIF_DIFFER;
 					if (Opt.StopDiffDup && !bBrokenByEsc)
-					{     // нужно ли продолжать сравнивать
+					{     // РЅСѓР¶РЅРѕ Р»Рё РїСЂРѕРґРѕР»Р¶Р°С‚СЊ СЃСЂР°РІРЅРёРІР°С‚СЊ
 						bCompareAll=(Opt.ShowMsg && !YesNoMsg(MFirstDiffTitle, MFirstDiffBody));
 						Opt.StopDiffDup=0;
 					}
 				}
 				CmpInfo.Proc+=2;
-				// добавим элемент в диалог результатов
+				// РґРѕР±Р°РІРёРј СЌР»РµРјРµРЅС‚ РІ РґРёР°Р»РѕРі СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ
 				if (Opt.Dialog)
 					MakeFileList(pLList->Dir,LII.pPPI[i-1],pRList->Dir,RII.pPPI[j-1],dwFlag);
 				break;
@@ -1799,7 +1799,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 
 			/******************************************************************************/
 
-			case -1: // Элемент LII.pPPI[i] не имеет одноимённых в RII.pPPI
+			case -1: // Р­Р»РµРјРµРЅС‚ LII.pPPI[i] РЅРµ РёРјРµРµС‚ РѕРґРЅРѕРёРјС‘РЅРЅС‹С… РІ RII.pPPI
 			{
 //wchar_t buf2[512];
 //FSF.sprintf(buf2,L"Left: %s Right: %s", LII.pPPI[i]->FindData.lpwszFileName, RII.pPPI[j]->FindData.lpwszFileName);
@@ -1815,7 +1815,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 						goto FoundDiffL;
 					}
 					else
-					{ // ...но если с Темп-панели, то проверим с элементом RII.pPPI
+					{ // ...РЅРѕ РµСЃР»Рё СЃ РўРµРјРї-РїР°РЅРµР»Рё, С‚Рѕ РїСЂРѕРІРµСЂРёРј СЃ СЌР»РµРјРµРЅС‚РѕРј RII.pPPI
 						bNextItem=false;
 						for (int k=0; k<RII.iCount; k++)
 						{
@@ -1832,7 +1832,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 								{
 									bDifferenceNotFound=false;
 									LII.pPPI[i]->Flags |= PPIF_SELECTED;
-									dwFlag=(RCIF_LNEW|RCIF_LUNIQ);  // просто установим
+									dwFlag=(RCIF_LNEW|RCIF_LUNIQ);  // РїСЂРѕСЃС‚Рѕ СѓСЃС‚Р°РЅРѕРІРёРј
 									i++; CmpInfo.LDiff++;
 									if (LPanel.bTMP && k<RII.iCount)
 									{
@@ -1854,7 +1854,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 							goto FoundDiffL;
 						}
 					}
-					// добавим элемент в диалог результатов
+					// РґРѕР±Р°РІРёРј СЌР»РµРјРµРЅС‚ РІ РґРёР°Р»РѕРі СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ
 					if (Opt.Dialog)
 						MakeFileList(pLList->Dir,LII.pPPI[i-1],pRList->Dir,NULL,dwFlag);
 				}
@@ -1868,7 +1868,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 
 			/******************************************************************************/
 
-			case 1: // Элемент RII.pPPI[j] не имеет одноимённых в LII.pPPI
+			case 1: // Р­Р»РµРјРµРЅС‚ RII.pPPI[j] РЅРµ РёРјРµРµС‚ РѕРґРЅРѕРёРјС‘РЅРЅС‹С… РІ LII.pPPI
 			{
 //wchar_t buf3[512];
 //FSF.sprintf(buf3,L"Left: %s Right: %s", LII.pPPI[i]->FindData.lpwszFileName, RII.pPPI[j]->FindData.lpwszFileName);
@@ -1884,7 +1884,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 						goto FoundDiffR;
 					}
 					else
-					{ // ...но если с Темп-панели, то проверим с элементом LII.pPPI
+					{ // ...РЅРѕ РµСЃР»Рё СЃ РўРµРјРї-РїР°РЅРµР»Рё, С‚Рѕ РїСЂРѕРІРµСЂРёРј СЃ СЌР»РµРјРµРЅС‚РѕРј LII.pPPI
 						bNextItem=false;
 						for (int k=0; k<LII.iCount; k++)
 						{
@@ -1901,7 +1901,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 								{
 									bDifferenceNotFound=false;
 									RII.pPPI[j]->Flags |= PPIF_SELECTED;
-									dwFlag=(RCIF_RNEW|RCIF_RUNIQ);  // просто установим
+									dwFlag=(RCIF_RNEW|RCIF_RUNIQ);  // РїСЂРѕСЃС‚Рѕ СѓСЃС‚Р°РЅРѕРІРёРј
 									j++; CmpInfo.RDiff++;
 									if (RPanel.bTMP && k<LII.iCount)
 									{
@@ -1923,7 +1923,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 							goto FoundDiffR;
 						}
 					}
-					// добавим элемент в диалог результатов
+					// РґРѕР±Р°РІРёРј СЌР»РµРјРµРЅС‚ РІ РґРёР°Р»РѕРі СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ
 					if (Opt.Dialog)
 						MakeFileList(pLList->Dir,NULL,pRList->Dir,RII.pPPI[j-1],dwFlag);
 				}
@@ -1939,7 +1939,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 
 	if (!bBrokenByEsc)
 	{
-		// Собственно сравнение окончено. Пометим то, что осталось необработанным в массивах
+		// РЎРѕР±СЃС‚РІРµРЅРЅРѕ СЃСЂР°РІРЅРµРЅРёРµ РѕРєРѕРЅС‡РµРЅРѕ. РџРѕРјРµС‚РёРј С‚Рѕ, С‡С‚Рѕ РѕСЃС‚Р°Р»РѕСЃСЊ РЅРµРѕР±СЂР°Р±РѕС‚Р°РЅРЅС‹Рј РІ РјР°СЃСЃРёРІР°С…
 		if ((!Opt.IgnoreMissing || (Opt.IgnoreMissing==2 && ScanDepth)) && i<LII.iCount)
 		{
 			if (!LPanel.bTMP)
@@ -1971,7 +1971,7 @@ bool AdvCmpProc::CompareDirs(const struct DirList *pLList,const struct DirList *
 
 /***************************************************************************
  *
- *                    ДИАЛОГ СРАВНЕНИЯ ТЕКУЩИХ ФАЙЛОВ
+ *                    Р”РРђР›РћР“ РЎР РђР’РќР•РќРРЇ РўР•РљРЈР©РРҐ Р¤РђР™Р›РћР’
  *
  ***************************************************************************/
 
@@ -2008,8 +2008,8 @@ bool UpdateImage(PicData *data, bool CheckOnly=false)
 						RECT DCRect;
 						DCRect.left=dx*(data->DrawRect.left-WinInfo.Con.Left);
 						DCRect.right=dx*(data->DrawRect.right+1-WinInfo.Con.Left);
-						DCRect.top=dy*(data->DrawRect.top/*-WinInfo.Con.Top*/);          //костыль для запуска far.exe /w
-						DCRect.bottom=dy*(data->DrawRect.bottom+1/*-WinInfo.Con.Top*/);  //костыль для запуска far.exe /w
+						DCRect.top=dy*(data->DrawRect.top/*-WinInfo.Con.Top*/);          //РєРѕСЃС‚С‹Р»СЊ РґР»СЏ Р·Р°РїСѓСЃРєР° far.exe /w
+						DCRect.bottom=dy*(data->DrawRect.bottom+1/*-WinInfo.Con.Top*/);  //РєРѕСЃС‚С‹Р»СЊ РґР»СЏ Р·Р°РїСѓСЃРєР° far.exe /w
 
 						float asp_dst=(float)(DCRect.right-DCRect.left)/(float)(DCRect.bottom-DCRect.top);
 						float asp_src=(float)RawPicture->Width/(float)RawPicture->Height;
@@ -2247,8 +2247,8 @@ intptr_t WINAPI ShowCmpCurDialogProc(HANDLE hDlg,intptr_t Msg,intptr_t Param1,vo
 
 int AdvCmpProc::ShowCmpCurDialog(const PluginPanelItem *pLPPI,const PluginPanelItem *pRPPI, bool bShowImage)
 {
-	const unsigned int dW = WinInfo.Con.Right;   // ширина
-	const unsigned int dH = bShowImage?WinInfo.Con.Bottom-WinInfo.Con.Top:11;   // высота
+	const unsigned int dW = WinInfo.Con.Right;   // С€РёСЂРёРЅР°
+	const unsigned int dH = bShowImage?WinInfo.Con.Bottom-WinInfo.Con.Top:11;   // РІС‹СЃРѕС‚Р°
 
 	wchar_t LTime[20]={0}, RTime[20]={0};
 	wchar_t LSize[65]={0}, RSize[65]={0};
@@ -2259,18 +2259,18 @@ int AdvCmpProc::ShowCmpCurDialog(const PluginPanelItem *pLPPI,const PluginPanelI
 	/* 1*/{DI_VTEXT,      dW/2,    0, dW/2,dH-10, 0, 0, 0,   DIF_SEPARATOR2,0,0,0},
 	/* 2*/{DI_TEXT,         -1,dH-10,    0,    0, 0, 0, 0,   DIF_SEPARATOR2,0,0,0},
 	/* 3*/{DI_DOUBLEBOX,     0,    0,   dW,   dH, 0, 0, 0,                0,0,0,0},
-	// инфо
+	// РёРЅС„Рѕ
 	/* 4*/{DI_TEXT,          0, dH-9,    0,    0, 0, 0, 0,                0,pLPPI->AlternateFileName,0,0},
-	/* 5*/{DI_TEXT,          0, dH-8,    0,    0, 0, 0, 0,                0,0,0,0},  // mp3-трек
+	/* 5*/{DI_TEXT,          0, dH-8,    0,    0, 0, 0, 0,                0,0,0,0},  // mp3-С‚СЂРµРє
 	/* 6*/{DI_TEXT,          0, dH-7,   18,    0, 0, 0, 0,                0,itoaa(pLPPI->FileSize,LSize),0,0},
 	/* 7*/{DI_TEXT,         19, dH-7,   38,    0, 0, 0, 0,                0,GetStrFileTime(&pLPPI->LastWriteTime,LTime),0,0},
-	/* 8*/{DI_TEXT,         39, dH-7, dW-1,    0, 0, 0, 0,                0,0,0,0},  // разрешение/длительность/...
+	/* 8*/{DI_TEXT,         39, dH-7, dW-1,    0, 0, 0, 0,                0,0,0,0},  // СЂР°Р·СЂРµС€РµРЅРёРµ/РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊ/...
 	/* 9*/{DI_TEXT,         -1, dH-6,    0,    0, 0, 0, 0,    DIF_SEPARATOR,0,0,0},
-	// инфо
+	// РёРЅС„Рѕ
 	/*10*/{DI_TEXT,          0, dH-5,   18,    0, 0, 0, 0,                0,itoaa(pRPPI->FileSize,RSize),0,0},
 	/*11*/{DI_TEXT,         19, dH-5,   38,    0, 0, 0, 0,                0,GetStrFileTime(&pRPPI->LastWriteTime,RTime),0,0},
-	/*12*/{DI_TEXT,         39, dH-5, dW-1,    0, 0, 0, 0,                0,0,0,0},  // разрешение/длительность/...
-	/*13*/{DI_TEXT,          0, dH-4,    0,    0, 0, 0, 0,                0,0,0,0},  // mp3-трек
+	/*12*/{DI_TEXT,         39, dH-5, dW-1,    0, 0, 0, 0,                0,0,0,0},  // СЂР°Р·СЂРµС€РµРЅРёРµ/РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊ/...
+	/*13*/{DI_TEXT,          0, dH-4,    0,    0, 0, 0, 0,                0,0,0,0},  // mp3-С‚СЂРµРє
 	/*14*/{DI_TEXT,          0, dH-3,    0,    0, 0, 0, 0,                0,pRPPI->AlternateFileName,0,0},
 	/*15*/{DI_TEXT,         -1, dH-2,    0,    0, 0, 0, 0,    DIF_SEPARATOR,0,0,0},
 
@@ -2352,7 +2352,7 @@ bool AdvCmpProc::CompareCurFile(const wchar_t *LDir, const wchar_t *LFileName, c
 		strCommand.updsize();
 	}
 
-	if (Method) // перебираем всё
+	if (Method) // РїРµСЂРµР±РёСЂР°РµРј РІСЃС‘
 	{
 		bool bImage=false;
 		bool bVisCmp=(pCompareFiles && GetModuleHandleW(L"VisComp.dll"));
