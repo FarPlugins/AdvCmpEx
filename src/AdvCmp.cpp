@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AdvCmp.hpp"
 #include "AdvCmpDlgOpt.hpp"
 #include "AdvCmpProc.hpp"
+#include "version.hpp"
 
 /****************************************************************************
  * Копии стандартных структур FAR
@@ -446,8 +447,8 @@ bool LoadBASS(wchar_t *PlugPath)
 void WINAPI GetGlobalInfoW(struct GlobalInfo *pInfo)
 {
 	pInfo->StructSize=sizeof(GlobalInfo);
-	pInfo->MinFarVersion=FARMANAGERVERSION;
-	pInfo->Version=MAKEFARVERSION(3,0,0,36,VS_RC);
+	pInfo->MinFarVersion=MAKEFARVERSION(3, 0, 0, 3192, VS_RELEASE);;
+	pInfo->Version=MAKEFARVERSION(PLUGIN_VER_MAJOR, PLUGIN_VER_MINOR, PLUGIN_VER_PATCH, 0, VS_RELEASE);
 	pInfo->Guid=MainGuid;
 	pInfo->Title=L"AdvCmpEx";
 	pInfo->Description=L"Advanced compare files plugin for Far Manager v3.0";
