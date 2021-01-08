@@ -1,0 +1,22 @@
+function(plugin_extract_version path_to_version_file)
+  file(READ "${path_to_version_file}" file_contents)
+  string(REGEX MATCH "PLUGIN_VER_MAJOR ([0-9]+)" _ "${file_contents}")
+  if (NOT CMAKE_MATCH_COUNT EQUAL 1)
+    message(FATAL_ERROR "Could not extract major version number from ${path_to_version_file}")
+  endif ()
+  set(ver_major ${CMAKE_MATCH_1})
+
+  string(REGEX MATCH "PLUGIN_VER_MINOR ([0-9]+)" _ "${file_contents}")
+  if (NOT CMAKE_MATCH_COUNT EQUAL 1)
+    message(FATAL_ERROR "Could not extract minor version number from ${path_to_version_file}")
+  endif ()
+
+  set(ver_minor ${CMAKE_MATCH_1})
+  string(REGEX MATCH "PLUGIN_VER_PATCH ([0-9]+)" _ "${file_contents}")
+  if (NOT CMAKE_MATCH_COUNT EQUAL 1)
+    message(FATAL_ERROR "Could not extract patch version number from ${path_to_version_file}")
+  endif ()
+  set(ver_patch ${CMAKE_MATCH_1})
+
+  set(PLUGIN_VERSION "${ver_major}.${ver_minor}.${ver_patch}" PARENT_SCOPE)
+endfunction()

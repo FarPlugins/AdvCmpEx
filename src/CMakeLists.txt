@@ -1,4 +1,4 @@
-project(AdvCmpEx CXX)
+project(AdvCmpEx VERSION ${PLUGIN_VERSION} LANGUAGES CXX)
 
 set(SRC_CPP
     AdvCmp.cpp
@@ -44,13 +44,11 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(LINK_FLAGS "${LINK_FLAGS} /incremental:no /OPT:REF /OPT:ICF /debug /ltcg")
   endif ()
 
-  add_definitions(-DUNICODE -D_UNICODE)
+  add_definitions(-DUNICODE -D_UNICODE -D_CRT_SECURE_NO_WARNINGS)
 
   if (IS_x64_PLATFORM)
     set(CMAKE_RC_FLAGS -D_WIN64)
   endif ()
-
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
 endif ()
 
@@ -65,44 +63,37 @@ set(MAIN_FLAGS_C_RELEASE ${FLAGS_C_RELEASE} ${FLAGS_C_DEFAULT})
 #====================================================
 
 set(SRC_FILES ${SRC_CPP} ${SRC_DEF})
-add_library(AdvCmpEx SHARED ${SRC_FILES})
-target_include_directories(AdvCmpEx
-    PUBLIC ${PROJECT_SOURCE_DIR}/../farsdk/unicode
+add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
+target_include_directories(${PROJECT_NAME}
+    PRIVATE ${PROJECT_SOURCE_DIR}/../farsdk/unicode
     )
 
-set_target_properties(AdvCmpEx PROPERTIES
+set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_STANDARD 11
     CXX_STANDARD_REQUIRED YES
     CXX_EXTENSIONS NO
     )
 
 if (${CMAKE_BUILD_TYPE} MATCHES Debug)
-  target_compile_options(AdvCmpEx
+  target_compile_options(${PROJECT_NAME}
       PUBLIC $<$<COMPILE_LANGUAGE:C>:${MAIN_FLAGS_C_DEBUG}>
       PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${MAIN_FLAGS_CXX_DEBUG}>
       )
 else ()
-  target_compile_options(AdvCmpEx
+  target_compile_options(${PROJECT_NAME}
       PUBLIC $<$<COMPILE_LANGUAGE:C>:${MAIN_FLAGS_C_RELEASE}>
       PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${MAIN_FLAGS_CXX_RELEASE}>
       )
 endif ()
 
-set_target_properties(AdvCmpEx
+set_target_properties(${PROJECT_NAME}
     PROPERTIES
     LINK_FLAGS "${LINK_FLAGS}"
     )
 
-#====================================================
-# build misc files
-#====================================================
-# used @@ESCAPE and ESCAPE@@ for escape @ in files
-configure_file(AdvCmpExRus.hlf.in AdvCmpExRus.hlf)
-
-#====================================================
-# install
-#====================================================
-install(TARGETS AdvCmpEx RUNTIME DESTINATION .)
-install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.map DESTINATION .)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AdvCmpExRus.hlf AdvCmpExEng.lng AdvCmpExRus.lng DESTINATION .)
-install(FILES ${PROJECT_SOURCE_DIR}/../WhatsNewRus.txt ${PROJECT_SOURCE_DIR}/../ReadMe.txt DESTINATION .)
+# create archive with pdb file
+add_custom_target(
+    ${PROJECT_NAME}_PDB ALL
+    COMMAND ${CMAKE_COMMAND} -E tar "cfv" "../${PACKAGE_FILE_NAME}.pdb.zip" --format=zip $<TARGET_PDB_FILE:${PROJECT_NAME}>
+    DEPENDS $<TARGET_PDB_FILE:${PROJECT_NAME}>
+)
