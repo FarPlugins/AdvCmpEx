@@ -48,7 +48,15 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 
   if (IS_x64_PLATFORM)
     set(CMAKE_RC_FLAGS -D_WIN64)
+  else ()
+    # support old CPU AMD on WinXP
+    set(FLAGS_CXX_DEFAULT ${FLAGS_CXX_DEFAULT} /arch:IA32)
+    set(FLAGS_C_DEFAULT ${FLAGS_C_DEFAULT} /arch:IA32)
   endif ()
+
+  # for vc_crt_fix_impl.cpp
+  set(FLAGS_CXX_DEFAULT ${FLAGS_CXX_DEFAULT} /Zc:threadSafeInit-)
+  set(FLAGS_C_DEFAULT ${FLAGS_C_DEFAULT} /Zc:threadSafeInit-)
 
 endif ()
 
@@ -57,6 +65,34 @@ set(MAIN_FLAGS_CXX_DEBUG ${FLAGS_CXX_DEBUG} ${FLAGS_CXX_DEFAULT})
 set(MAIN_FLAGS_CXX_RELEASE ${FLAGS_CXX_RELEASE} ${FLAGS_CXX_DEFAULT})
 set(MAIN_FLAGS_C_DEBUG ${FLAGS_C_DEBUG} ${FLAGS_C_DEFAULT})
 set(MAIN_FLAGS_C_RELEASE ${FLAGS_C_RELEASE} ${FLAGS_C_DEFAULT})
+
+#====================================================
+# support win2k, winxp
+#====================================================
+if (MSVC)
+  set(ASM_SOURCE ${PROJECT_SOURCE_DIR}/../farsdk/vc_crt_fix.asm)
+  set(ASM_OBJECT ${CMAKE_CURRENT_BINARY_DIR}/vc_crt_fix.obj)
+  set(ASM_OBJECTS ${ASM_OBJECTS} ${ASM_OBJECT})
+  set(MASM_DEFINES "")
+  if (${CMAKE_CL_64} STREQUAL "0")
+    find_program(MASM_EXECUTABLE ml)
+  else ()
+    find_program(MASM_EXECUTABLE ml64)
+    set(MASM_DEFINES "/DX64")
+  endif ()
+
+  add_custom_command(
+      OUTPUT ${ASM_OBJECT}
+      COMMAND ${MASM_EXECUTABLE}
+      ARGS /c ${MASM_DEFINES} /Fo ${ASM_OBJECT} ${ASM_SOURCE}
+      DEPENDS ${ASM_SOURCE}
+  )
+
+  set(SRC_CPP ${SRC_CPP}
+      ${PROJECT_SOURCE_DIR}/../farsdk/vc_crt_fix_impl.cpp
+      ${ASM_OBJECTS}
+      )
+endif ()
 
 #====================================================
 # build
