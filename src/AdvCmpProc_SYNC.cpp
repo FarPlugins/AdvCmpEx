@@ -77,7 +77,7 @@ int GetSyncOpt(cmpFileList* pFileList)
     if (Opt.ShowMsg)
     {
       const wchar_t* MsgItems[] = {GetMsg(MSyncTitle), GetMsg(MNoSyncBody), GetMsg(MOK)};
-      Info.Message(&MainGuid, &NoSyncMsgGuid, 0, 0, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 1);
+      Info.Message(&MainGuid, &NoSyncMsgGuid, 0, nullptr, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 1);
     }
     return ret = QR_SKIP;  //нет элементов
   }
@@ -90,28 +90,28 @@ int GetSyncOpt(cmpFileList* pFileList)
   FSF.sprintf(buf3, GetMsg(MSyncDel), ItemsRDel);
 
   struct FarDialogItem DialogItems[] = {//			Type	X1	Y1	X2	Y2				Selected	History	Mask	Flags	Data	MaxLen	UserParam
-                                        /* 0*/ {DI_DOUBLEBOX, 3, 1, 60, 8, 0, 0, 0, 0, GetMsg(MSyncTitle), 0, 0},
-                                        /* 1*/ {DI_CHECKBOX, 5, 2, 0, 0, Opt.SyncRPanel, 0, 0, Opt.SyncRPanel ? DIF_FOCUS : DIF_DISABLE, buf2, 0, 0},
-                                        /* 2*/ {DI_CHECKBOX, 5, 3, 0, 0, Opt.SyncLPanel, 0, 0, Opt.SyncLPanel ? 0 : DIF_DISABLE, buf1, 0, 0},
-                                        /* 3*/ {DI_CHECKBOX, 5, 4, 0, 0, Opt.SyncDel, 0, 0, Opt.SyncDel ? 0 : DIF_DISABLE, buf3, 0, 0},
-                                        /* 4*/ {DI_CHECKBOX, 8, 5, 0, 0, 0, 0, 0, Opt.SyncDel ? 0 : DIF_DISABLE, GetMsg(MSyncUseDelFilter), 0, 0},
-                                        /* 5*/ {DI_TEXT, -1, 6, 0, 0, 0, 0, 0, DIF_SEPARATOR, L"", 0, 0},
-                                        /* 6*/ {DI_BUTTON, 0, 7, 0, 0, 0, 0, 0, DIF_DEFAULTBUTTON | DIF_CENTERGROUP, GetMsg(MOK), 0, 0},
-                                        /* 7*/ {DI_BUTTON, 0, 7, 0, 0, 0, 0, 0, DIF_CENTERGROUP, GetMsg(MSyncEdit), 0, 0},
-                                        /* 8*/ {DI_BUTTON, 0, 7, 0, 0, 0, 0, 0, DIF_CENTERGROUP, GetMsg(MCancel), 0, 0}};
+                                        /* 0*/ {DI_DOUBLEBOX, 3, 1, 60, 8, 0, nullptr, nullptr, 0, GetMsg(MSyncTitle), 0, 0},
+                                        /* 1*/ {DI_CHECKBOX, 5, 2, 0, 0, Opt.SyncRPanel, nullptr, nullptr, Opt.SyncRPanel ? DIF_FOCUS : DIF_DISABLE, buf2, 0, 0},
+                                        /* 2*/ {DI_CHECKBOX, 5, 3, 0, 0, Opt.SyncLPanel, nullptr, nullptr, Opt.SyncLPanel ? 0 : DIF_DISABLE, buf1, 0, 0},
+                                        /* 3*/ {DI_CHECKBOX, 5, 4, 0, 0, Opt.SyncDel, nullptr, nullptr, Opt.SyncDel ? 0 : DIF_DISABLE, buf3, 0, 0},
+                                        /* 4*/ {DI_CHECKBOX, 8, 5, 0, 0, 0, nullptr, nullptr, Opt.SyncDel ? 0 : DIF_DISABLE, GetMsg(MSyncUseDelFilter), 0, 0},
+                                        /* 5*/ {DI_TEXT, -1, 6, 0, 0, 0, nullptr, nullptr, DIF_SEPARATOR, L"", 0, 0},
+                                        /* 6*/ {DI_BUTTON, 0, 7, 0, 0, 0, nullptr, nullptr, DIF_DEFAULTBUTTON | DIF_CENTERGROUP, GetMsg(MOK), 0, 0},
+                                        /* 7*/ {DI_BUTTON, 0, 7, 0, 0, 0, nullptr, nullptr, DIF_CENTERGROUP, GetMsg(MSyncEdit), 0, 0},
+                                        /* 8*/ {DI_BUTTON, 0, 7, 0, 0, 0, nullptr, nullptr, DIF_CENTERGROUP, GetMsg(MCancel), 0, 0}};
 
   HANDLE hDlg =
-      Info.DialogInit(&MainGuid, &OptSyncDlgGuid, -1, -1, 64, 10, L"DlgCmp", DialogItems, sizeof(DialogItems) / sizeof(DialogItems[0]), 0, 0, 0, 0);
+      Info.DialogInit(&MainGuid, &OptSyncDlgGuid, -1, -1, 64, 10, L"DlgCmp", DialogItems, sizeof(DialogItems) / sizeof(DialogItems[0]), 0, 0, nullptr, nullptr);
 
   if (hDlg != INVALID_HANDLE_VALUE)
   {
     ret = (int) Info.DialogRun(hDlg);
     if (ret == 6)
     {
-      Opt.SyncRPanel = Info.SendDlgMessage(hDlg, DM_GETCHECK, 1, 0);
-      Opt.SyncLPanel = Info.SendDlgMessage(hDlg, DM_GETCHECK, 2, 0);
-      Opt.SyncDel = Info.SendDlgMessage(hDlg, DM_GETCHECK, 3, 0);
-      Opt.SyncUseDelFilter = Info.SendDlgMessage(hDlg, DM_GETCHECK, 4, 0);
+      Opt.SyncRPanel = Info.SendDlgMessage(hDlg, DM_GETCHECK, 1, nullptr);
+      Opt.SyncLPanel = Info.SendDlgMessage(hDlg, DM_GETCHECK, 2, nullptr);
+      Opt.SyncDel = Info.SendDlgMessage(hDlg, DM_GETCHECK, 3, nullptr);
+      Opt.SyncUseDelFilter = Info.SendDlgMessage(hDlg, DM_GETCHECK, 4, nullptr);
       ret = (Opt.SyncLPanel || Opt.SyncRPanel || Opt.SyncDel) ? QR_ALL : QR_SKIP;  // синхронизируем, иначе - пропустим
     }
     else if (ret == 7)
@@ -150,7 +150,7 @@ int AdvCmpProc::QueryOverwriteFile(const wchar_t* FileName, FILETIME* srcTime, F
                                GetMsg(MSkip),    GetMsg(MSkipAll), GetMsg(MCancel)};
 
   int ExitCode =
-      (int) Info.Message(&MainGuid, &QueryOverwriteMsgGuid, FMSG_WARNING | FMSG_LEFTALIGN, NULL, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 5);
+      (int) Info.Message(&MainGuid, &QueryOverwriteMsgGuid, FMSG_WARNING | FMSG_LEFTALIGN, nullptr, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 5);
 
   return (ExitCode <= QR_SKIPALL ? ExitCode : QR_ABORT);
 }
@@ -173,7 +173,7 @@ int AdvCmpProc::QueryDelete(const wchar_t* FileName, bool bIsDir, bool bReadOnly
       GetMsg(MSkipAll),
       GetMsg(MCancel)};
 
-  int ExitCode = (int) Info.Message(&MainGuid, &QueryDelMsgGuid, FMSG_WARNING, NULL, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 5);
+  int ExitCode = (int) Info.Message(&MainGuid, &QueryDelMsgGuid, FMSG_WARNING, nullptr, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 5);
 
   return (ExitCode <= QR_SKIPALL ? ExitCode : QR_ABORT);
 }
@@ -202,7 +202,7 @@ void ShowSyncMsg(const wchar_t* Name1, const wchar_t* Name2, unsigned __int64 Pr
 
   const wchar_t* MsgItems[] = {GetMsg(MSyncTitle), GetMsg(MCopying), TruncName1, GetMsg(MCopyingTo), TruncName2, L"\1", ProgressBar};
 
-  Info.Message(&MainGuid, &SyncMsgGuid, bStartMsg ? FMSG_LEFTALIGN : FMSG_LEFTALIGN | FMSG_KEEPBACKGROUND, NULL, MsgItems,
+  Info.Message(&MainGuid, &SyncMsgGuid, bStartMsg ? FMSG_LEFTALIGN : FMSG_LEFTALIGN | FMSG_KEEPBACKGROUND, nullptr, MsgItems,
                sizeof(MsgItems) / sizeof(MsgItems[0]), 0);
   bStartMsg = false;
 }
@@ -221,7 +221,7 @@ DWORD WINAPI SynchronizeFileCopyCallback(LARGE_INTEGER TotalFileSize, LARGE_INTE
 
   if (lpData)
   {
-    struct SynchronizeFileCopyCallbackData* data = (SynchronizeFileCopyCallbackData*) lpData;
+    auto* data = (SynchronizeFileCopyCallbackData*) lpData;
     ShowSyncMsg(data->srcFileName, data->destFileName, progress, max, false);
   }
   else
@@ -372,7 +372,7 @@ int AdvCmpProc::SyncFile(const wchar_t* srcFileName, const wchar_t* destFileName
 
     if (doCopy)
     {
-      struct SynchronizeFileCopyCallbackData copyData;
+      struct SynchronizeFileCopyCallbackData copyData{};
       copyData.srcFileName = (wchar_t*) srcFileName;
       copyData.destFileName = (wchar_t*) destFileName;
       int doSync = 1;
@@ -408,7 +408,7 @@ int AdvCmpProc::SyncFile(const wchar_t* srcFileName, const wchar_t* destFileName
           if (!dwErr && ((Opt.CmpTime && (dwFlag & RCIF_TIMEDIFF)) || !Opt.CmpTime))
           {
             HANDLE hFile =
-                CreateFileW(destFileName, FILE_WRITE_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, 0);
+                CreateFileW(destFileName, FILE_WRITE_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
             if (hFile != INVALID_HANDLE_VALUE)
             {
               if (!SetFileTime(hFile, &sWFD.ftCreationTime, &sWFD.ftLastAccessTime, &sWFD.ftLastWriteTime))
@@ -435,7 +435,7 @@ int AdvCmpProc::SyncFile(const wchar_t* srcFileName, const wchar_t* destFileName
           if (!SetFileAttributesW(destFileName, dWFD.dwFileAttributes & ~(FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN)))
             dwErr = GetLastError();
 
-        if (!dwErr && CopyFileExW(srcFileName, destFileName, SynchronizeFileCopyCallback, &copyData, NULL, 0))
+        if (!dwErr && CopyFileExW(srcFileName, destFileName, SynchronizeFileCopyCallback, &copyData, nullptr, 0))
         {
           // CopyFileExW() не синхронизирует имена, поэтому...
           const wchar_t* pSrc = FSF.PointToName(srcFileName);
@@ -467,13 +467,13 @@ int AdvCmpProc::SyncFile(const wchar_t* srcFileName, const wchar_t* destFileName
         // Check, wich file failes?
         HANDLE hFile;
         // ERROR_SHARING_VIOLATION==32
-        hFile = CreateFileW(srcFileName, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, NULL);
+        hFile = CreateFileW(srcFileName, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
         if (hFile == INVALID_HANDLE_VALUE)
           nErrMsg = MFailedOpenSrcFile;  // Source file failed
         else
         {
           CloseHandle(hFile);
-          hFile = CreateFileW(destFileName, GENERIC_WRITE, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, NULL);
+          hFile = CreateFileW(destFileName, GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
           if (hFile == INVALID_HANDLE_VALUE)
           {
             if (GetLastError() == ERROR_FILE_NOT_FOUND)
@@ -492,7 +492,7 @@ int AdvCmpProc::SyncFile(const wchar_t* srcFileName, const wchar_t* destFileName
         SetLastError(dwErr);
         int ExitCode = bBrokenByEsc
             ? 2 /*MCancel*/
-            : Info.Message(&MainGuid, &FailedCopyMsgGuid, FMSG_WARNING | FMSG_ERRORTYPE, 0, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 3);
+            : Info.Message(&MainGuid, &FailedCopyMsgGuid, FMSG_WARNING | FMSG_ERRORTYPE, nullptr, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 3);
 
         if (!ExitCode)
           goto RetryCopy;
@@ -615,7 +615,7 @@ int AdvCmpProc::DelFile(const wchar_t* FileName)
           if (Result || shs.fAnyOperationsAborted)
           {
             int ExitCode = bBrokenByEsc ? 2 /*MCancel*/
-                                        : Info.Message(&MainGuid, &FailedDelFileMsgGuid, FMSG_WARNING | FMSG_ERRORTYPE, 0, MsgItems,
+                                        : Info.Message(&MainGuid, &FailedDelFileMsgGuid, FMSG_WARNING | FMSG_ERRORTYPE, nullptr, MsgItems,
                                                        sizeof(MsgItems) / sizeof(MsgItems[0]), 3);
 
             if (!ExitCode)
@@ -641,7 +641,7 @@ int AdvCmpProc::DelFile(const wchar_t* FileName)
         {
           int ExitCode = bBrokenByEsc
               ? 2 /*MCancel*/
-              : Info.Message(&MainGuid, &FailedDelFileMsgGuid, FMSG_WARNING | FMSG_ERRORTYPE, 0, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 3);
+              : Info.Message(&MainGuid, &FailedDelFileMsgGuid, FMSG_WARNING | FMSG_ERRORTYPE, nullptr, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 3);
 
           if (!ExitCode)
             goto RetryDelFile;
@@ -691,7 +691,7 @@ RetryMkDir:
 
   if (hFind == INVALID_HANDLE_VALUE)
   {
-    if (WFD.dwFileAttributes && CreateDirectoryW(destDirName, NULL))
+    if (WFD.dwFileAttributes && CreateDirectoryW(destDirName, nullptr))
       SetFileAttributesW(destDirName, WFD.dwFileAttributes);
     else
       ret = 0;
@@ -725,7 +725,7 @@ RetryMkDir:
                                  GetMsg(MCancel)};
 
     int ExitCode =
-        Info.Message(&MainGuid, &CantCreateFolderMsgGuid, FMSG_WARNING | FMSG_ERRORTYPE, 0, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 3);
+        Info.Message(&MainGuid, &CantCreateFolderMsgGuid, FMSG_WARNING | FMSG_ERRORTYPE, nullptr, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 3);
 
     if (!ExitCode)
       goto RetryMkDir;
@@ -917,7 +917,7 @@ RetryDelDir:
 
     int ExitCode = bBrokenByEsc
         ? 2 /*MCancel*/
-        : Info.Message(&MainGuid, &FailedDelFolderMsgGuid, FMSG_WARNING | FMSG_ERRORTYPE, 0, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 3);
+        : Info.Message(&MainGuid, &FailedDelFolderMsgGuid, FMSG_WARNING | FMSG_ERRORTYPE, nullptr, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 3);
 
     if (!ExitCode)
       goto RetryDelDir;
@@ -947,7 +947,7 @@ int AdvCmpProc::Synchronize()
     bAskDel = GetFarSetting(FSSF_CONFIRMATIONS, L"Delete") ? true : false;
     bSkipLReadOnly = bSkipRReadOnly = false;
 
-    hConInp = CreateFileW(L"CONIN$", GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+    hConInp = CreateFileW(L"CONIN$", GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
     DWORD dwTicks = GetTickCount();
     cmpFileList* pFileList = &cFList;
 
@@ -1027,18 +1027,18 @@ int AdvCmpProc::Synchronize()
     {
       if (Opt.Sound && (GetTickCount() - dwTicks > 30000))
         MessageBeep(MB_ICONASTERISK);
-      Info.AdvControl(&MainGuid, ACTL_PROGRESSNOTIFY, 0, 0);
+      Info.AdvControl(&MainGuid, ACTL_PROGRESSNOTIFY, 0, nullptr);
     }
 
     // Кеш стал неактуальным, освободим
     if (Cache.RCI)
       free(Cache.RCI);
-    Cache.RCI = 0;
+    Cache.RCI = nullptr;
     Cache.ItemsNumber = 0;
   }
 
-  Info.PanelControl(LPanel.hPanel, FCTL_UPDATEPANEL, 0, 0);
-  Info.PanelControl(RPanel.hPanel, FCTL_UPDATEPANEL, 0, 0);
+  Info.PanelControl(LPanel.hPanel, FCTL_UPDATEPANEL, 0, nullptr);
+  Info.PanelControl(RPanel.hPanel, FCTL_UPDATEPANEL, 0, nullptr);
 
   return ret;
 }

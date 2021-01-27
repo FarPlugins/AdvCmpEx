@@ -201,14 +201,14 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList* pFileList, bool bSetCurPos, bool b
   Info.SendDlgMessage(hDlg, DM_LISTINFO, 0, &ListInfo);
 
   if (ListInfo.ItemsNumber)
-    Info.SendDlgMessage(hDlg, DM_LISTDELETE, 0, 0);
+    Info.SendDlgMessage(hDlg, DM_LISTDELETE, 0, nullptr);
 
   if (!pFileList->iCount)
     return true;
 
   // сортируем только при инициализации
   if (bSort)
-    FSF.qsort(pFileList->F, pFileList->iCount, sizeof(pFileList->F[0]), cmpSortList, NULL);
+    FSF.qsort(pFileList->F, pFileList->iCount, sizeof(pFileList->F[0]), cmpSortList, nullptr);
 
   int Index = 0;
   string strBuf;
@@ -501,19 +501,19 @@ bool bSetBottom = false;
  ***************************************************************************/
 intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, void* Param2)
 {
-  cmpFileList* pFileList = (cmpFileList*) Info.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
+  cmpFileList* pFileList = (cmpFileList*) Info.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, nullptr);
   switch (Msg)
   {
     case DN_INITDIALOG:
       MakeCmpFarList(hDlg, pFileList, true, true);
-      Info.SendDlgMessage(hDlg, DM_SETMOUSEEVENTNOTIFY, 1, 0);
+      Info.SendDlgMessage(hDlg, DM_SETMOUSEEVENTNOTIFY, 1, nullptr);
       break;
 
       /************************************************************************/
 
     case DN_RESIZECONSOLE: {
       COORD c = (*(COORD*) Param2);
-      Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, 0);
+      Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, nullptr);
       Info.SendDlgMessage(hDlg, DM_RESIZEDIALOG, 0, &c);
       WinInfo.Con.Right = c.X - 1;
       WinInfo.Con.Bottom = c.Y - 1;
@@ -523,7 +523,7 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
       Info.SendDlgMessage(hDlg, DM_SETITEMPOSITION, 0, &WinInfo.Con);
       c.X = c.Y = -1;
       Info.SendDlgMessage(hDlg, DM_MOVEDIALOG, true, &c);
-      Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, 0);
+      Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, nullptr);
       return true;
     }
 
@@ -598,7 +598,7 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
             Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, &ListPos);
             int OldPos = ListPos.SelectPos;
             ListPos.SelectPos = ListPos.TopPos + (record->Event.MouseEvent.dwMousePosition.Y - 1 - dlgRect.Top);
-            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, 0);
+            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, nullptr);
             int NewPos = Info.SendDlgMessage(hDlg, DM_LISTSETCURPOS, 0, &ListPos);
             if (NewPos != ListPos.SelectPos)
             {
@@ -606,7 +606,7 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
               Info.SendDlgMessage(hDlg, DM_LISTSETCURPOS, 0, &ListPos);
               MessageBeep(MB_OK);
             }
-            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, 0);
+            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, nullptr);
             // вот оно, поле Mark
             if (NewPos == ListPos.SelectPos && record->Event.MouseEvent.dwMousePosition.X >= dlgRect.Left + 68 &&
                 record->Event.MouseEvent.dwMousePosition.X <= dlgRect.Left + 70)
@@ -640,7 +640,7 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
             if (FSF.FarNameToInputRecord(L"F10", &rec))
               Info.SendDlgMessage(hDlg, DM_KEY, 1, &rec);
             else
-              Info.SendDlgMessage(hDlg, DM_CLOSE, 0, 0);
+              Info.SendDlgMessage(hDlg, DM_CLOSE, 0, nullptr);
             return false;
           }
         }
@@ -744,9 +744,9 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
           if (vk == VK_RETURN)
           {
           GOTOCMPFILE:
-            int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, 0);
+            int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, nullptr);
             cmpFile** tmp = (cmpFile**) Info.SendDlgMessage(hDlg, DM_LISTGETDATA, 0, (void*) Pos);
-            cmpFile* cur = tmp ? *tmp : NULL;
+            cmpFile* cur = tmp ? *tmp : nullptr;
             if (cur)
             {
               if ((LPanel.PInfo.Flags & PFLAGS_PLUGIN) || (RPanel.PInfo.Flags & PFLAGS_PLUGIN) || (cur->L.dwAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
@@ -808,7 +808,7 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
             struct FarListPos FLP = {sizeof(FarListPos)};
             Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, &FLP);
             cmpFile** tmp = (cmpFile**) Info.SendDlgMessage(hDlg, DM_LISTGETDATA, 0, (void*) FLP.SelectPos);
-            cmpFile* cur = tmp ? *tmp : NULL;
+            cmpFile* cur = tmp ? *tmp : nullptr;
             if (cur && Opt.ShowListSelect)
             {
               struct FarListGetItem FLGI = {sizeof(FarListGetItem)};
@@ -845,9 +845,9 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
           else if (vk == VK_SPACE)
           {
           GOTOCHANGEMARK:
-            int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, 0);
+            int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, nullptr);
             cmpFile** tmp = (cmpFile**) Info.SendDlgMessage(hDlg, DM_LISTGETDATA, 0, (void*) Pos);
-            cmpFile* cur = tmp ? *tmp : NULL;
+            cmpFile* cur = tmp ? *tmp : nullptr;
             if (cur && !(cur->dwFlags & RCIF_EQUAL) && Opt.Mode == MODE_SYNC)
             {
               struct FarListGetItem FLGI = {sizeof(FarListGetItem)};
@@ -982,9 +982,9 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
         {
           if (vk == VK_RETURN)
           {
-            int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, 0);
+            int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, nullptr);
             cmpFile** tmp = (cmpFile**) Info.SendDlgMessage(hDlg, DM_LISTGETDATA, 0, (void*) Pos);
-            cmpFile* cur = tmp ? *tmp : NULL;
+            cmpFile* cur = tmp ? *tmp : nullptr;
             if (cur)
             {
               if ((LPanel.PInfo.Flags & PFLAGS_PLUGIN) || (RPanel.PInfo.Flags & PFLAGS_PLUGIN) || (cur->L.dwAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
@@ -1003,9 +1003,9 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
         {
           if (vk == VK_CONTROL)
           {
-            int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, 0);
+            int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, nullptr);
             cmpFile** tmp = (cmpFile**) Info.SendDlgMessage(hDlg, DM_LISTGETDATA, 0, (void*) Pos);
-            cmpFile* cur = tmp ? *tmp : NULL;
+            cmpFile* cur = tmp ? *tmp : nullptr;
             if (cur)
             {
               string strVirtDir = GetPosToName(cur->L.Dir) + wcslen(LPanel.Dir);
@@ -1024,7 +1024,7 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
           }
           else if (vk == 0x52)  // VK_R
           {
-            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, 0);
+            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, nullptr);
             Opt.ShowListSelect = true;
             Opt.ShowListIdentical = true;
             Opt.ShowListDifferent = true;
@@ -1033,47 +1033,47 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
             Opt.SyncFlagClearUser = true;
             MakeCmpFarList(hDlg, pFileList);
             Opt.SyncFlagClearUser = false;  // восстановим!
-            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, 0);
+            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, nullptr);
             return true;
           }
           else if (vk == VK_OEM_5 && !(Opt.ShowListSelect && pFileList->Select == 0))
           {
-            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, 0);
+            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, nullptr);
             Opt.ShowListSelect = (Opt.ShowListSelect ? false : true);
             MakeCmpFarList(hDlg, pFileList);
-            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, 0);
+            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, nullptr);
             return true;
           }
           else if (vk == VK_OEM_PLUS && !(Opt.ShowListIdentical && pFileList->Identical == 0))
           {
-            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, 0);
+            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, nullptr);
             Opt.ShowListIdentical = (Opt.ShowListIdentical ? false : true);
             MakeCmpFarList(hDlg, pFileList);
-            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, 0);
+            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, nullptr);
             return true;
           }
           else if (vk == VK_OEM_MINUS && !(Opt.ShowListDifferent && pFileList->Different == 0))
           {
-            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, 0);
+            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, nullptr);
             Opt.ShowListDifferent = (Opt.ShowListDifferent ? false : true);
             MakeCmpFarList(hDlg, pFileList);
-            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, 0);
+            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, nullptr);
             return true;
           }
           else if (vk == VK_OEM_4 && !(Opt.ShowListLNew && pFileList->LNew == 0))
           {
-            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, 0);
+            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, nullptr);
             Opt.ShowListLNew = (Opt.ShowListLNew ? false : true);
             MakeCmpFarList(hDlg, pFileList);
-            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, 0);
+            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, nullptr);
             return true;
           }
           else if (vk == VK_OEM_6 && !(Opt.ShowListRNew && pFileList->RNew == 0))
           {
-            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, 0);
+            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, nullptr);
             Opt.ShowListRNew = (Opt.ShowListRNew ? false : true);
             MakeCmpFarList(hDlg, pFileList);
-            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, 0);
+            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, nullptr);
             return true;
           }
           else if (vk == VK_SPACE && Opt.Mode == MODE_SYNC)
@@ -1081,47 +1081,47 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
             int ret = 0;
             struct FarDialogItem DialogItems[] = {
                 //			Type	X1	Y1	X2	Y2				Selected	History	Mask	Flags	Data	MaxLen	UserParam
-                /* 0*/ {DI_DOUBLEBOX, 3, 1, 60, 11, 0, 0, 0, 0, GetMsg(MSyncSelTitle), 0, 0},
-                /* 1*/ {DI_TEXT, 5, 2, 0, 0, 0, 0, 0, DIF_SEPARATOR, GetMsg(MSyncSelDiff), 0, 0},
-                /* 2*/ {DI_RADIOBUTTON, 5, 3, 0, 0, (Opt.SyncOnlyRight ? 0 : 1), 0, 0, DIF_FOCUS | DIF_GROUP, GetMsg(MSyncSelToSkip), 0, 0},
-                /* 3*/ {DI_RADIOBUTTON, 22, 3, 0, 0, (Opt.SyncOnlyRight ? 1 : 0), 0, 0, 0, GetMsg(MSyncSelToRight), 0, 0},
-                /* 4*/ {DI_RADIOBUTTON, 39, 3, 0, 0, 0, 0, 0, 0, GetMsg(MSyncSelToLeft), 0, 0},
-                /* 5*/ {DI_CHECKBOX, 5, 4, 0, 0, 0, 0, 0, 0, GetMsg(MSyncSelIfNew), 0, 0},
-                /* 6*/ {DI_TEXT, 5, 5, 0, 0, 0, 0, 0, DIF_SEPARATOR, GetMsg(MSyncSelLNew), 0, 0},
-                /* 7*/ {DI_RADIOBUTTON, 5, 6, 0, 0, 1, 0, 0, DIF_GROUP, GetMsg(MSyncSelToRight), 0, 0},
-                /* 8*/ {DI_RADIOBUTTON, 22, 6, 0, 0, 0, 0, 0, 0, GetMsg(MSyncSelToLeft), 0, 0},
-                /* 9*/ {DI_RADIOBUTTON, 39, 6, 0, 0, 0, 0, 0, 0, GetMsg(MSyncSelToNon), 0, 0},
-                /*10*/ {DI_TEXT, 5, 7, 0, 0, 0, 0, 0, DIF_SEPARATOR, GetMsg(MSyncSelRNew), 0, 0},
+                /* 0*/ {DI_DOUBLEBOX, 3, 1, 60, 11, 0, nullptr, nullptr, 0, GetMsg(MSyncSelTitle), 0, 0},
+                /* 1*/ {DI_TEXT, 5, 2, 0, 0, 0, nullptr, nullptr, DIF_SEPARATOR, GetMsg(MSyncSelDiff), 0, 0},
+                /* 2*/ {DI_RADIOBUTTON, 5, 3, 0, 0, (Opt.SyncOnlyRight ? 0 : 1), nullptr, nullptr, DIF_FOCUS | DIF_GROUP, GetMsg(MSyncSelToSkip), 0, 0},
+                /* 3*/ {DI_RADIOBUTTON, 22, 3, 0, 0, (Opt.SyncOnlyRight ? 1 : 0), nullptr, nullptr, 0, GetMsg(MSyncSelToRight), 0, 0},
+                /* 4*/ {DI_RADIOBUTTON, 39, 3, 0, 0, 0, nullptr, nullptr, 0, GetMsg(MSyncSelToLeft), 0, 0},
+                /* 5*/ {DI_CHECKBOX, 5, 4, 0, 0, 0, nullptr, nullptr, 0, GetMsg(MSyncSelIfNew), 0, 0},
+                /* 6*/ {DI_TEXT, 5, 5, 0, 0, 0, nullptr, nullptr, DIF_SEPARATOR, GetMsg(MSyncSelLNew), 0, 0},
+                /* 7*/ {DI_RADIOBUTTON, 5, 6, 0, 0, 1, nullptr, nullptr, DIF_GROUP, GetMsg(MSyncSelToRight), 0, 0},
+                /* 8*/ {DI_RADIOBUTTON, 22, 6, 0, 0, 0, nullptr, nullptr, 0, GetMsg(MSyncSelToLeft), 0, 0},
+                /* 9*/ {DI_RADIOBUTTON, 39, 6, 0, 0, 0, nullptr, nullptr, 0, GetMsg(MSyncSelToNon), 0, 0},
+                /*10*/ {DI_TEXT, 5, 7, 0, 0, 0, nullptr, nullptr, DIF_SEPARATOR, GetMsg(MSyncSelRNew), 0, 0},
                 /*11*/
-                {DI_RADIOBUTTON, 5, 8, 0, 0, (Opt.SyncOnlyRight != 2 ? 1 : 0), 0, 0, DIF_GROUP,
+                {DI_RADIOBUTTON, 5, 8, 0, 0, (Opt.SyncOnlyRight != 2 ? 1 : 0), nullptr, nullptr, DIF_GROUP,
                  GetMsg(Opt.SyncOnlyRight ? MSyncSelToDel : MSyncSelToLeft), 0, 0},
-                /*12*/ {DI_RADIOBUTTON, 22, 8, 0, 0, 0, 0, 0, 0, GetMsg(MSyncSelToRight), 0, 0},
-                /*13*/ {DI_RADIOBUTTON, 39, 8, 0, 0, (Opt.SyncOnlyRight != 2 ? 0 : 1), 0, 0, 0, GetMsg(MSyncSelToNon), 0, 0},
-                /*14*/ {DI_TEXT, -1, 9, 0, 0, 0, 0, 0, DIF_SEPARATOR, 0, 0, 0},
-                /*15*/ {DI_BUTTON, 0, 10, 0, 0, 0, 0, 0, DIF_DEFAULTBUTTON | DIF_CENTERGROUP, GetMsg(MOK), 0, 0},
-                /*16*/ {DI_BUTTON, 0, 10, 0, 0, 0, 0, 0, DIF_CENTERGROUP, GetMsg(MCancel), 0, 0}};
+                /*12*/ {DI_RADIOBUTTON, 22, 8, 0, 0, 0, nullptr, nullptr, 0, GetMsg(MSyncSelToRight), 0, 0},
+                /*13*/ {DI_RADIOBUTTON, 39, 8, 0, 0, (Opt.SyncOnlyRight != 2 ? 0 : 1), nullptr, nullptr, 0, GetMsg(MSyncSelToNon), 0, 0},
+                /*14*/ {DI_TEXT, -1, 9, 0, 0, 0, nullptr, nullptr, DIF_SEPARATOR, nullptr, 0, 0},
+                /*15*/ {DI_BUTTON, 0, 10, 0, 0, 0, nullptr, nullptr, DIF_DEFAULTBUTTON | DIF_CENTERGROUP, GetMsg(MOK), 0, 0},
+                /*16*/ {DI_BUTTON, 0, 10, 0, 0, 0, nullptr, nullptr, DIF_CENTERGROUP, GetMsg(MCancel), 0, 0}};
 
             HANDLE hDlgCur = Info.DialogInit(&MainGuid, &DlgSyncSel, -1, -1, 64, 13, L"DlgCmp", DialogItems,
-                                             sizeof(DialogItems) / sizeof(DialogItems[0]), 0, 0, 0, 0);
+                                             sizeof(DialogItems) / sizeof(DialogItems[0]), 0, 0, nullptr, nullptr);
             if (hDlgCur != INVALID_HANDLE_VALUE)
             {
               ret = (int) Info.DialogRun(hDlgCur);
               if (ret == 15)
               {
-                Opt.SyncFlagCopy = (Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 2, 0) ? 1 : (Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 3, 0) ? 2 : -2));
-                Opt.SyncFlagIfNew = Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 5, 0);
+                Opt.SyncFlagCopy = (Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 2, nullptr) ? 1 : (Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 3, nullptr) ? 2 : -2));
+                Opt.SyncFlagIfNew = Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 5, nullptr);
                 Opt.SyncFlagLCopy =
-                    (Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 7, 0) ? 2 : (Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 8, 0) ? -2 : 0));
+                    (Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 7, nullptr) ? 2 : (Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 8, nullptr) ? -2 : 0));
                 Opt.SyncFlagRCopy =
-                    (Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 11, 0) ? -2 : (Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 12, 0) ? 2 : 0));
+                    (Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 11, nullptr) ? -2 : (Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 12, nullptr) ? 2 : 0));
               }
               Info.DialogFree(hDlgCur);
             }
             if (ret == 15)
             {
-              Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, 0);
+              Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, nullptr);
               MakeCmpFarList(hDlg, pFileList, true, false);
-              Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, 0);
+              Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, nullptr);
               Opt.SyncFlagCopy = Opt.SyncFlagIfNew = 0;
               Opt.SyncFlagLCopy = 1;
               Opt.SyncFlagRCopy = -1;
@@ -1130,9 +1130,9 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
           }
           else if (vk == VK_PRIOR)
           {
-            int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, 0);
+            int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, nullptr);
             cmpFile** tmp = (cmpFile**) Info.SendDlgMessage(hDlg, DM_LISTGETDATA, 0, (void*) Pos);
-            cmpFile* cur = tmp ? *tmp : NULL;
+            cmpFile* cur = tmp ? *tmp : nullptr;
             if (cur)
             {
               if ((LPanel.PInfo.Flags & PFLAGS_PLUGIN) || (RPanel.PInfo.Flags & PFLAGS_PLUGIN))
@@ -1158,9 +1158,9 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
               */
               if (FSF.LStricmp(LPanel.Dir, GetPosToName(cur->L.Dir)))
               {
-                FarPanelDirectory dirInfo = {sizeof(FarPanelDirectory), GetPosToName(cur->L.Dir), NULL, {0}, NULL};
+                FarPanelDirectory dirInfo = {sizeof(FarPanelDirectory), GetPosToName(cur->L.Dir), nullptr, {0}, nullptr};
                 bSetLDir = Info.PanelControl(LPanel.hPanel, FCTL_SETPANELDIRECTORY, 0, &dirInfo);
-                Info.PanelControl(LPanel.hPanel, FCTL_BEGINSELECTION, 0, 0);
+                Info.PanelControl(LPanel.hPanel, FCTL_BEGINSELECTION, 0, nullptr);
               }
 
               {
@@ -1169,7 +1169,7 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
 
                 for (unsigned i = 0; i < PInfo.ItemsNumber; i++)
                 {
-                  size_t size = Info.PanelControl(LPanel.hPanel, FCTL_GETPANELITEM, i, 0);
+                  size_t size = Info.PanelControl(LPanel.hPanel, FCTL_GETPANELITEM, i, nullptr);
                   PluginPanelItem* PPI = (PluginPanelItem*) malloc(size);
                   if (PPI)
                   {
@@ -1202,14 +1202,14 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
                   }
                 }
                 if (bSetLDir)
-                  Info.PanelControl(LPanel.hPanel, FCTL_ENDSELECTION, 0, 0);
+                  Info.PanelControl(LPanel.hPanel, FCTL_ENDSELECTION, 0, nullptr);
               }
 
               if (FSF.LStricmp(RPanel.Dir, GetPosToName(cur->R.Dir)))
               {
-                FarPanelDirectory dirInfo = {sizeof(FarPanelDirectory), GetPosToName(cur->R.Dir), NULL, {0}, NULL};
+                FarPanelDirectory dirInfo = {sizeof(FarPanelDirectory), GetPosToName(cur->R.Dir), nullptr, {0}, nullptr};
                 bSetRDir = Info.PanelControl(RPanel.hPanel, FCTL_SETPANELDIRECTORY, 0, &dirInfo);
-                Info.PanelControl(RPanel.hPanel, FCTL_BEGINSELECTION, 0, 0);
+                Info.PanelControl(RPanel.hPanel, FCTL_BEGINSELECTION, 0, nullptr);
               }
               {
                 PanelInfo PInfo = {sizeof(PanelInfo)};
@@ -1217,7 +1217,7 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
 
                 for (unsigned i = 0; i < PInfo.ItemsNumber; i++)
                 {
-                  size_t size = Info.PanelControl(RPanel.hPanel, FCTL_GETPANELITEM, i, 0);
+                  size_t size = Info.PanelControl(RPanel.hPanel, FCTL_GETPANELITEM, i, nullptr);
                   PluginPanelItem* PPI = (PluginPanelItem*) malloc(size);
                   if (PPI)
                   {
@@ -1249,11 +1249,11 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
                   }
                 }
                 if (bSetRDir)
-                  Info.PanelControl(RPanel.hPanel, FCTL_ENDSELECTION, 0, 0);
+                  Info.PanelControl(RPanel.hPanel, FCTL_ENDSELECTION, 0, nullptr);
               }
               Info.PanelControl(LPanel.hPanel, FCTL_REDRAWPANEL, 0, &LRInfo);
               Info.PanelControl(RPanel.hPanel, FCTL_REDRAWPANEL, 0, &RRInfo);
-              Info.SendDlgMessage(hDlg, DM_CLOSE, 0, 0);
+              Info.SendDlgMessage(hDlg, DM_CLOSE, 0, nullptr);
             }
             return true;
           }
@@ -1281,7 +1281,7 @@ int AdvCmpProc::ShowCmpDialog(const struct DirList* pLList, const struct DirList
 
   int len = WinInfo.Con.Right / 2 - 2;
 
-  int size = Info.PanelControl(LPanel.hPanel, FCTL_GETPANELHOSTFILE, 0, 0);
+  int size = Info.PanelControl(LPanel.hPanel, FCTL_GETPANELHOSTFILE, 0, nullptr);
   string strTmp;
   if (size > 1)
   {
@@ -1301,7 +1301,7 @@ int AdvCmpProc::ShowCmpDialog(const struct DirList* pLList, const struct DirList
   wchar_t buf1[MAX_PATH];
   strcentr(buf1, strTmp2.get(), len, 0x00002550);
 
-  size = Info.PanelControl(RPanel.hPanel, FCTL_GETPANELHOSTFILE, 0, 0);
+  size = Info.PanelControl(RPanel.hPanel, FCTL_GETPANELHOSTFILE, 0, nullptr);
   if (size > 1)
   {
     strTmp.get(size);

@@ -110,31 +110,31 @@ struct ParamStore
   int ID;
   wchar_t* OptName;
   int* Option;
-} StoreOpt[] = {{DlgBORDER, 0, 0},
-                {DlgMODE, 0, 0},
+} StoreOpt[] = {{DlgBORDER, nullptr, nullptr},
+                {DlgMODE, nullptr, nullptr},
                 {DlgMODEBOX, L"Mode", &Opt.Mode},
 
                 {DlgCMPCASE, L"CmpCase", &Opt.CmpCase},
                 {DlgCMPSIZE, L"CmpSize", &Opt.CmpSize},
                 {DlgCMPTIME, L"CmpTime", &Opt.CmpTime},
                 {DlgSECONDS, L"Seconds", &Opt.Seconds},
-                {DlgIGNORESEC, 0, 0},
+                {DlgIGNORESEC, nullptr, nullptr},
                 {DlgPRECISION, L"LowPrecisionTime", &Opt.LowPrecisionTime},
                 {DlgTIMEZONE, L"IgnoreTimeZone", &Opt.IgnoreTimeZone},
                 {DlgCMPCONTENTS, L"CmpContents", &Opt.CmpContents},
                 {DlgDIFFTIME, L"OnlyTimeDiff", &Opt.OnlyTimeDiff},
                 {DlgCACHE, L"Cache", &Opt.Cache},
                 {DlgCACHEIGNORE, L"CacheIgnore", &Opt.CacheIgnore},
-                {DlgCACHEUSE, 0, 0},
-                {DlgCACHECLEAR, 0, 0},
+                {DlgCACHEUSE, nullptr, nullptr},
+                {DlgCACHECLEAR, nullptr, nullptr},
                 {DlgPARTLY, L"Partly", &Opt.Partly},
                 {DlgPARTLYFULL, L"PartlyFull", &Opt.PartlyFull},
-                {DlgLPARTLYKB, 0, 0},
+                {DlgLPARTLYKB, nullptr, nullptr},
                 {DlgEPARTLYKB, L"PartlyKbSize", &Opt.PartlyKbSize},
                 {DlgIGNORE, L"Ignore", &Opt.Ignore},
                 {DlgIGNORETEMPL, L"IgnoreTemplates", &Opt.IgnoreTemplates},
 
-                {DlgDUPPATH, 0, 0},
+                {DlgDUPPATH, nullptr, nullptr},
                 {DlgDUPNAME, L"DupName", &Opt.DupName},
                 {DlgDUPSIZE, L"DupSize", &Opt.DupSize},
                 {DlgDUPCONTENTS, L"DupContents", &Opt.DupContents},
@@ -148,16 +148,16 @@ struct ParamStore
                 {DlgDUPMUSICDURL, L"DupMusicDuration", &Opt.DupMusicDuration},
                 {DlgDUPMUSICDURE, L"DupMusicDurationSec", &Opt.DupMusicDurationSec},
 
-                {DlgSEP1, 0, 0},
+                {DlgSEP1, nullptr, nullptr},
                 {DlgSUBFOLDER, L"Subfolders", &Opt.Subfolders},
-                {DlgLMAXDEPTH, 0, 0},
+                {DlgLMAXDEPTH, nullptr, nullptr},
                 {DlgEMAXDEPTH, L"MaxScanDepth", &Opt.MaxScanDepth},
-                {DlgSCANSYMLINK, 0, 0},
+                {DlgSCANSYMLINK, nullptr, nullptr},
                 {DlgLCMPSKIP, L"SkipSubstr", &Opt.SkipSubstr},
-                {DlgECMPSKIP, 0, 0},
+                {DlgECMPSKIP, nullptr, nullptr},
                 {DlgSTOPDIFFDUP, L"StopDiffDup", &Opt.StopDiffDup},
                 {DlgFILTER, L"Filter", &Opt.Filter},
-                {DlgFILTERBOTTON, 0, 0},
+                {DlgFILTERBOTTON, nullptr, nullptr},
                 {DlgSELECTED, L"ProcessSelected", &Opt.ProcessSelected},
                 {DlgSELECTEDNEW, L"SelectedNew", &Opt.SelectedNew},
                 {DlgONLYRIGHT, L"SyncOnlyRight", &Opt.SyncOnlyRight},
@@ -174,7 +174,7 @@ struct ParamStore
 
 intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProcThunk(HANDLE hDlg, intptr_t Msg, intptr_t Param1, void* Param2)
 {
-  AdvCmpDlgOpt* Class = (AdvCmpDlgOpt*) Info.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
+  AdvCmpDlgOpt* Class = (AdvCmpDlgOpt*) Info.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, nullptr);
   return Class->ShowOptDialogProc(hDlg, Msg, Param1, Param2);
 }
 
@@ -185,20 +185,20 @@ void AdvCmpDlgOpt::Close()
   if (Opt.Substr)
   {
     free(Opt.Substr);
-    Opt.Substr = NULL;
+    Opt.Substr = nullptr;
   }
   if (Opt.WinMergePath)
   {
     free(Opt.WinMergePath);
-    Opt.WinMergePath = NULL;
+    Opt.WinMergePath = nullptr;
   }
   if (Opt.DupPath)
   {
     free(Opt.DupPath);
-    Opt.DupPath = NULL;
+    Opt.DupPath = nullptr;
   }
   if (Opt.Filter)
-    Info.FileFilterControl(Opt.hCustomFilter, FFCTL_FREEFILEFILTER, 0, 0);
+    Info.FileFilterControl(Opt.hCustomFilter, FFCTL_FREEFILEFILTER, 0, nullptr);
 }
 
 intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, void* Param2)
@@ -209,7 +209,7 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intpt
       bool CheckSelect = false;
       if (LPanel.PInfo.SelectedItemsNumber)
       {
-        FarGetPluginPanelItem FGPPI = {sizeof(FarGetPluginPanelItem), 0, 0};
+        FarGetPluginPanelItem FGPPI = {sizeof(FarGetPluginPanelItem), 0, nullptr};
         FGPPI.Item = (PluginPanelItem*) malloc(FGPPI.Size = Info.PanelControl(LPanel.hPanel, FCTL_GETSELECTEDPANELITEM, 0, &FGPPI));
         if (FGPPI.Item)
         {
@@ -221,7 +221,7 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intpt
       }
       if (!CheckSelect && RPanel.PInfo.SelectedItemsNumber)
       {
-        FarGetPluginPanelItem FGPPI = {sizeof(FarGetPluginPanelItem), 0, 0};
+        FarGetPluginPanelItem FGPPI = {sizeof(FarGetPluginPanelItem), 0, nullptr};
         FGPPI.Item = (PluginPanelItem*) malloc(FGPPI.Size = Info.PanelControl(RPanel.hPanel, FCTL_GETSELECTEDPANELITEM, 0, &FGPPI));
         if (FGPPI.Item)
         {
@@ -945,7 +945,7 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intpt
 
         Opt.ScanSymlink = Info.SendDlgMessage(hDlg, DM_GETCHECK, DlgSCANSYMLINK, 0);
 
-        Opt.Substr = NULL;
+        Opt.Substr = nullptr;
         int len = Info.SendDlgMessage(hDlg, DM_GETTEXT, DlgECMPSKIP, 0);
         if (len)
         {
@@ -963,7 +963,7 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intpt
           Opt.SkipSubstr = 0;
         }
 
-        Opt.DupPath = NULL;
+        Opt.DupPath = nullptr;
         len = Info.SendDlgMessage(hDlg, DM_GETTEXT, DlgDUPPATH, 0);
         if (len)
         {
@@ -1149,7 +1149,7 @@ int AdvCmpDlgOpt::ShowOptDialog()
       }
     }
     // узнаем пользовательский путь до WinMerge
-    Opt.WinMergePath = NULL;
+    Opt.WinMergePath = nullptr;
     FarSettingsItem item = {sizeof(FarSettingsItem), Root, L"WinMergePath", FST_STRING};
     if (Info.SettingsControl(settings.Handle, SCTL_GET, 0, &item))
     {

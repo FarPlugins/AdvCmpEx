@@ -52,8 +52,8 @@ bool bBrokenByEsc;
 bool bStartMsg;
 bool bGflLoaded = false;
 bool bBASSLoaded = false;  // bass.dll загружена?
-HMODULE GflHandle = NULL;
-HMODULE BASSHandle = NULL;
+HMODULE GflHandle = nullptr;
+HMODULE BASSHandle = nullptr;
 HANDLE hConInp = INVALID_HANDLE_VALUE;
 
 /****************************************************************************
@@ -70,7 +70,7 @@ const wchar_t* GetMsg(int MsgId)
 void ErrorMsg(DWORD Title, DWORD Body)
 {
   const wchar_t* MsgItems[] = {GetMsg(Title), GetMsg(Body), GetMsg(MOK)};
-  Info.Message(&MainGuid, &ErrorMsgGuid, FMSG_WARNING, 0, MsgItems, 3, 1);
+  Info.Message(&MainGuid, &ErrorMsgGuid, FMSG_WARNING, nullptr, MsgItems, 3, 1);
 }
 
 /****************************************************************************
@@ -79,7 +79,7 @@ void ErrorMsg(DWORD Title, DWORD Body)
 bool YesNoMsg(DWORD Title, DWORD Body)
 {
   const wchar_t* MsgItems[] = {GetMsg(Title), GetMsg(Body)};
-  return (!Info.Message(&MainGuid, &YesNoMsgGuid, FMSG_WARNING | FMSG_MB_YESNO, 0, MsgItems, 2, 0));
+  return (!Info.Message(&MainGuid, &YesNoMsgGuid, FMSG_WARNING | FMSG_MB_YESNO, nullptr, MsgItems, 2, 0));
 }
 
 // Сообщение для отладки
@@ -91,14 +91,14 @@ int DebugMsg(wchar_t* msg, wchar_t* msg2, unsigned int i)
   MsgItems[1] = msg2;
   MsgItems[2] = msg;
   MsgItems[3] = buf;
-  return (!Info.Message(&MainGuid, &DebugMsgGuid, FMSG_WARNING | FMSG_MB_OKCANCEL, 0, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 2));
+  return (!Info.Message(&MainGuid, &DebugMsgGuid, FMSG_WARNING | FMSG_MB_OKCANCEL, nullptr, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 2));
 }
 
 __int64 GetFarSetting(FARSETTINGS_SUBFOLDERS Root, const wchar_t* Name)
 {
   __int64 result = 0;
   FarSettingsCreate settings = {sizeof(FarSettingsCreate), FarGuid, INVALID_HANDLE_VALUE};
-  HANDLE Settings = Info.SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, &settings) ? settings.Handle : 0;
+  HANDLE Settings = Info.SettingsControl(INVALID_HANDLE_VALUE, SCTL_CREATE, 0, &settings) ? settings.Handle : nullptr;
   if (Settings)
   {
     FarSettingsItem item = {sizeof(FarSettingsItem), Root, Name, FST_UNKNOWN, {0}};
@@ -106,7 +106,7 @@ __int64 GetFarSetting(FARSETTINGS_SUBFOLDERS Root, const wchar_t* Name)
     {
       result = item.Number;
     }
-    Info.SettingsControl(Settings, SCTL_FREE, 0, 0);
+    Info.SettingsControl(Settings, SCTL_FREE, 0, nullptr);
   }
   return result;
 }
@@ -121,7 +121,7 @@ void GetDirList(FarPanelInfo& CurPanel, DirList& CurList)
     {
       for (int i = 0; i < CurList.ItemsNumber; i++)
       {
-        size_t size = Info.PanelControl(CurPanel.hPanel, FCTL_GETPANELITEM, i, 0);
+        size_t size = Info.PanelControl(CurPanel.hPanel, FCTL_GETPANELITEM, i, nullptr);
         PluginPanelItem* PPI = (PluginPanelItem*) malloc(size);
         if (PPI)
         {
@@ -159,10 +159,10 @@ void GetDirList(FarPanelInfo& CurPanel, DirList& CurList)
   else
   {
     CurList.ItemsNumber = 0;
-    CurList.PPI = NULL;
+    CurList.PPI = nullptr;
   }
 
-  int size = Info.PanelControl(CurPanel.hPanel, FCTL_GETPANELDIRECTORY, 0, 0);
+  int size = Info.PanelControl(CurPanel.hPanel, FCTL_GETPANELDIRECTORY, 0, nullptr);
   if (size)
   {
     FarPanelDirectory* buf = (FarPanelDirectory*) malloc(size);
@@ -173,7 +173,7 @@ void GetDirList(FarPanelInfo& CurPanel, DirList& CurList)
       wcscpy(CurPanel.Dir, buf->Name);
       if (!(CurPanel.PInfo.Flags & PFLAGS_PLUGIN))
       {
-        size = FSF.ConvertPath(CPM_NATIVE, buf->Name, 0, 0);
+        size = FSF.ConvertPath(CPM_NATIVE, buf->Name, nullptr, 0);
         CurList.Dir = (wchar_t*) malloc(size * sizeof(wchar_t));
         if (CurList.Dir)
           FSF.ConvertPath(CPM_NATIVE, buf->Name, CurList.Dir, size);
@@ -195,10 +195,10 @@ void FreeDirList(struct DirList* pList)
   {
     for (int i = 0; i < pList->ItemsNumber; i++) free((void*) pList->PPI[i].FileName);
     free(pList->PPI);
-    pList->PPI = NULL;
+    pList->PPI = nullptr;
   }
   free(pList->Dir);
-  pList->Dir = NULL;
+  pList->Dir = nullptr;
   pList->ItemsNumber = 0;
 }
 
@@ -207,39 +207,39 @@ void FreeDirList(struct DirList* pList)
  ****************************************************************************/
 
 ///  VisComp.dll
-PCOMPAREFILES pCompareFiles = NULL;
+PCOMPAREFILES pCompareFiles = nullptr;
 
 ///  libgfl340.dll
-extern PGFLGETVERSION pGflGetVersion = NULL;
-PGFLLIBRARYINIT pGflLibraryInit = NULL;
-PGFLENABLELZW pGflEnableLZW = NULL;
-PGFLLIBRARYEXIT pGflLibraryExit = NULL;
-PGFLLOADBITMAPW pGflLoadBitmapW = NULL;
-PGFLGETNUMBEROFFORMAT pGflGetNumberOfFormat = NULL;
-PGFLGETFORMATINFORMATIONBYINDEX pGflGetFormatInformationByIndex = NULL;
-PGFLGETDEFAULTLOADPARAMS pGflGetDefaultLoadParams = NULL;
-PGFLCHANGECOLORDEPTH pGflChangeColorDepth = NULL;
-PGFLROTATE pGflRotate = NULL;
-PGFLRESIZE pGflResize = NULL;
-PGFLFREEBITMAP pGflFreeBitmap = NULL;
-PGFLFREEFILEINFORMATION pGflFreeFileInformation = NULL;
-PGFLGETCOLORAT pGflGetColorAt = NULL;
+extern PGFLGETVERSION pGflGetVersion = nullptr;
+PGFLLIBRARYINIT pGflLibraryInit = nullptr;
+PGFLENABLELZW pGflEnableLZW = nullptr;
+PGFLLIBRARYEXIT pGflLibraryExit = nullptr;
+PGFLLOADBITMAPW pGflLoadBitmapW = nullptr;
+PGFLGETNUMBEROFFORMAT pGflGetNumberOfFormat = nullptr;
+PGFLGETFORMATINFORMATIONBYINDEX pGflGetFormatInformationByIndex = nullptr;
+PGFLGETDEFAULTLOADPARAMS pGflGetDefaultLoadParams = nullptr;
+PGFLCHANGECOLORDEPTH pGflChangeColorDepth = nullptr;
+PGFLROTATE pGflRotate = nullptr;
+PGFLRESIZE pGflResize = nullptr;
+PGFLFREEBITMAP pGflFreeBitmap = nullptr;
+PGFLFREEFILEINFORMATION pGflFreeFileInformation = nullptr;
+PGFLGETCOLORAT pGflGetColorAt = nullptr;
 
 ///  bass.dll
-PBASS_GETVERSION pBASS_GetVersion = NULL;
-PBASS_SETCONFIG pBASS_SetConfig = NULL;
-PBASS_INIT pBASS_Init = NULL;
-PBASS_FREE pBASS_Free = NULL;
-PBASS_STREAMCREATEFILE pBASS_StreamCreateFile = NULL;
-PBASS_STREAMFREE pBASS_StreamFree = NULL;
-PBASS_CHANNELGETLENGTH pBASS_ChannelGetLength = NULL;
-PBASS_CHANNELBYTES2SECONDS pBASS_ChannelBytes2Seconds = NULL;
-PBASS_CHANNELGETINFO pBASS_ChannelGetInfo = NULL;
-PBASS_CHANNELGETTAGS pBASS_ChannelGetTags = NULL;
-PBASS_STREAMGETFILEPOSITION pBASS_StreamGetFilePosition = NULL;
-PBASS_GETDEVICEINFO pBASS_GetDeviceInfo = NULL;
-PBASS_CHANNELISACTIVE pBASS_ChannelIsActive = NULL;
-PBASS_CHANNELGETDATA pBASS_ChannelGetData = NULL;
+PBASS_GETVERSION pBASS_GetVersion = nullptr;
+PBASS_SETCONFIG pBASS_SetConfig = nullptr;
+PBASS_INIT pBASS_Init = nullptr;
+PBASS_FREE pBASS_Free = nullptr;
+PBASS_STREAMCREATEFILE pBASS_StreamCreateFile = nullptr;
+PBASS_STREAMFREE pBASS_StreamFree = nullptr;
+PBASS_CHANNELGETLENGTH pBASS_ChannelGetLength = nullptr;
+PBASS_CHANNELBYTES2SECONDS pBASS_ChannelBytes2Seconds = nullptr;
+PBASS_CHANNELGETINFO pBASS_ChannelGetInfo = nullptr;
+PBASS_CHANNELGETTAGS pBASS_ChannelGetTags = nullptr;
+PBASS_STREAMGETFILEPOSITION pBASS_StreamGetFilePosition = nullptr;
+PBASS_GETDEVICEINFO pBASS_GetDeviceInfo = nullptr;
+PBASS_CHANNELISACTIVE pBASS_ChannelIsActive = nullptr;
+PBASS_CHANNELGETDATA pBASS_ChannelGetData = nullptr;
 
 bool FindFile(wchar_t* Dir, wchar_t* Pattern, string& strFileName)
 {
@@ -439,7 +439,7 @@ bool LoadBASS(wchar_t* PlugPath)
 
     if (bBASSLoaded)
     {
-      if (!pBASS_Init(0, 44100, BASS_DEVICE_MONO, 0, NULL))
+      if (!pBASS_Init(0, 44100, BASS_DEVICE_MONO, nullptr, nullptr))
         UnLoadBASS();
     }
   }
@@ -505,7 +505,7 @@ void WINAPI GetPluginInfoW(struct PluginInfo* pInfo)
  ****************************************************************************/
 HANDLE WINAPI OpenW(const struct OpenInfo* OInfo)
 {
-  HANDLE hPanel = NULL;
+  HANDLE hPanel = nullptr;
   struct PanelInfo PInfo = {sizeof(PanelInfo)};
 
   // Если не удалось запросить информацию о активной панели...
@@ -553,7 +553,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo* OInfo)
   GetDirList(LPanel, LList);
   GetDirList(RPanel, RList);
 
-  WinInfo.hFarWindow = (HWND) Info.AdvControl(&MainGuid, ACTL_GETFARHWND, 0, 0);
+  WinInfo.hFarWindow = (HWND) Info.AdvControl(&MainGuid, ACTL_GETFARHWND, 0, nullptr);
   GetClientRect(WinInfo.hFarWindow, &WinInfo.Win);
   if (Info.AdvControl(&MainGuid, ACTL_GETFARRECT, 0, &WinInfo.Con))
   {
@@ -581,7 +581,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo* OInfo)
     BASS_DEVICEINFO info;
     pBASS_GetDeviceInfo(0, &info);
     if (!(info.flags & BASS_DEVICE_INIT))
-      if (!pBASS_Init(0, 44100, BASS_DEVICE_MONO, 0, NULL))
+      if (!pBASS_Init(0, 44100, BASS_DEVICE_MONO, nullptr, nullptr))
         UnLoadBASS();
   }
 
@@ -592,7 +592,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo* OInfo)
   {
     DWORD dwTicks = GetTickCount();
     // откроем, для проверок на Esc
-    hConInp = CreateFileW(L"CONIN$", GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+    hConInp = CreateFileW(L"CONIN$", GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
 
     class AdvCmpProc AdvCmp;
     AdvCmp.Init();
@@ -615,29 +615,29 @@ HANDLE WINAPI OpenW(const struct OpenInfo* OInfo)
         if (!bBrokenByEsc)
         {
           {
-            Info.PanelControl(LPanel.hPanel, FCTL_BEGINSELECTION, 0, 0);
-            Info.PanelControl(RPanel.hPanel, FCTL_BEGINSELECTION, 0, 0);
+            Info.PanelControl(LPanel.hPanel, FCTL_BEGINSELECTION, 0, nullptr);
+            Info.PanelControl(RPanel.hPanel, FCTL_BEGINSELECTION, 0, nullptr);
 
             for (int i = 0; i < LList.ItemsNumber; i++)
               Info.PanelControl(LPanel.hPanel, FCTL_SETSELECTION, i, (void*) (LList.PPI[i].Flags & PPIF_SELECTED));
             for (int i = 0; i < RList.ItemsNumber; i++)
               Info.PanelControl(RPanel.hPanel, FCTL_SETSELECTION, i, (void*) (RList.PPI[i].Flags & PPIF_SELECTED));
 
-            Info.PanelControl(LPanel.hPanel, FCTL_ENDSELECTION, 0, 0);
-            Info.PanelControl(LPanel.hPanel, FCTL_REDRAWPANEL, 0, 0);
-            Info.PanelControl(RPanel.hPanel, FCTL_ENDSELECTION, 0, 0);
-            Info.PanelControl(RPanel.hPanel, FCTL_REDRAWPANEL, 0, 0);
+            Info.PanelControl(LPanel.hPanel, FCTL_ENDSELECTION, 0, nullptr);
+            Info.PanelControl(LPanel.hPanel, FCTL_REDRAWPANEL, 0, nullptr);
+            Info.PanelControl(RPanel.hPanel, FCTL_ENDSELECTION, 0, nullptr);
+            Info.PanelControl(RPanel.hPanel, FCTL_REDRAWPANEL, 0, nullptr);
           }
 
           if (Opt.Sound && (GetTickCount() - dwTicks > 30000))
             MessageBeep(MB_ICONASTERISK);
-          Info.AdvControl(&MainGuid, ACTL_PROGRESSNOTIFY, 0, 0);
+          Info.AdvControl(&MainGuid, ACTL_PROGRESSNOTIFY, 0, nullptr);
           if (CmpInfo.Errors && Opt.ShowMsg)
             ErrorMsg(MOpenErrorTitle, MOpenErrorBody);
           if (bDifferenceNotFound && Opt.ShowMsg)
           {
             const wchar_t* MsgItems[] = {GetMsg(MNoDiffTitle), GetMsg(MNoDiffBody), GetMsg(MOK)};
-            Info.Message(&MainGuid, &NoDiffMsgGuid, 0, 0, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 1);
+            Info.Message(&MainGuid, &NoDiffMsgGuid, 0, nullptr, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 1);
           }
           else if (!bDifferenceNotFound && Opt.Dialog)
             AdvCmp.ShowCmpDialog(&LList, &RList);
@@ -676,7 +676,7 @@ void WINAPI ExitFARW(const struct ExitInfo* pInfo)
   //Освободим память в случае выгрузки плагина
   if (Cache.RCI)
     free(Cache.RCI);
-  Cache.RCI = NULL;
+  Cache.RCI = nullptr;
   Cache.ItemsNumber = 0;
 
   UnLoadGfl();

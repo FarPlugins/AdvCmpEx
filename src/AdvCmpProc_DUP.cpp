@@ -105,24 +105,24 @@ int GetDupOpt(dupFileList* pFileList)
 
   struct FarDialogItem DialogItems[] = {
       //			Type	X1	Y1	X2	Y2		              Selected	History	Mask	Flags	Data	MaxLen	UserParam
-      /* 0*/ {DI_DOUBLEBOX, 3, 1, 60, 6, 0, 0, 0, 0, GetMsg(MDupTitle), 0, 0},
-      /* 1*/ {DI_CHECKBOX, 5, 2, 0, 0, Opt.DupDel, 0, 0, Opt.DupDel ? DIF_FOCUS : DIF_DISABLE, buf, 0, 0},
-      /* 2*/ {DI_CHECKBOX, 8, 3, 0, 0, Opt.DupDelRecycleBin, 0, 0, Opt.DupDel ? 0 : DIF_DISABLE, GetMsg(MDupDelRecycleBin), 0, 0},
-      /* 3*/ {DI_TEXT, -1, 4, 0, 0, 0, 0, 0, DIF_SEPARATOR, L"", 0, 0},
-      /* 4*/ {DI_BUTTON, 0, 5, 0, 0, 0, 0, 0, DIF_DEFAULTBUTTON | DIF_CENTERGROUP, GetMsg(MOK), 0, 0},
-      /* 5*/ {DI_BUTTON, 0, 5, 0, 0, 0, 0, 0, DIF_CENTERGROUP, GetMsg(MDupEdit), 0, 0},
-      /* 6*/ {DI_BUTTON, 0, 5, 0, 0, 0, 0, 0, DIF_CENTERGROUP, GetMsg(MCancel), 0, 0}};
+      /* 0*/ {DI_DOUBLEBOX, 3, 1, 60, 6, 0, nullptr, nullptr, 0, GetMsg(MDupTitle), 0, 0},
+      /* 1*/ {DI_CHECKBOX, 5, 2, 0, 0, Opt.DupDel, nullptr, nullptr, Opt.DupDel ? DIF_FOCUS : DIF_DISABLE, buf, 0, 0},
+      /* 2*/ {DI_CHECKBOX, 8, 3, 0, 0, Opt.DupDelRecycleBin, nullptr, nullptr, Opt.DupDel ? 0 : DIF_DISABLE, GetMsg(MDupDelRecycleBin), 0, 0},
+      /* 3*/ {DI_TEXT, -1, 4, 0, 0, 0, nullptr, nullptr, DIF_SEPARATOR, L"", 0, 0},
+      /* 4*/ {DI_BUTTON, 0, 5, 0, 0, 0, nullptr, nullptr, DIF_DEFAULTBUTTON | DIF_CENTERGROUP, GetMsg(MOK), 0, 0},
+      /* 5*/ {DI_BUTTON, 0, 5, 0, 0, 0, nullptr, nullptr, DIF_CENTERGROUP, GetMsg(MDupEdit), 0, 0},
+      /* 6*/ {DI_BUTTON, 0, 5, 0, 0, 0, nullptr, nullptr, DIF_CENTERGROUP, GetMsg(MCancel), 0, 0}};
 
   HANDLE hDlg =
-      Info.DialogInit(&MainGuid, &OptSyncDlgGuid, -1, -1, 64, 8, L"DlgDup", DialogItems, sizeof(DialogItems) / sizeof(DialogItems[0]), 0, 0, 0, 0);
+      Info.DialogInit(&MainGuid, &OptSyncDlgGuid, -1, -1, 64, 8, L"DlgDup", DialogItems, sizeof(DialogItems) / sizeof(DialogItems[0]), 0, 0, nullptr, nullptr);
 
   if (hDlg != INVALID_HANDLE_VALUE)
   {
     ret = (int) Info.DialogRun(hDlg);
     if (ret == 4)
     {
-      Opt.DupDel = Info.SendDlgMessage(hDlg, DM_GETCHECK, 1, 0);
-      Opt.DupDelRecycleBin = Info.SendDlgMessage(hDlg, DM_GETCHECK, 2, 0);
+      Opt.DupDel = Info.SendDlgMessage(hDlg, DM_GETCHECK, 1, nullptr);
+      Opt.DupDelRecycleBin = Info.SendDlgMessage(hDlg, DM_GETCHECK, 2, nullptr);
       ret = Opt.DupDel ? QR_ALL : QR_SKIP;  // удаляем дубли, иначе - пропустим
     }
     else if (ret == 5)
@@ -205,14 +205,14 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList* pFileList, bool bSetCurPos, bool b
   Info.SendDlgMessage(hDlg, DM_LISTINFO, 0, &ListInfo);
 
   if (ListInfo.ItemsNumber)
-    Info.SendDlgMessage(hDlg, DM_LISTDELETE, 0, 0);
+    Info.SendDlgMessage(hDlg, DM_LISTDELETE, 0, nullptr);
 
   if (!pFileList->iCount)
     return true;
 
   // сортируем только при инициализации
   if (bSort)
-    FSF.qsort(pFileList->F, pFileList->iCount, sizeof(pFileList->F[0]), dupSortListByGroupEx, NULL);
+    FSF.qsort(pFileList->F, pFileList->iCount, sizeof(pFileList->F[0]), dupSortListByGroupEx, nullptr);
 
   int Index = 0;
   string strBuf;
@@ -308,14 +308,14 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList* pFileList, bool bSetCurPos, bool b
     if (j < pFileList->iCount && cur->nDupGroup != pFileList->F[j].nDupGroup)
     {
       Item.Flags = LIF_SEPARATOR;
-      Item.Text = NULL;
+      Item.Text = nullptr;
       List.Items = &Item;
       Info.SendDlgMessage(hDlg, DM_LISTADD, 0, &List);
       Index++;
     }
   }
 
-  SetBottom(hDlg, pFileList, pFileList->iCount ? &pFileList->F[0] : NULL);
+  SetBottom(hDlg, pFileList, pFileList->iCount ? &pFileList->F[0] : nullptr);
 
   if (bSetCurPos)
   {
@@ -332,19 +332,19 @@ bool MakeDupFarList(HANDLE hDlg, dupFileList* pFileList, bool bSetCurPos, bool b
  ***************************************************************************/
 intptr_t WINAPI ShowDupDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, void* Param2)
 {
-  dupFileList* pFileList = (dupFileList*) Info.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
+  dupFileList* pFileList = (dupFileList*) Info.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, nullptr);
   switch (Msg)
   {
     case DN_INITDIALOG:
       MakeDupFarList(hDlg, pFileList, true, true);
-      Info.SendDlgMessage(hDlg, DM_SETMOUSEEVENTNOTIFY, 1, 0);
+      Info.SendDlgMessage(hDlg, DM_SETMOUSEEVENTNOTIFY, 1, nullptr);
       break;
 
       /************************************************************************/
 
     case DN_RESIZECONSOLE: {
       COORD c = (*(COORD*) Param2);
-      Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, 0);
+      Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, nullptr);
       Info.SendDlgMessage(hDlg, DM_RESIZEDIALOG, 0, &c);
       WinInfo.Con.Right = c.X - 1;
       WinInfo.Con.Bottom = c.Y - 1;
@@ -352,14 +352,14 @@ intptr_t WINAPI ShowDupDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
       if (WinInfo.TruncLen > MAX_PATH - 2)
         WinInfo.TruncLen = MAX_PATH - 2;
       Info.SendDlgMessage(hDlg, DM_SETITEMPOSITION, 0, &WinInfo.Con);
-      int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, 0);
+      int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, nullptr);
       dupFile** tmp = (dupFile**) Info.SendDlgMessage(hDlg, DM_LISTGETDATA, 0, (void*) Pos);
-      dupFile* cur = tmp ? *tmp : NULL;
+      dupFile* cur = tmp ? *tmp : nullptr;
       if (cur)
         SetBottom(hDlg, pFileList, cur);
       c.X = c.Y = -1;
       Info.SendDlgMessage(hDlg, DM_MOVEDIALOG, true, &c);
-      Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, 0);
+      Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, nullptr);
       return true;
     }
 
@@ -400,7 +400,7 @@ intptr_t WINAPI ShowDupDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
       if (Param1 == 0)
       {
         dupFile** tmp = (dupFile**) Info.SendDlgMessage(hDlg, DM_LISTGETDATA, 0, (void*) Param2);
-        dupFile* cur = tmp ? *tmp : NULL;
+        dupFile* cur = tmp ? *tmp : nullptr;
         if (cur)
         {
           SetBottom(hDlg, pFileList, cur);
@@ -440,7 +440,7 @@ intptr_t WINAPI ShowDupDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
             Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, &ListPos);
             int OldPos = ListPos.SelectPos;
             ListPos.SelectPos = ListPos.TopPos + (record->Event.MouseEvent.dwMousePosition.Y - 1 - dlgRect.Top);
-            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, 0);
+            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, nullptr);
             int NewPos = Info.SendDlgMessage(hDlg, DM_LISTSETCURPOS, 0, &ListPos);
             if (NewPos != ListPos.SelectPos)
             {
@@ -448,11 +448,11 @@ intptr_t WINAPI ShowDupDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
               Info.SendDlgMessage(hDlg, DM_LISTSETCURPOS, 0, &ListPos);
               MessageBeep(MB_OK);
             }
-            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, 0);
+            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, nullptr);
             if (NewPos == ListPos.SelectPos)
             {
               dupFile** tmp = (dupFile**) Info.SendDlgMessage(hDlg, DM_LISTGETDATA, 0, (void*) ListPos.SelectPos);
-              dupFile* cur = (tmp && *tmp) ? *tmp : NULL;
+              dupFile* cur = (tmp && *tmp) ? *tmp : nullptr;
               if (cur)
               {
                 struct FarListGetItem FLGI = {sizeof(FarListGetItem)};
@@ -500,14 +500,14 @@ intptr_t WINAPI ShowDupDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
         {
           if (vk == VK_F3)
           {
-            int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, 0);
+            int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, nullptr);
             dupFile** tmp = (dupFile**) Info.SendDlgMessage(hDlg, DM_LISTGETDATA, 0, (void*) Pos);
-            dupFile* cur = tmp ? *tmp : NULL;
+            dupFile* cur = tmp ? *tmp : nullptr;
             if (cur)
             {
               string strFullFileName;
               GetFullFileName(strFullFileName, cur->fi.Dir, cur->fi.FileName);
-              if (Info.Viewer(GetPosToName(strFullFileName.get()), NULL, 0, 0, -1, -1, VF_DISABLEHISTORY, CP_DEFAULT))
+              if (Info.Viewer(GetPosToName(strFullFileName.get()), nullptr, 0, 0, -1, -1, VF_DISABLEHISTORY, CP_DEFAULT))
               {
                 SetBottom(hDlg, pFileList, cur);  // обходим баг фара: почему-то строка функциональных клавиш не прячется автоматом!
                 return true;
@@ -522,7 +522,7 @@ intptr_t WINAPI ShowDupDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
             struct FarListPos FLP = {sizeof(FarListPos)};
             Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, &FLP);
             dupFile** tmp = (dupFile**) Info.SendDlgMessage(hDlg, DM_LISTGETDATA, 0, (void*) FLP.SelectPos);
-            dupFile* cur = tmp ? *tmp : NULL;
+            dupFile* cur = tmp ? *tmp : nullptr;
             if (cur)
             {
               struct FarListGetItem FLGI = {sizeof(FarListGetItem)};
@@ -687,17 +687,17 @@ intptr_t WINAPI ShowDupDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
         {
           if (vk == 0x31)  // VK_1
           {
-            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, 0);
+            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, nullptr);
             Opt.DupListSmall ? Opt.DupListSmall = 0 : Opt.DupListSmall = 1;
             MakeDupFarList(hDlg, pFileList, true, false);
-            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, 0);
+            Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, nullptr);
             return true;
           }
           else if (vk == VK_PRIOR)
           {
-            int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, 0);
+            int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, nullptr);
             dupFile** tmp = (dupFile**) Info.SendDlgMessage(hDlg, DM_LISTGETDATA, 0, (void*) Pos);
-            dupFile* cur = tmp ? *tmp : NULL;
+            dupFile* cur = tmp ? *tmp : nullptr;
             if (cur)
             {
               Opt.Mode = MODE_CMP;  //скидываем!!!
@@ -706,7 +706,7 @@ intptr_t WINAPI ShowDupDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
               bool bLeft = (LPanel.PInfo.Flags & PFLAGS_FOCUS ? true : false);
               if (FSF.LStricmp(bLeft ? LPanel.Dir : RPanel.Dir, GetPosToName(cur->fi.Dir)))
               {
-                FarPanelDirectory dirInfo = {sizeof(FarPanelDirectory), GetPosToName(cur->fi.Dir), NULL, {0}, NULL};
+                FarPanelDirectory dirInfo = {sizeof(FarPanelDirectory), GetPosToName(cur->fi.Dir), nullptr, {0}, nullptr};
                 Info.PanelControl(bLeft ? LPanel.hPanel : RPanel.hPanel, FCTL_SETPANELDIRECTORY, 0, &dirInfo);
               }
               PanelInfo PInfo = {sizeof(PanelInfo)};
@@ -714,7 +714,7 @@ intptr_t WINAPI ShowDupDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
 
               for (unsigned i = 0; i < PInfo.ItemsNumber; i++)
               {
-                size_t size = Info.PanelControl(bLeft ? LPanel.hPanel : RPanel.hPanel, FCTL_GETPANELITEM, i, 0);
+                size_t size = Info.PanelControl(bLeft ? LPanel.hPanel : RPanel.hPanel, FCTL_GETPANELITEM, i, nullptr);
                 PluginPanelItem* PPI = (PluginPanelItem*) malloc(size);
                 if (PPI)
                 {
@@ -730,7 +730,7 @@ intptr_t WINAPI ShowDupDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
                 }
               }
               Info.PanelControl(bLeft ? LPanel.hPanel : RPanel.hPanel, FCTL_REDRAWPANEL, 0, &RInfo);
-              Info.SendDlgMessage(hDlg, DM_CLOSE, 0, 0);
+              Info.SendDlgMessage(hDlg, DM_CLOSE, 0, nullptr);
             }
             return true;
           }
@@ -739,9 +739,9 @@ intptr_t WINAPI ShowDupDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
         {
           if (vk == VK_RETURN)
           {
-            int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, 0);
+            int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, nullptr);
             dupFile** tmp = (dupFile**) Info.SendDlgMessage(hDlg, DM_LISTGETDATA, 0, (void*) Pos);
-            dupFile* cur = tmp ? *tmp : NULL;
+            dupFile* cur = tmp ? *tmp : nullptr;
             if (cur)
             {
               string strFullFileName;
@@ -791,7 +791,7 @@ int AdvCmpProc::ShowDupDialog()
       FarSettingsItem item = {sizeof(FarSettingsItem), Root, L"DupListSmall", FST_QWORD};
       if (Info.SettingsControl(settings.Handle, SCTL_GET, 0, &item))
         Opt.DupListSmall = (int) item.Number;
-      Info.SettingsControl(settings.Handle, SCTL_FREE, 0, 0);
+      Info.SettingsControl(settings.Handle, SCTL_FREE, 0, nullptr);
     }
 
     Info.DialogRun(hDlg);
@@ -802,7 +802,7 @@ int AdvCmpProc::ShowDupDialog()
       FarSettingsItem item = {sizeof(FarSettingsItem), Root, L"DupListSmall", FST_QWORD};
       item.Number = Opt.DupListSmall;
       Info.SettingsControl(settings.Handle, SCTL_SET, 0, &item);
-      Info.SettingsControl(settings.Handle, SCTL_FREE, 0, 0);
+      Info.SettingsControl(settings.Handle, SCTL_FREE, 0, nullptr);
     }
     Info.DialogFree(hDlg);
   }
@@ -883,7 +883,7 @@ DWORD AdvCmpProc::GetCRC(const dupFile* cur)
   GetFullFileName(strFullFileName, cur->fi.Dir, cur->fi.FileName);
 
   HANDLE hFile;
-  if ((hFile = CreateFileW(strFullFileName, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, 0)) == INVALID_HANDLE_VALUE)
+  if ((hFile = CreateFileW(strFullFileName, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr)) == INVALID_HANDLE_VALUE)
   {
     CmpInfo.ProcSize += cur->fi.nFileSize;
     CmpInfo.Errors++;
@@ -901,7 +901,7 @@ DWORD AdvCmpProc::GetCRC(const dupFile* cur)
 
   while (1)
   {
-    if (CheckForEsc() || !ReadFile(hFile, Buf, ReadBlock, &ReadSize, 0))
+    if (CheckForEsc() || !ReadFile(hFile, Buf, ReadBlock, &ReadSize, nullptr))
     {
       ret = false;
       break;
@@ -1119,7 +1119,7 @@ int AdvCmpProc::GetMp3(dupFile* cur, int GetInfo)  // GetInfo=0-только б�
       char szFrameID[5];
       unsigned nFrameSize;
       unsigned nTotal = 0;
-      char* pUnsync = NULL;
+      char* pUnsync = nullptr;
 
       if ((nFlag & 0x80) && (nVersion <= 0x300))
         p = pUnsync = Unsync(p + 10, 0, nTagSize, &nTagSize);
@@ -1332,7 +1332,7 @@ int AdvCmpProc::GetPic(dupFile* cur, int GetInfo)
     string strFullFileName;
     GetFullFileName(strFullFileName, cur->fi.Dir, cur->fi.FileName);
 
-    GFL_BITMAP* pBitmap = NULL;
+    GFL_BITMAP* pBitmap = nullptr;
     GFL_LOAD_PARAMS load_params;
 
     pGflGetDefaultLoadParams(&load_params);
@@ -1340,16 +1340,16 @@ int AdvCmpProc::GetPic(dupFile* cur, int GetInfo)
     load_params.Origin = GFL_BOTTOM_LEFT;
     load_params.LinePadding = 4;
 
-    GFL_ERROR res = pGflLoadBitmapW(strFullFileName.get(), &pBitmap, &load_params, NULL);
+    GFL_ERROR res = pGflLoadBitmapW(strFullFileName.get(), &pBitmap, &load_params, nullptr);
     if (res)
     {
       cur->dwFlags |= RCIF_PICERR;
-      pBitmap = NULL;
+      pBitmap = nullptr;
       load_params.Flags |= GFL_LOAD_IGNORE_READ_ERROR;
-      res = pGflLoadBitmapW(strFullFileName.get(), &pBitmap, &load_params, NULL);
+      res = pGflLoadBitmapW(strFullFileName.get(), &pBitmap, &load_params, nullptr);
       if (res)
       {
-        pBitmap = NULL;
+        pBitmap = nullptr;
         CmpInfo.Errors++;
         return ret;
       }
@@ -1516,7 +1516,7 @@ int AdvCmpProc::Duplicate(const struct DirList* pList)
     if (!(ret = ScanDir(pList->Dir, 0)))
       goto END;
 
-    wchar_t** ListPath = NULL;
+    wchar_t** ListPath = nullptr;
     int NumPath = GetArgv(Opt.DupPath, &ListPath);
     if (NumPath)
     {
@@ -1524,7 +1524,7 @@ int AdvCmpProc::Duplicate(const struct DirList* pList)
       {
         if (FSF.LStricmp(GetPosToName(pList->Dir), GetPosToName(ListPath[i])))
         {
-          int size = FSF.ConvertPath(CPM_NATIVE, ListPath[i], 0, 0);
+          int size = FSF.ConvertPath(CPM_NATIVE, ListPath[i], nullptr, 0);
           wchar_t* Dir = (wchar_t*) malloc(size * sizeof(wchar_t));
           if (Dir)
           {
@@ -1545,7 +1545,7 @@ int AdvCmpProc::Duplicate(const struct DirList* pList)
   if (!ret)
     goto END;
 
-  FSF.qsort(dFList.F, dFList.iCount, sizeof(dFList.F[0]), dupSortListByName, NULL);
+  FSF.qsort(dFList.F, dFList.iCount, sizeof(dFList.F[0]), dupSortListByName, nullptr);
 
   if (Opt.DupContents)
   {
@@ -1872,20 +1872,20 @@ int AdvCmpProc::Duplicate(const struct DirList* pList)
     goto END;
 
   // освободимся от уникальных
-  FSF.qsort(dFList.F, dFList.iCount, sizeof(dFList.F[0]), dupSortListByGroup, NULL);
+  FSF.qsort(dFList.F, dFList.iCount, sizeof(dFList.F[0]), dupSortListByGroup, nullptr);
   int Index;
   for (Index = dFList.iCount - 1; Index >= 0 && !dFList.F[Index].nDupGroup; Index--)
   {
     free(dFList.F[Index].fi.FileName);
-    dFList.F[Index].fi.FileName = NULL;
+    dFList.F[Index].fi.FileName = nullptr;
     free(dFList.F[Index].fi.Dir);
-    dFList.F[Index].fi.Dir = NULL;
+    dFList.F[Index].fi.Dir = nullptr;
     free(dFList.F[Index].PicPix);
-    dFList.F[Index].PicPix = NULL;
+    dFList.F[Index].PicPix = nullptr;
     free(dFList.F[Index].MusicArtist);
-    dFList.F[Index].MusicArtist = NULL;
+    dFList.F[Index].MusicArtist = nullptr;
     free(dFList.F[Index].MusicTitle);
-    dFList.F[Index].MusicTitle = NULL;
+    dFList.F[Index].MusicTitle = nullptr;
   }
 
   dFList.F = (dupFile*) realloc(dFList.F, (dFList.iCount = Index + 1) * sizeof(dupFile));
@@ -1895,8 +1895,8 @@ int AdvCmpProc::Duplicate(const struct DirList* pList)
     CloseHandle(hConInp);
     hConInp = INVALID_HANDLE_VALUE;
   }
-  Info.PanelControl(LPanel.hPanel, FCTL_REDRAWPANEL, 0, 0);
-  Info.PanelControl(RPanel.hPanel, FCTL_REDRAWPANEL, 0, 0);
+  Info.PanelControl(LPanel.hPanel, FCTL_REDRAWPANEL, 0, nullptr);
+  Info.PanelControl(RPanel.hPanel, FCTL_REDRAWPANEL, 0, nullptr);
   if (TitleSaved)
     SetConsoleTitle(strFarTitle);
 
@@ -1922,7 +1922,7 @@ int AdvCmpProc::Duplicate(const struct DirList* pList)
     {
       if (Opt.Sound && (GetTickCount() - dwTicks > 30000))
         MessageBeep(MB_ICONASTERISK);
-      Info.AdvControl(&MainGuid, ACTL_PROGRESSNOTIFY, 0, 0);
+      Info.AdvControl(&MainGuid, ACTL_PROGRESSNOTIFY, 0, nullptr);
     }
     if (!bBrokenByEsc)
     {
@@ -1934,14 +1934,14 @@ int AdvCmpProc::Duplicate(const struct DirList* pList)
         FSF.FormatFileSize(CmpInfo.ProcSize, 7, FFFS_FLOATSIZE | FFFS_SHOWBYTESINDEX | FFFS_ECONOMIC, size, 8);
         FSF.sprintf(buf, GetMsg(MDupDelItems), size, CmpInfo.Proc);
         const wchar_t* MsgItems[] = {GetMsg(MDupTitle), buf, GetMsg(MOK)};
-        Info.Message(&MainGuid, &DupDelItemsMsgGuid, 0, 0, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 1);
+        Info.Message(&MainGuid, &DupDelItemsMsgGuid, 0, nullptr, MsgItems, sizeof(MsgItems) / sizeof(MsgItems[0]), 1);
       }
     }
   }
   if (Opt.Dup == QR_ALL || Opt.Dup == QR_SKIP)
   {
-    Info.PanelControl(LPanel.hPanel, FCTL_UPDATEPANEL, 0, 0);
-    Info.PanelControl(RPanel.hPanel, FCTL_UPDATEPANEL, 0, 0);
+    Info.PanelControl(LPanel.hPanel, FCTL_UPDATEPANEL, 0, nullptr);
+    Info.PanelControl(RPanel.hPanel, FCTL_UPDATEPANEL, 0, nullptr);
   }
 
 END:
