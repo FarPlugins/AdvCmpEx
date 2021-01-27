@@ -35,15 +35,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // диалог с опциями
 class AdvCmpDlgOpt
 {
-		bool bSkipSaveOpt;
+  bool bSkipSaveOpt;
 
-		static intptr_t WINAPI ShowOptDialogProcThunk(HANDLE hDlg, intptr_t Msg, intptr_t Param1, void *Param2);
-		intptr_t WINAPI ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, void *Param2);
+  static intptr_t WINAPI ShowOptDialogProcThunk(HANDLE hDlg, intptr_t Msg, intptr_t Param1, void* Param2);
+  intptr_t WINAPI ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, void* Param2);
 
-	public:
-		AdvCmpDlgOpt() { }
-		~AdvCmpDlgOpt() { }
+ public:
+  AdvCmpDlgOpt() {}
+  ~AdvCmpDlgOpt() {}
 
-		int ShowOptDialog();
-		void Close();
+  int ShowOptDialog();
+  void Close();
 };
