@@ -148,28 +148,78 @@ extern struct FarStandardFunctions FSF;
  ****************************************************************************/
 extern struct Options
 {
-  int Mode, CmpCase, CmpSize, CmpTime, Seconds, LowPrecisionTime, IgnoreTimeZone, CmpContents, OnlyTimeDiff, Cache, CacheIgnore, Partly, PartlyFull,
-      PartlyKbSize, Ignore, IgnoreTemplates, DupName, DupSize, DupContents, DupPic, DupPicDiff, DupPicSize, DupPicFmt, DupMusic, DupMusicArtist,
-      DupMusicTitle, DupMusicDuration, DupMusicDurationSec, Subfolders, MaxScanDepth, ScanSymlink, Filter, StopDiffDup, SkipSubstr, ProcessSelected,
-      SelectedNew, SyncOnlyRight, LightSync, IgnoreMissing, ShowMsg, Sound, Dialog, TotalProgress, Sync,
-      // что показывать в листе
-      ShowListSelect, ShowListIdentical, ShowListDifferent, ShowListLNew, ShowListRNew,
-      // отметка элементов в листе
-      SyncFlagClearUser,
-      SyncFlagCopy,  // <0 - налево, =0 - нет, >0 - направо
-      SyncFlagIfNew,
-      SyncFlagLCopy,  // уникальный слева: <0 - налево, =0 - нет, >0 - направо
-      SyncFlagRCopy,  // уникальный справа: <0 - налево/удалить, =0 - нет, >0 - направо
-      // копирование/удаление
-      SyncLPanel, SyncRPanel, SyncDel, SyncUseDelFilter,
-
-      Dup, DupListSmall,
-      // удаление
-      DupDel, DupDelRecycleBin,
-
-      ProcessHidden, BufSize;
+  int Mode;
+  int CmpCase;
+  int CmpSize;
+  int CmpTime;
+  int Seconds;
+  int LowPrecisionTime;
+  int IgnoreTimeZone;
+  int CmpContents;
+  int OnlyTimeDiff;
+  int Cache;
+  int CacheIgnore;
+  int Partly;
+  int PartlyFull;
+  int PartlyKbSize;
+  int Ignore;
+  int IgnoreTemplates;
+  int DupName;
+  int DupSize;
+  int DupContents;
+  int DupPic;
+  int DupPicDiff;
+  int DupPicSize;
+  int DupPicFmt;
+  int DupMusic;
+  int DupMusicArtist;
+  int DupMusicTitle;
+  int DupMusicDuration;
+  int DupMusicDurationSec;
+  int Subfolders;
+  int MaxScanDepth;
+  int ScanSymlink;
+  int Filter;
+  int StopDiffDup;
+  int SkipSubstr;
+  int ProcessSelected;
+  int SelectedNew;
+  int SyncOnlyRight;
+  int LightSync;
+  int IgnoreMissing;
+  int ShowMsg;
+  int Sound;
+  int Dialog;
+  int TotalProgress;
+  int Sync;
+  // что показывать в листе
+  int ShowListSelect;
+  int ShowListIdentical;
+  int ShowListDifferent;
+  int ShowListLNew;
+  int ShowListRNew;
+  // отметка элементов в листе
+  int SyncFlagClearUser;
+  int SyncFlagCopy;  // <0 - налево, =0 - нет, >0 - направо
+  int SyncFlagIfNew;
+  int SyncFlagLCopy;  // уникальный слева: <0 - налево, =0 - нет, >0 - направо
+  int SyncFlagRCopy;  // уникальный справа: <0 - налево/удалить, =0 - нет, >0 - направо
+  // копирование/удаление
+  int SyncLPanel;
+  int SyncRPanel;
+  int SyncDel;
+  int SyncUseDelFilter;
+  int Dup;
+  int DupListSmall;
+  // удаление
+  int DupDel;
+  int DupDelRecycleBin;
+  int ProcessHidden;
+  int BufSize;
   char* Buf[2];
-  wchar_t *DupPath, *Substr, *WinMergePath;
+  wchar_t *DupPath;
+  wchar_t* Substr;
+  wchar_t* WinMergePath;
   HANDLE hCustomFilter;
 } Opt;
 
