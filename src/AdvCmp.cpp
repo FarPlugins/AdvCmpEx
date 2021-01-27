@@ -604,7 +604,10 @@ HANDLE WINAPI OpenW(const struct OpenInfo* OInfo)
         bool bDifferenceNotFound = AdvCmp.CompareDirs(&LList, &RList, true, 0);
 
         if (hConInp != INVALID_HANDLE_VALUE)
+        {
           CloseHandle(hConInp);
+          hConInp = INVALID_HANDLE_VALUE;
+        }
         if (AdvCmp.TitleSaved)
           SetConsoleTitle(AdvCmp.strFarTitle);
 
@@ -648,7 +651,10 @@ HANDLE WINAPI OpenW(const struct OpenInfo* OInfo)
     else
     {
       if (hConInp != INVALID_HANDLE_VALUE)
+      {
         CloseHandle(hConInp);
+        hConInp = INVALID_HANDLE_VALUE;
+      }
       AdvCmp.CompareCurFile(LList.Dir, LList.PPI[LPanel.PInfo.CurrentItem].FileName, RList.Dir, RList.PPI[RPanel.PInfo.CurrentItem].FileName, 1);
     }
     AdvCmp.Close();

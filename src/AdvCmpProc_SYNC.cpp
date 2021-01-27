@@ -1018,7 +1018,10 @@ int AdvCmpProc::Synchronize()
     }
 
     if (hConInp != INVALID_HANDLE_VALUE)
+    {
       CloseHandle(hConInp);
+      hConInp = INVALID_HANDLE_VALUE;
+    }
 
     if (ret && !bBrokenByEsc)
     {

@@ -1891,7 +1891,10 @@ int AdvCmpProc::Duplicate(const struct DirList* pList)
   dFList.F = (dupFile*) realloc(dFList.F, (dFList.iCount = Index + 1) * sizeof(dupFile));
 
   if (hConInp != INVALID_HANDLE_VALUE)
+  {
     CloseHandle(hConInp);
+    hConInp = INVALID_HANDLE_VALUE;
+  }
   Info.PanelControl(LPanel.hPanel, FCTL_REDRAWPANEL, 0, 0);
   Info.PanelControl(RPanel.hPanel, FCTL_REDRAWPANEL, 0, 0);
   if (TitleSaved)
@@ -1943,6 +1946,9 @@ int AdvCmpProc::Duplicate(const struct DirList* pList)
 
 END:
   if (hConInp != INVALID_HANDLE_VALUE)
+  {
     CloseHandle(hConInp);
+    hConInp = INVALID_HANDLE_VALUE;
+  }
   return ret;
 }
