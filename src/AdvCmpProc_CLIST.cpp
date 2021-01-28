@@ -497,20 +497,20 @@ bool MakeCmpFarList(HANDLE hDlg, cmpFileList* pFileList, bool bSetCurPos, bool b
 bool bSetBottom = false;
 
 /***************************************************************************
- * Обработчик диалога
+ * Обработчик диалога результатов сравнения файлов
  ***************************************************************************/
 intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, void* Param2)
 {
-  cmpFileList* pFileList = (cmpFileList*) Info.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, nullptr);
+  auto* pFileList = (cmpFileList*) Info.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, nullptr);
   switch (Msg)
   {
     case DN_INITDIALOG:
       MakeCmpFarList(hDlg, pFileList, true, true);
-      Info.SendDlgMessage(hDlg, DM_SETMOUSEEVENTNOTIFY, 1, nullptr);
+      Info.SendDlgMessage(hDlg, DM_SETINPUTNOTIFY, 1, nullptr);
       break;
 
       /************************************************************************/
-
+      // изменение размера окна FAR
     case DN_RESIZECONSOLE: {
       COORD c = (*(COORD*) Param2);
       Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, nullptr);
@@ -529,11 +529,13 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
 
       /************************************************************************/
 
+      // перед отрисовкой элемента списка, выбирам цвет отображения
     case DN_CTLCOLORDLGLIST:
       if (Param1 == 0)
       {
-        struct FarDialogItemColors* Colors = (FarDialogItemColors*) Param2;
-        FarColor Color;
+        // TODO сделать заполнение массива один раз, а не на каждое движение по списку
+        auto* Colors = (FarDialogItemColors*) Param2;
+        FarColor Color {};
         int ColorIndex[15] = {COL_PANELTEXT,
                               COL_PANELBOX,
                               COL_PANELBOX,   // заголовки
@@ -567,9 +569,11 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
 
       /************************************************************************/
 
+      // попытка выйти из окна
     case DN_CLOSE:
       if (Opt.Mode == MODE_SYNC && Param1 == -1)
       {
+        // проверяем есть ли что синхронизировать, и показываем окно действий
         Opt.Sync = GetSyncOpt(pFileList);
         if (Opt.Sync == QR_EDIT)
           return false;
@@ -581,17 +585,18 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
       /************************************************************************/
 
     case DN_INPUT: {
-      const INPUT_RECORD* record = (const INPUT_RECORD*) Param2;
+      const auto* record = (const INPUT_RECORD*) Param2;
 
       if (record->EventType == MOUSE_EVENT)
-        // отработаем щелчок мыши в поле Mark
-        if (Opt.Mode == MODE_SYNC && Param1 == 0 && record->Event.MouseEvent.dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED &&
+      {
+        if (Param1 == 0 && record->Event.MouseEvent.dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED &&
             record->Event.MouseEvent.dwEventFlags != DOUBLE_CLICK)
         {
           SMALL_RECT dlgRect;
           Info.SendDlgMessage(hDlg, DM_GETDLGRECT, 0, &dlgRect);
+          // отработаем щелчок мыши в поле Mark
           // щелкнули в LISTе
-          if (record->Event.MouseEvent.dwMousePosition.X > dlgRect.Left && record->Event.MouseEvent.dwMousePosition.X < dlgRect.Right &&
+          if (Opt.Mode == MODE_SYNC && record->Event.MouseEvent.dwMousePosition.X > dlgRect.Left && record->Event.MouseEvent.dwMousePosition.X < dlgRect.Right &&
               record->Event.MouseEvent.dwMousePosition.Y > dlgRect.Top && record->Event.MouseEvent.dwMousePosition.Y < dlgRect.Bottom)
           {
             FarListPos ListPos = {sizeof(FarListPos)};
@@ -615,6 +620,16 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
               return false;
             }
           }
+          // закроем диалог по клику в правом верхнем угу
+          if (record->Event.MouseEvent.dwMousePosition.X == dlgRect.Right && record->Event.MouseEvent.dwMousePosition.Y == dlgRect.Top)
+          {
+            INPUT_RECORD rec;
+            if (FSF.FarNameToInputRecord(L"F10", &rec))
+              Info.SendDlgMessage(hDlg, DM_KEY, 1, &rec);
+            else
+              Info.SendDlgMessage(hDlg, DM_CLOSE, 0, nullptr);
+            return false;
+          }
         }
         else if (Param1 == 0 && record->Event.MouseEvent.dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED &&
                  record->Event.MouseEvent.dwEventFlags == DOUBLE_CLICK)
@@ -629,29 +644,37 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
             return false;
           }
         }
-        // закроем диалог по клику в правом верхнем угу
-        else if (Param1 == 0 && record->Event.MouseEvent.dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED)
+      }
+      else if (record->EventType == KEY_EVENT && record->Event.KeyEvent.bKeyDown && record->Event.KeyEvent.wVirtualKeyCode == VK_CONTROL &&
+               IsCtrl(record))
+      {
+        int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, nullptr);
+        cmpFile** tmp = (cmpFile**) Info.SendDlgMessage(hDlg, DM_LISTGETDATA, 0, (void*) Pos);
+        cmpFile* cur = tmp ? *tmp : nullptr;
+        if (cur)
         {
-          SMALL_RECT dlgRect;
-          Info.SendDlgMessage(hDlg, DM_GETDLGRECT, 0, &dlgRect);
-          if (record->Event.MouseEvent.dwMousePosition.X == dlgRect.Right && record->Event.MouseEvent.dwMousePosition.Y == dlgRect.Top)
+          string strVirtDir = GetPosToName(cur->L.Dir) + wcslen(LPanel.Dir);
+          if (strVirtDir.length() > 0)
+            FSF.TruncStr(strVirtDir.get(), WinInfo.TruncLen - wcslen(GetMsg(MListBottomCurDir)));
+          else
           {
-            INPUT_RECORD rec;
-            if (FSF.FarNameToInputRecord(L"F10", &rec))
-              Info.SendDlgMessage(hDlg, DM_KEY, 1, &rec);
-            else
-              Info.SendDlgMessage(hDlg, DM_CLOSE, 0, nullptr);
-            return false;
+            MessageBeep(MB_OK);
+            return true;
           }
+          strVirtDir.updsize();
+          SetBottom(hDlg, pFileList, strVirtDir.get());
+          bSetBottom = true;
+          return true;
         }
+      }
 
       return true;
     }
 
       /************************************************************************/
-
+      // нажатия клавиш
     case DN_CONTROLINPUT: {
-      const INPUT_RECORD* record = (const INPUT_RECORD*) Param2;
+      const auto* record = (const INPUT_RECORD*) Param2;
 
       if (bSetBottom)
       {
@@ -665,82 +688,6 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
 
         if (IsNone(record))
         {
-#if 0
-					if (vk==VK_F3)
-					{
-						wchar_t LName[4][66], RName[4][66];
-
-						for (int i=0; i<4; i++)
-						{
-							LName[i][0]=0;
-							RName[i][0]=0;
-						}
-						int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
-						cmpFile **tmp=(cmpFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
-						cmpFile *cur=(tmp && *tmp)?*tmp:NULL;
-						if (cur)
-						{
-							for (int j=0;j<=1;j++)
-							{
-								wchar_t *Name=GetPosToName((j==0)?cur->LDir:cur->RDir);
-								int len=wcslen(Name);
-								for (int i=0; i<4; i++, len-=65)
-								{
-									if (len<65)
-									{
-										lstrcpyn((j==0)?LName[i]:RName[i], Name+i*65, len+1);
-										break;
-									}
-									else
-										lstrcpyn((j==0)?LName[i]:RName[i], Name+i*65, 66);
-								}
-							}
-						}
-						struct FarDialogItem DialogItems[] = {
-							//			Type	X1	Y1	X2	Y2	Selected	History	Mask	Flags	Data	MaxLen	UserParam	
-							/* 0*/{DI_DOUBLEBOX,0, 0,70,14, 0, 0, 0,                  0, GetMsg(MCurDirName), 0,0},
-							/* 1*/{DI_SINGLEBOX,2, 1,68, 6, 0, 0, 0,       DIF_LEFTTEXT, GetMsg(MLName), 0,0},
-							/* 2*/{DI_TEXT,     3, 2, 0, 0, 0, 0, 0,       DIF_LEFTTEXT, LName[0],0,0},
-							/* 3*/{DI_TEXT,     3, 3, 0, 0, 0, 0, 0,       DIF_LEFTTEXT, LName[1],0,0},
-							/* 4*/{DI_TEXT,     3, 4, 0, 0, 0, 0, 0,       DIF_LEFTTEXT, LName[2],0,0},
-							/* 5*/{DI_TEXT,     3, 5, 0, 0, 0, 0, 0,       DIF_LEFTTEXT, LName[3],0,0},
-							/* 6*/{DI_SINGLEBOX,2, 7,68,12, 0, 0, 0,       DIF_LEFTTEXT, GetMsg(MRName), 0,0},
-							/* 7*/{DI_TEXT,     3, 8, 0, 0, 0, 0, 0,       DIF_LEFTTEXT, RName[0],0,0},
-							/* 8*/{DI_TEXT,     3, 9, 0, 0, 0, 0, 0,       DIF_LEFTTEXT, RName[1],0,0},
-							/* 9*/{DI_TEXT,     3,10, 0, 0, 0, 0, 0,       DIF_LEFTTEXT, RName[2],0,0},
-							/*10*/{DI_TEXT,     3,11, 0, 0, 0, 0, 0,       DIF_LEFTTEXT, RName[3],0,0},
-							/*11*/{DI_BUTTON,   0,13, 0, 0, 0, 0, 0,DIF_CENTERGROUP|DIF_DEFAULTBUTTON, GetMsg(MOK),0,0},
-						};
-						HANDLE hDlg=Info.DialogInit(&MainGuid,&DlgNameGuid,-1,-1,71,15,L"DlgCmp", DialogItems,sizeof(DialogItems)/sizeof(DialogItems[0]),0,FDLG_SMALLDIALOG,0,0);
-						if (hDlg != INVALID_HANDLE_VALUE)
-						{
-							Info.DialogRun(hDlg);
-							Info.DialogFree(hDlg);
-						}
-						return true;
-					}
-					//-----
-					else
-					if (vk==VK_F3||vk==VK_F4)
-					{
-						int Pos=Info.SendDlgMessage(hDlg,DM_LISTGETCURPOS,0,0);
-						cmpFile **tmp=(cmpFile **)Info.SendDlgMessage(hDlg,DM_LISTGETDATA,0,(void *)Pos);
-						cmpFile *cur=(tmp && *tmp)?*tmp:NULL;
-						if (cur)
-						{
-							string strFullFileName;
-							if (vk==VK_F3 && !(cur->dwFlags&RCIF_RUNIQ) && !(cur->dwLAttributes&FILE_ATTRIBUTE_DIRECTORY))
-								GetFullFileName(strFullFileName,cur->LDir,cur->FileName);
-							else if (vk==VK_F4 && !(cur->dwFlags&RCIF_LUNIQ) && !(cur->dwRAttributes&FILE_ATTRIBUTE_DIRECTORY))
-								GetFullFileName(strFullFileName,cur->RDir,cur->FileName);
-							if (strFullFileName.length() && Info.Viewer(GetPosToName(strFullFileName.get()),NULL,0,0,-1,-1,VF_DISABLEHISTORY,CP_AUTODETECT))
-								return true;
-						}
-						MessageBeep(MB_OK);
-						return true;
-					}
-					else
-#endif
           if (vk == VK_RETURN)
           {
           GOTOCMPFILE:
@@ -1001,28 +948,7 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
         }
         else if (IsCtrl(record))
         {
-          if (vk == VK_CONTROL)
-          {
-            int Pos = Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, 0, nullptr);
-            cmpFile** tmp = (cmpFile**) Info.SendDlgMessage(hDlg, DM_LISTGETDATA, 0, (void*) Pos);
-            cmpFile* cur = tmp ? *tmp : nullptr;
-            if (cur)
-            {
-              string strVirtDir = GetPosToName(cur->L.Dir) + wcslen(LPanel.Dir);
-              if (strVirtDir.length() > 0)
-                FSF.TruncStr(strVirtDir.get(), WinInfo.TruncLen - wcslen(GetMsg(MListBottomCurDir)));
-              else
-              {
-                MessageBeep(MB_OK);
-                return true;
-              }
-              strVirtDir.updsize();
-              SetBottom(hDlg, pFileList, strVirtDir.get());
-              bSetBottom = true;
-              return true;
-            }
-          }
-          else if (vk == 0x52)  // VK_R
+          if (vk == 0x52)  // VK_R
           {
             Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, nullptr);
             Opt.ShowListSelect = true;
@@ -1083,7 +1009,8 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
                 //			Type	X1	Y1	X2	Y2				Selected	History	Mask	Flags	Data	MaxLen	UserParam
                 /* 0*/ {DI_DOUBLEBOX, 3, 1, 60, 11, 0, nullptr, nullptr, 0, GetMsg(MSyncSelTitle), 0, 0},
                 /* 1*/ {DI_TEXT, 5, 2, 0, 0, 0, nullptr, nullptr, DIF_SEPARATOR, GetMsg(MSyncSelDiff), 0, 0},
-                /* 2*/ {DI_RADIOBUTTON, 5, 3, 0, 0, (Opt.SyncOnlyRight ? 0 : 1), nullptr, nullptr, DIF_FOCUS | DIF_GROUP, GetMsg(MSyncSelToSkip), 0, 0},
+                /* 2*/
+                {DI_RADIOBUTTON, 5, 3, 0, 0, (Opt.SyncOnlyRight ? 0 : 1), nullptr, nullptr, DIF_FOCUS | DIF_GROUP, GetMsg(MSyncSelToSkip), 0, 0},
                 /* 3*/ {DI_RADIOBUTTON, 22, 3, 0, 0, (Opt.SyncOnlyRight ? 1 : 0), nullptr, nullptr, 0, GetMsg(MSyncSelToRight), 0, 0},
                 /* 4*/ {DI_RADIOBUTTON, 39, 3, 0, 0, 0, nullptr, nullptr, 0, GetMsg(MSyncSelToLeft), 0, 0},
                 /* 5*/ {DI_CHECKBOX, 5, 4, 0, 0, 0, nullptr, nullptr, 0, GetMsg(MSyncSelIfNew), 0, 0},
@@ -1108,7 +1035,8 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
               ret = (int) Info.DialogRun(hDlgCur);
               if (ret == 15)
               {
-                Opt.SyncFlagCopy = (Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 2, nullptr) ? 1 : (Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 3, nullptr) ? 2 : -2));
+                Opt.SyncFlagCopy =
+                    (Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 2, nullptr) ? 1 : (Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 3, nullptr) ? 2 : -2));
                 Opt.SyncFlagIfNew = Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 5, nullptr);
                 Opt.SyncFlagLCopy =
                     (Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 7, nullptr) ? 2 : (Info.SendDlgMessage(hDlgCur, DM_GETCHECK, 8, nullptr) ? -2 : 0));
@@ -1260,6 +1188,8 @@ intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, vo
         }
       }
     }
+    default:
+      break;
   }
   return Info.DefDlgProc(hDlg, Msg, Param1, Param2);
 }

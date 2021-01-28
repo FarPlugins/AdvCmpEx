@@ -548,7 +548,7 @@ HANDLE WINAPI OpenW(const struct OpenInfo* OInfo)
 
   LPanel.bTMP = LPanel.bARC = LPanel.bCurFile = LPanel.bDir = false;
   RPanel.bTMP = RPanel.bARC = RPanel.bCurFile = RPanel.bDir = false;
-  struct DirList LList, RList;
+  struct DirList LList{}, RList{};
 
   GetDirList(LPanel, LList);
   GetDirList(RPanel, RList);
