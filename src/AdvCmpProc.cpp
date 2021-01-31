@@ -217,7 +217,7 @@ wchar_t* GetStrFileTime(FILETIME* LastWriteTime, wchar_t* Time, bool FullYear)
 /****************************************************************************
  * Проверка на Esc. Возвращает true, если пользователь нажал Esc
  ****************************************************************************/
-bool CheckForEsc(void)
+bool CheckForEsc()
 {
   if (hConInp == INVALID_HANDLE_VALUE)
     return false;
@@ -598,7 +598,7 @@ int AdvCmpProc::GetDirList(const wchar_t* Dir, int ScanDepth, bool OnlyInfo, str
         }
         else
         {
-          struct PluginPanelItem* pPPI = (PluginPanelItem*) realloc(pList->PPI, (pList->ItemsNumber + 1) * sizeof(PluginPanelItem));
+          auto* pPPI = (PluginPanelItem*) realloc(pList->PPI, (pList->ItemsNumber + 1) * sizeof(PluginPanelItem));
           if (!pPPI)
           {
             ErrorMsg(MNoMemTitle, MNoMemBody);
