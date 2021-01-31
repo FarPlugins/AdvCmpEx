@@ -457,6 +457,7 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intpt
       {
         if (Param2 == (void*) MODE_DUP)
         {
+          Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, nullptr);
           for (int i = DlgCMPCASE; i <= DlgIGNORETEMPL; i++) Info.SendDlgMessage(hDlg, DM_SHOWITEM, i, nullptr);
           for (int i = DlgDUPPATH; i <= DlgDUPMUSICDURE; i++) Info.SendDlgMessage(hDlg, DM_SHOWITEM, i, (void*) 1);
 
@@ -478,9 +479,11 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intpt
           Info.SendDlgMessage(hDlg, DM_SETCHECK, DlgONLYRIGHT, (void*) BSTATE_UNCHECKED);
           Info.SendDlgMessage(hDlg, DM_ENABLE, DlgLIGHTSYNC, (void*) false);
           Info.SendDlgMessage(hDlg, DM_SETCHECK, DlgLIGHTSYNC, (void*) BSTATE_UNCHECKED);
+          Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, nullptr);
         }
         else
         {
+          Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, false, nullptr);
           for (int i = DlgCMPCASE; i <= DlgIGNORETEMPL; i++) Info.SendDlgMessage(hDlg, DM_SHOWITEM, i, (void*) 1);
           for (int i = DlgDUPPATH; i <= DlgDUPMUSICDURE; i++) Info.SendDlgMessage(hDlg, DM_SHOWITEM, i, nullptr);
 
@@ -533,6 +536,7 @@ intptr_t WINAPI AdvCmpDlgOpt::ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intpt
             Info.SendDlgMessage(hDlg, DM_ENABLE, DlgLIGHTSYNC, (void*) true);
             Info.SendDlgMessage(hDlg, DM_SETCHECK, DlgLIGHTSYNC, (void*) (Opt.LightSync ? BSTATE_CHECKED : BSTATE_UNCHECKED));
           }
+          Info.SendDlgMessage(hDlg, DM_ENABLEREDRAW, true, nullptr);
         }
         return Msg == DN_LISTHOTKEY ? false : true;  // апи требует разного возврата - сделаем разным
       }
