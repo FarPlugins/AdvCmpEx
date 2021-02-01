@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <initguid.h>
-#include <wchar.h>
+#include <cwchar>
 #include "AdvCmpLng.hpp"  // набор констант для извлечения строк из .lng файла
 #include "bass.h"
 #include "farcolor.hpp"

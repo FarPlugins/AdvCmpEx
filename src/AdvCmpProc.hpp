@@ -45,10 +45,12 @@ struct FileInfo
 
   FileInfo()
   {
-    FileName = Dir = NULL;
+    FileName = nullptr;
+    Dir = nullptr;
     dwAttributes = 0;
     nFileSize = 0;
-    ftLastWriteTime.dwLowDateTime = ftLastWriteTime.dwHighDateTime = 0;
+    ftLastWriteTime.dwLowDateTime = 0;
+    ftLastWriteTime.dwHighDateTime = 0;
   }
 };
 
@@ -101,10 +103,10 @@ struct dupFile
     dwFlags = RCIF_NONE;
 
     PicWidth = PicHeight = 0;
-    PicPix = NULL;
+    PicPix = nullptr;
 
-    MusicArtist = NULL;
-    MusicTitle = NULL;
+    MusicArtist = nullptr;
+    MusicTitle = nullptr;
     MusicBitrate = 0;
     MusicTime = 0;
   }
@@ -178,15 +180,15 @@ class AdvCmpProc
   // полезняшки
   bool GetFarTitle(string& strTitle);
   void WFD2PPI(WIN32_FIND_DATA& wfd, PluginPanelItem& ppi);
-  inline bool IsNewLine(int c)
+  static inline bool IsNewLine(int c)
   {
     return (c == '\r' || c == '\n');
   }
-  inline bool myIsSpace(int c)
+  static inline bool myIsSpace(int c)
   {
     return (c == ' ' || c == '\t' || c == '\v' || c == '\f');
   }
-  inline bool IsWhiteSpace(int c)
+  static inline bool IsWhiteSpace(int c)
   {
     return (c == ' ' || c == '\t' || c == '\v' || c == '\f' || c == '\r' || c == '\n');
   }
@@ -194,7 +196,7 @@ class AdvCmpProc
   DWORD ProcessCRC(void* pData, register int iLen, DWORD FileCRC);
   bool CheckScanDepth(const wchar_t* FileName, int ScanDepth);
 
-  int GetDirList(const wchar_t* Dir, int ScanDepth, bool OnlyInfo, struct DirList* pList = 0);
+  int GetDirList(const wchar_t* Dir, int ScanDepth, bool OnlyInfo, struct DirList* pList = nullptr);
   void FreeDirList(struct DirList* pList);
   bool BuildItemsIndex(bool bLeftPanel, const struct DirList* pList, struct ItemsIndex* pIndex, int ScanDepth);
   void FreeItemsIndex(struct ItemsIndex* pIndex);
@@ -228,8 +230,8 @@ class AdvCmpProc
   int ShowDupDialog();
 
  public:
-  AdvCmpProc() {}
-  ~AdvCmpProc() {}
+  AdvCmpProc() = default;
+  ~AdvCmpProc() = default;
 
   void Init();
   void Close();
@@ -242,7 +244,7 @@ class AdvCmpProc
 
 // диалог результатов сравнения
 void MakeListItemText(wchar_t* buf, cmpFile* cur, wchar_t Mark);
-void SetBottom(HANDLE hDlg, cmpFileList* pFileList, wchar_t* CurDir = NULL);
+void SetBottom(HANDLE hDlg, cmpFileList* pFileList, wchar_t* CurDir = nullptr);
 bool MakeCmpFarList(HANDLE hDlg, cmpFileList* pFileList, bool bSetCurPos = true, bool bSort = false);
 intptr_t WINAPI ShowCmpDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, void* Param2);
 
@@ -258,6 +260,6 @@ void ProgressLine(wchar_t* Dest, unsigned __int64 nCurrent, unsigned __int64 nTo
 wchar_t* GetPosToName(const wchar_t* FileName);
 void GetFullFileName(string& strFullFileName, const wchar_t* Dir, const wchar_t* FileName, bool bNative = true);
 wchar_t* GetStrFileTime(FILETIME* LastWriteTime, wchar_t* Time, bool FullYear = true);
-bool CheckForEsc(void);
-void TruncCopy(wchar_t* Dest, const wchar_t* Src, int TruncLen, const wchar_t* FormatMsg = NULL);
+bool CheckForEsc();
+void TruncCopy(wchar_t* Dest, const wchar_t* Src, int TruncLen, const wchar_t* FormatMsg = nullptr);
 int GetArgv(const wchar_t* cmd, wchar_t*** argv);

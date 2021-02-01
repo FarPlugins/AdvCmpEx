@@ -41,8 +41,8 @@ class AdvCmpDlgOpt
   intptr_t WINAPI ShowOptDialogProc(HANDLE hDlg, intptr_t Msg, intptr_t Param1, void* Param2);
 
  public:
-  AdvCmpDlgOpt() {}
-  ~AdvCmpDlgOpt() {}
+  AdvCmpDlgOpt() = default;
+  ~AdvCmpDlgOpt() = default;
 
   int ShowOptDialog();
   void Close();
