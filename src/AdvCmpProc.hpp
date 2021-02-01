@@ -196,7 +196,7 @@ class AdvCmpProc
   DWORD ProcessCRC(void* pData, register int iLen, DWORD FileCRC);
   bool CheckScanDepth(const wchar_t* FileName, int ScanDepth);
 
-  int GetDirList(const wchar_t* Dir, int ScanDepth, bool OnlyInfo, struct DirList* pList = nullptr0);
+  int GetDirList(const wchar_t* Dir, int ScanDepth, bool OnlyInfo, struct DirList* pList = nullptr);
   void FreeDirList(struct DirList* pList);
   bool BuildItemsIndex(bool bLeftPanel, const struct DirList* pList, struct ItemsIndex* pIndex, int ScanDepth);
   void FreeItemsIndex(struct ItemsIndex* pIndex);

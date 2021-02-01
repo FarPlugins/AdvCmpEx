@@ -197,7 +197,7 @@ void AdvCmpDlgOpt::Close()
     free(Opt.DupPath);
     Opt.DupPath = nullptr;
   }
-  if (Opt.Filter)
+  if (Opt.hCustomFilter != INVALID_HANDLE_VALUE)
     Info.FileFilterControl(Opt.hCustomFilter, FFCTL_FREEFILEFILTER, 0, nullptr);
 }
 
