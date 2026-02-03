@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma hdrstop
 #include "AdvCmpProc.hpp"
+#include <vector>
 
 /****************************************************************************
  *
@@ -536,12 +537,13 @@ int AdvCmpProc::GetDirList(const wchar_t* Dir, int ScanDepth, bool OnlyInfo, str
       FSF.ConvertPath(CPM_REAL, Dir, buf, size);
       strPathMask.updsize();
       // проверка на рекурсию - узнаем, может мы уже отсюда пришли
-      wchar_t RealPrevDir[32768];
-      wcscpy(RealPrevDir, Dir);
-      (wchar_t) * (FSF.PointToName(RealPrevDir)) = 0;
-      FSF.ConvertPath(CPM_REAL, RealPrevDir, RealPrevDir, 32768);
 
-      if (!FSF.LStricmp(strPathMask.get(), RealPrevDir))  // да, уже были тут!
+      std::vector<wchar_t> RealPrevDir(32768);
+      wcscpy(RealPrevDir.data(), Dir);
+      (wchar_t) * (FSF.PointToName(RealPrevDir.data())) = 0;
+      FSF.ConvertPath(CPM_REAL, RealPrevDir.data(), RealPrevDir.data(), 32768);
+
+      if (!FSF.LStricmp(strPathMask.get(), RealPrevDir.data()))  // да, уже были тут!
         ret = false;
     }
   }
